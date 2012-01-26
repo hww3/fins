@@ -203,7 +203,7 @@ object get_master_for_thread()
 //! returns the current thead's program path
 array get_program_path()
 {
-	return get_master_for_thread()->pike_program_path;
+	return master()->get_program_path();
 }
 
 static object low_load_controller(string controller_name)
@@ -234,10 +234,14 @@ static object low_load_controller(string controller_name)
 //werror("file: %O\n",f);
   if(f)
   {
+    write("compiling.\n");
     c = compile_string(Stdio.read_file(f), f);
   }
-  else return 0;
-
+  else 
+  { 
+    log->error("Unable to load controller %s, no file found", controller_name);
+    return 0;
+  }
   if(!c) log->error("Unable to load controller %s", controller_name);
 
   
@@ -737,7 +741,7 @@ array get_event(.Request request)
 
   cc = controller;
   request->controller = cc;
-//werror("controller: %O\n", cc);
+write("controller: %O\n", cc);
   request->controller_name = cc->__controller_name;
 
 

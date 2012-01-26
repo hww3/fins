@@ -2,6 +2,7 @@
 
 //import Fins;
 import Tools.Logging;
+//inherit Fins.Bootstrap;
 
 function access_logger;
 object logger;
@@ -59,6 +60,7 @@ int(0..1) started()
 void create(array args)
 {
   tool_args = args;
+ // ::create();
 }
 
 int run()
@@ -364,7 +366,7 @@ void load_application()
 {
   object application;
   mixed err = catch(
-  application = Fins.Loader.load_app(combine_path(getcwd(), project), config_name));
+  application = master()->resolv("Fins.Loader")->load_app(combine_path(getcwd(), project), config_name));
   if(err || !application)
   {
     if(err) Log.exception("An error occurred while loading the application.", err);

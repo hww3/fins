@@ -70,7 +70,7 @@ int run()
 
   project = combine_path(getcwd(), project);
 
-  app = Fins.Loader.load_app(project, config_name);  
+  app = Fins.Loader()->load_app(project, config_name);  
 
   Log.debug("Application loaded.");
 

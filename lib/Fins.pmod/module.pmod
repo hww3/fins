@@ -107,3 +107,137 @@ string version()
 {
   return "Fins " + __version;
 }
+
+static void create()
+{
+  werror("bootstrap!\n");
+  werror("replacing master!\n");
+  object m = my_master();
+ replace_master(m);
+}
+
+class my_master
+{
+  object mm = (object)"/master";
+
+  inherit "/master": old_master;
+
+  mapping(string:object) handlers = ([]);
+  mapping(object:string) handlers_for_thread = ([]);
+
+  function orig_compile = predef::compile;
+  function orig_compile_string = predef::compile_string;
+
+  //!
+  void create()
+  {
+    add_constant("compile", fins_aware_compile);
+    add_constant("compile_string", fins_aware_compile_string);
+    add_constant("create_thread", fins_aware_create_thread);
+//    add_constant("fins_add_handler", fins_aware_add_handler);  
+    set_weak_flag(handlers_for_thread, Pike.WEAK_INDICES);
+
+    object o = this_object();
+    /* Copy variables from the original master */
+    foreach(indices(mm), string varname) {
+      catch(o[varname] = mm[varname]);
+      /* Ignore errors when copying functions */
+    }
+    programs["/master"] = object_program(o);
+//    program_names[object_program(o)] = "/master";
+ //   objects[object_program(o)] = o;
+    /* make ourselves known */
+    add_constant("_master",o);
+
+    /* Move the old efuns to the new object. */
+    if (o->master_efuns) {
+      foreach(o->master_efuns, string e) {
+        if (has_index(o, e)) {
+          add_constant(e, o[e]);
+        } else {
+          throw(({ sprintf("Function %O is missing from caudium_master.pike.\n",
+                           e), backtrace() }));
+        }
+      }
+    } else {
+      ::create();
+    }
+  }
+  
+  array get_program_path(object|void handler)
+  {
+    
+    if(!handler)
+      handler = get_handler_for_thread(Thread.this_thread());
+    return handler->pike_program_path;
+  }
+  
+  program low_cast_to_program(string pname,
+                              string current_file,
+                              object|void handler,
+                              void|int mkobj)
+  {
+      if(!handler)
+        handler = get_handler_for_thread(Thread.this_thread());
+        
+   //   werror("low_cast_to_program(%s, %s)\n", (string)pname, (string)current_file);
+  //    if(handler) werror(" program path: %s", handler->pike_program_path *", ");
+      return ::low_cast_to_program(pname, current_file, handler, mkobj);
+  }
+
+program fins_aware_compile_string(string source, void|string filename, object|void handler, void|program p, void|object o, void|int _show_if_constant_errors)
+{
+  werror("___ COMPILE_STRING(%O)\n", source);
+  if(!handler) handler = get_handler_for_thread(Thread.this_thread());  
+  return orig_compile_string(source, filename, handler, p, o, _show_if_constant_errors);
+  
+}
+  program fins_aware_compile(string source, object|void handler, mixed ... args)
+  {
+    werror("___ COMPILE(%O)\n", source);
+    if(!handler) handler = get_handler_for_thread(Thread.this_thread());  
+    return orig_compile(source, handler, @args);
+  }
+
+  object fins_aware_create_thread(function(mixed ... :void) f, mixed ... args)
+  {
+    string hn;
+    hn = handlers_for_thread[Thread.this_thread()];
+
+    object t = Thread.Thread(splice(setup_thread, f), hn, @args);
+    handlers_for_thread[t] = hn;
+  }
+
+  void setup_thread(string hn, mixed ... args)
+  {
+      handlers_for_thread[Thread.this_thread()] = hn;
+  }
+
+  class splice(function ... funcs)
+  {
+    static void `()(mixed ... args)
+    {
+      foreach(funcs;; function f)
+      {
+        mixed a;
+        f(@args);
+        [a, args] = Array.shift(args);
+      }
+    }
+  }
+
+  object get_handler_for_thread(object thread)
+  {
+    string hn;
+    hn = handlers_for_thread[thread];
+
+    if(hn) return handlers[hn];
+    else return 0;
+  }
+
+  void fins_add_handler(string key, object handler)
+  {
+    handlers[key] = handler;
+  }
+}
+
