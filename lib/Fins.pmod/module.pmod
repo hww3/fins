@@ -127,12 +127,14 @@ class my_master
 
   function orig_compile = predef::compile;
   function orig_compile_string = predef::compile_string;
+  function orig_compile_file = predef::compile_file;
 
   //!
   void create()
   {
     add_constant("compile", fins_aware_compile);
     add_constant("compile_string", fins_aware_compile_string);
+    add_constant("compile_file", fins_aware_compile_file);
     add_constant("create_thread", fins_aware_create_thread);
 //    add_constant("fins_add_handler", fins_aware_add_handler);  
     set_weak_flag(handlers_for_thread, Pike.WEAK_INDICES);
@@ -143,12 +145,13 @@ class my_master
       catch(o[varname] = mm[varname]);
       /* Ignore errors when copying functions */
     }
+    werror("programs: %O\n", programs);
+    programs = ([]);
     programs["/master"] = object_program(o);
 //    program_names[object_program(o)] = "/master";
  //   objects[object_program(o)] = o;
     /* make ourselves known */
     add_constant("_master",o);
-
     /* Move the old efuns to the new object. */
     if (o->master_efuns) {
       foreach(o->master_efuns, string e) {
@@ -184,14 +187,21 @@ class my_master
   //    if(handler) werror(" program path: %s", handler->pike_program_path *", ");
       return ::low_cast_to_program(pname, current_file, handler, mkobj);
   }
+  
+  program fins_aware_compile_file(string filename, object|void handler, void|program p, void|object o)
+  {
+    werror("___ COMPILE_FILE(%O)\n", filename);
+    if(!handler) handler = get_handler_for_thread(Thread.this_thread());  
+    return orig_compile_file(filename, handler, p, o);    
+  }
 
 program fins_aware_compile_string(string source, void|string filename, object|void handler, void|program p, void|object o, void|int _show_if_constant_errors)
 {
   werror("___ COMPILE_STRING(%O)\n", source);
   if(!handler) handler = get_handler_for_thread(Thread.this_thread());  
-  return orig_compile_string(source, filename, handler, p, o, _show_if_constant_errors);
-  
+  return orig_compile_string(source, filename, handler, p, o, _show_if_constant_errors);  
 }
+
   program fins_aware_compile(string source, object|void handler, mixed ... args)
   {
     werror("___ COMPILE(%O)\n", source);
