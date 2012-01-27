@@ -183,8 +183,8 @@ class my_master
       if(!handler)
         handler = get_handler_for_thread(Thread.this_thread());
         
-   //   werror("low_cast_to_program(%s, %s)\n", (string)pname, (string)current_file);
-  //    if(handler) werror(" program path: %s", handler->pike_program_path *", ");
+      werror("> low_cast_to_program(%s, %s, %O)\n", (string)pname, (string)current_file, handler);
+      if(handler) werror(" program path: %s", handler->pike_program_path *", ");
       return ::low_cast_to_program(pname, current_file, handler, mkobj);
   }
   
@@ -239,8 +239,9 @@ program fins_aware_compile_string(string source, void|string filename, object|vo
   object get_handler_for_thread(object thread)
   {
     string hn;
+write("handlers: %O %O\n", handlers_for_thread, Thread.this_thread());
     hn = handlers_for_thread[thread];
-
+write("handler sought: %O from %O\n", hn, handlers[hn]);
     if(hn) return handlers[hn];
     else return 0;
   }

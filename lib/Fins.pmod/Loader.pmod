@@ -36,7 +36,8 @@ object low_load_app(string handler_name, string app_dir, string config_name)
 {
   string cn;
   object a;
-  
+ 
+  write("handler_name: %s\n", handler_name); 
   master()->handlers_for_thread[Thread.this_thread()] = handler_name;
   
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");

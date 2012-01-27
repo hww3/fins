@@ -28,7 +28,7 @@ Session.SessionManager session_manager;
 
 object /*Fins.Application*/ app;
 Protocols.HTTP.Server.Port port;
-program server = Protocols.HTTP.Server.Port;
+program server = fins_app_port;
 
 #if constant(_Protocols_DNS_SD)
 
@@ -176,6 +176,7 @@ int do_startup()
     if(al->log) access_logger = al->log;
     else access_logger = genlogger(al);
     port = server(handle_request, (int)my_port);  
+    port->set_app(app);
     port->request_program = Fins.HTTPRequest;
 
 #if constant(_Protocols_DNS_SD)
@@ -269,6 +270,16 @@ void session_startup()
 
 void handle_request(Protocols.HTTP.Server.Request request)
 {
+  Thread.Queue queue;
+
+  write("id: %O\n", request->my_fd->query_id());
+  queue = request->app->queue;
+  thread_handle_request(request);
+  queue->write(request);  
+}
+
+void thread_handle_request(Protocols.HTTP.Server.Request request)
+{
   mixed r;
 //access_logger(request);
   // Do we have either the session cookie or the PSESSIONID var?
@@ -284,7 +295,7 @@ void handle_request(Protocols.HTTP.Server.Request request)
   }
 
   mixed e = catch {
-    r = app->handle_request(request);
+    r = request->app->handle_request(request);
   };
 
   if(e)
@@ -301,7 +312,6 @@ void handle_request(Protocols.HTTP.Server.Request request)
     request->response_and_finish(response);
     return;
   }
-
 
   e = catch {
     if(mappingp(r))
@@ -398,4 +408,27 @@ void destroy()
 {
   if(logger) logger->info("Shutting down Fins application.");
   if(port) destruct(port);
+}
+
+
+class fins_app_port
+{
+  inherit Protocols.HTTP.Server.Port;
+
+  protected object app;
+
+  public void set_app(object application)
+  {
+    app = application;
+  }
+
+  protected void new_connection()
+  {
+    while( Stdio.File fd=port->accept() )
+    {
+        .Request r=request_program();
+        r->fins_app = app;
+        r->attach_fd(fd,this,callback);
+    }
+  }
 }
