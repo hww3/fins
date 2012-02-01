@@ -11,6 +11,9 @@ object __fin_serve;
 //! is derived from the value of the context_root parameter in the application section of the application config file, and defaults to /.
 string context_root = "";
 
+//! the request processing queue
+Thread.Queue queue = Thread.Queue();
+
 //! The root Controller object
 .FinsController controller;
 

@@ -52,3 +52,12 @@ string get_client_addr()
   if(!f) return (remoteaddr/" ")[0];
   else return String.trim_whites((f/",")[0]);
 }
+
+void attach_fd(Stdio.File _fd, Port server,
+	       function(this_program:void) _request_callback,
+	       void|string already_data)
+{
+  fins_app = server->get_app();
+  
+  ::attach_fd(_fd, server, _request_callback, already_data);
+}

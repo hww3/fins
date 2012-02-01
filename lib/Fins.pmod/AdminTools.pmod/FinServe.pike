@@ -187,7 +187,7 @@ int do_startup()
     logger->info("Advertising this application via Bonjour.");
 #endif
 #endif
-
+    start_worker_thread(app);
     call_out(session_startup, 0);
     logger->info("FinServe listening on port " + my_port);
     logger->info("Application ready for business.");
@@ -198,6 +198,27 @@ int do_startup()
 
     return -1;
   }
+}
+
+Thread.Thread start_worker_thread(object app)
+{
+  Thread.Thread t = Thread.Thread(run_worker, app);
+  return t;
+}
+
+void run_worker(object app)
+{
+  int keep_running = 1;
+  
+  do
+  {
+//    werror("loop\n");
+    object r = app->queue->read();
+    
+    if(r)
+      thread_handle_request(r);
+//    werror("handled request.\n");
+  } while(keep_running);
 }
 
 function genlogger(object al)
@@ -272,9 +293,10 @@ void handle_request(Protocols.HTTP.Server.Request request)
 {
   Thread.Queue queue;
 
-  write("id: %O\n", request->my_fd->query_id());
-  queue = request->app->queue;
-  thread_handle_request(request);
+//  werror("APP: %O\n", request->fins_app);
+  queue = request->fins_app->queue;
+  //thread_handle_request(request);
+//  werror("QUEUE: %O->%O\n", request->fins_app, queue);
   queue->write(request);  
 }
 
@@ -282,6 +304,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
   mixed r;
 //access_logger(request);
+//werror("thread_handle_request 1\n");
   // Do we have either the session cookie or the PSESSIONID var?
   if(request->cookies && request->cookies[session_cookie_name]
          || request->variables[session_cookie_name] )
@@ -295,12 +318,11 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   }
 
   mixed e = catch {
-    r = request->app->handle_request(request);
+    r = request->fins_app->handle_request(request);
   };
 
   if(e)
   {
-//describe_backtrace(e);
     Log.exception("Error occurred while handling request!", e);
     mapping response = ([]);
     response->error=500;
@@ -309,6 +331,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
                      "<pre>" + describe_backtrace(e) + "</pre>";
     response->request = request;
     access_logger(response);
+//werror("respnse_and_finish 1\n");
     request->response_and_finish(response);
     return;
   }
@@ -318,7 +341,10 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     {
       access_logger(r);
       if(!r->_is_pipe_response)
+      {
+//        werror("respnse_and_finish 2\n");
         request->response_and_finish(r);
+      }
     }
     else if(stringp(r))
     {
@@ -329,6 +355,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       response->data = r;
       response->request = request;
       access_logger(response);
+//      werror("respnse_and_finish 3\n");
       request->response_and_finish(response);
     }
     else
@@ -343,6 +370,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
                        "Fins was unable to find a handler for " + request->not_query + ".";
       response->request = request;
       access_logger(response);
+//      werror("respnse_and_finish 4\n");
       request->response_and_finish(response);
     }
   };
@@ -365,6 +393,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
                      "<pre>" + describe_backtrace(e) + "</pre>";
     response->request = request;
     access_logger(response);
+//    werror("respnse_and_finish 5\n");
     request->response_and_finish(response);
     return;
   }
@@ -419,16 +448,13 @@ class fins_app_port
 
   public void set_app(object application)
   {
+//    werror("*** setting app: %O\n", application);
     app = application;
   }
 
-  protected void new_connection()
+  public object get_app()
   {
-    while( Stdio.File fd=port->accept() )
-    {
-        .Request r=request_program();
-        r->fins_app = app;
-        r->attach_fd(fd,this,callback);
-    }
+    return app;
   }
+  
 }
