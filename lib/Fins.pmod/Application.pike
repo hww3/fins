@@ -38,6 +38,9 @@ Fins.Helpers.Filters.Compress _gzfilter;
 //!
 Fins.Helpers.Filters.TemplateParser _templatefilter;
 
+//!
+object access_logger;
+
 static mapping processors = ([]);
 static mapping controller_path_cache = ([]);
 static mapping action_path_cache = ([]);
@@ -68,6 +71,18 @@ Standards.URI my_url;
 //! this setting is derived from the value of the static_expire_period parameter in the application section of the application 
 //! config file and defaults to 240 (10 days).
 static int exp = 24 * 10;
+
+//! 
+string get_config_name()
+{
+  return config->config_name;
+}
+
+//!
+string get_app_name()
+{
+  return config->app_name;
+}
 
 //! constructor for the Fins application. It is normally not necessary to override this method,
 //! as @[start]() will be called immediately from this method.

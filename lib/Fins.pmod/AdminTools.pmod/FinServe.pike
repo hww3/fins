@@ -4,14 +4,14 @@
 import Tools.Logging;
 //inherit Fins.Bootstrap;
 
-function access_logger;
+#define DEFAULT_CONFIG_NAME "dev"
+
 object logger;
 
 function(object:void) ready_callback;
 
 constant default_port = 8080;
 constant my_version = "0.1";
-int my_port;
 
 // we really want the default to be RAM.
 string session_storagetype = "ram";
@@ -43,14 +43,12 @@ Protocols.DNS_SD.Service bonjour;
 #endif
 #endif
 int hilfe_mode = 0;
-string project = "default";
-string config_name = "dev";
 int go_background = 0;
 private int has_started = 0;
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [-s ram|file|sqlite|--session-manager=ram|file|sqlite [-l "
-		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d]  appname\n");
+		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d]  appname [appname [appname]]\n");
 }
 
 array tool_args;
@@ -74,7 +72,8 @@ int run()
 
 int main(int argc, array(string) argv)
 {
-  my_port = default_port;
+  int my_port = default_port;
+  array(string) config_name = ({});
 
   foreach(Getopt.find_all_options(argv,aggregate(
     ({"port",Getopt.HAS_ARG,({"-p", "--port"}) }),
@@ -91,11 +90,11 @@ int main(int argc, array(string) argv)
       switch(opt[0])
       {
 		case "port":
-		my_port = opt[1];
+		my_port = (int)opt[1];
 		break;
 		
 		case "config":
-		config_name = opt[1];
+		config_name += ({opt[1]});
 		break;
 
 		case "sessionloc":
@@ -128,16 +127,17 @@ int main(int argc, array(string) argv)
 	
 	argv-=({0});
 	argc = sizeof(argv);
+        if(!sizeof(config_name)) config_name = ({"dev"});
 
+  array projects = ({"default"});
+  if(argc>=2) projects = argv[1..];
 
-  if(argc>=2) project = argv[1];
-
-  int x = do_startup();
+  int x = do_startup(projects, config_name, my_port);
 
   return x;
 }
 
-int do_startup()
+int do_startup(array(string) projects, array(string) config_name, int my_port)
 {
 
 #if constant(fork)
@@ -148,18 +148,33 @@ int do_startup()
 	}
 
 #endif /* fork() */
+
+  config_name += allocate(sizeof(projects) - sizeof(config_name));
+
+  foreach(projects;int i;string project)
+  {
+    int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, (int)my_port++);
+    if(res == 0) return 0;
+  }
+
+  return -1;
+
+}
+
+int start_app(string project, string config_name, int my_port)
+{
   object app;
   object port;
 
   Log.info("FinServe starting on port " + my_port);
-
   Log.info("FinServe loading application " + project + " using configuration " + config_name);
-  app = load_application();
   logger=Tools.Logging.get_default_logger();
+
+  app = load_application(project, config_name);
 
   app->__fin_serve = this;
 
-  logger->info("Application " + project + " loaded.");
+  logger->info("Application %s/%s loaded.", project, config_name);
 
   if(hilfe_mode)
   {
@@ -178,9 +193,6 @@ int do_startup()
   }
   else
   {
-    object al = Tools.Logging.get_logger("access");
-    if(al->log) access_logger = al->log;
-    else access_logger = genlogger(al);
     port = server(handle_request, (int)my_port);  
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;
@@ -201,7 +213,7 @@ int do_startup()
     call_out(session_startup, 0, port->get_app());
 
     logger->info("FinServe listening on port " + my_port);
-    logger->info("Application ready for business.");
+    logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), (int)my_port);
 
     // TODO: do we need to call this for each application?
     if(ready_callback)
@@ -234,17 +246,12 @@ void run_worker(object app)
   } while(keep_running);
 }
 
-function genlogger(object al)
-{
-  return lambda(mapping m){al->do_msg(10,"%O", m);};
-}
-
 void session_startup(object app)
 {
   Session.SessionStorage s;
   Session.SessionManager session_manager;
 
-  Log.info("Starting Session Manager.");
+  Log.info("Starting Session Manager for %s/%s.", app->get_app_name(), app->get_config_name());
 
   session_manager = Session.SessionManager();
 
@@ -318,10 +325,10 @@ void handle_request(Protocols.HTTP.Server.Request request)
 
 void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
-  object session_manager = managers[request->fins_app];
   mixed r;
-//access_logger(request);
-//werror("thread_handle_request 1\n");
+  object session_manager = managers[request->fins_app];
+  object app = request->fins_app;
+
   // Do we have either the session cookie or the PSESSIONID var?
   if(request->cookies && request->cookies[session_cookie_name]
          || request->variables[session_cookie_name] )
@@ -336,7 +343,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   }
 
   mixed e = catch {
-    r = request->fins_app->handle_request(request);
+    r = app->handle_request(request);
   };
 
   if(e)
@@ -348,16 +355,16 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     response->data = "<h1>An error occurred while processing your request:</h1>\n"
                      "<pre>" + describe_backtrace(e) + "</pre>";
     response->request = request;
-    access_logger(response);
-//werror("respnse_and_finish 1\n");
+    app->access_logger(response);
+
     request->response_and_finish(response);
-    return;
+    return 0;
   }
 
   e = catch {
     if(mappingp(r))
     {
-      access_logger(r);
+      app->access_logger(r);
       if(!r->_is_pipe_response)
       {
 //        werror("respnse_and_finish 2\n");
@@ -372,7 +379,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       response->error = 200;
       response->data = r;
       response->request = request;
-      access_logger(response);
+      app->access_logger(response);
 //      werror("respnse_and_finish 3\n");
       request->response_and_finish(response);
     }
@@ -387,7 +394,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       response->data = "<h1>Page not found</h1>"
                        "Fins was unable to find a handler for " + request->not_query + ".";
       response->request = request;
-      access_logger(response);
+      app->access_logger(response);
 //      werror("respnse_and_finish 4\n");
       request->response_and_finish(response);
     }
@@ -410,19 +417,20 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     response->data = "<h1>Internal Server Error</h1>\n"
                      "<pre>" + describe_backtrace(e) + "</pre>";
     response->request = request;
-    access_logger(response);
+    app->access_logger(response);
 //    werror("respnse_and_finish 5\n");
     request->response_and_finish(response);
-    return;
+    return 0;
   }
 
-  return;
+  return 0;
 }
 
-object load_application()
+object load_application(string project, string config_name)
 {
   object application;
   mixed err = catch(
+
   application = master()->resolv("Fins.Loader")->load_app(combine_path(getcwd(), project), config_name));
   if(err || !application)
   {
@@ -456,7 +464,7 @@ void new_session(object request, object response, mixed ... args)
 
 void destroy()
 {
-  if(logger) logger->info("Shutting down Fins application.");
+  if(logger) logger->info("Shutting down Fins applications.");
   if(sizeof(ports)) 
   {
     object port;

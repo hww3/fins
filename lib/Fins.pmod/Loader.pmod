@@ -3,9 +3,15 @@ import Tools.Logging;
 //! @param app_dir
 //!   the full path to the application directory.
 
+
 static void create()
 {  
   werror("loader loaded.\n"); 
+}
+
+protected function genlogger(object al)
+{
+  return lambda(mapping m){al->do_msg(10,"%O", m);};
 }
 
 object load_app(string app_dir, string config_name)
@@ -17,15 +23,18 @@ object load_app(string app_dir, string config_name)
     throw(Error.Generic("Application directory " + app_dir + " does not exist.\n"));
   
   key = app_dir + ":" + config_name;
-  
-  handler = master()->CompatResolver(key);  
-  handler->fallback_resolver = master();
+  handler = master()->MultiTenantResolver(key);  
+//  handler->fallback_resolver = master();
   master()->fins_add_handler(key, handler);
 
-  handler->add_program_path(combine_path(app_dir, "classes")); 
+  werror("adding %O\n", combine_path(app_dir, "modules"));
+//  if(config_name=="dev")
   handler->add_module_path(combine_path(app_dir, "modules")); 
+
+  handler->add_program_path(combine_path(app_dir, "classes")); 
   foreach(master()->pike_module_path;; string m)
     handler->add_module_path(m); 
+
 
   object thread = Thread.Thread(low_load_app, key, app_dir, config_name);  
 
@@ -61,8 +70,22 @@ mixed err = catch
   a = p(config);
 };
 
-if(err)
-  Log.exception("error occurred while loading the application.", Error.mkerror(err));
+  if(err)
+  {
+    Log.exception("error occurred while loading the application.", Error.mkerror(err));
+    return a;
+  }
+
+  object access_logger;
+
+  object al = Tools.Logging.get_logger("access");
+  if(al->log)
+    access_logger = al->log;
+  else
+    access_logger = genlogger(al);
+
+  a->access_logger = access_logger;
+
   return a;
 }
 

@@ -250,5 +250,32 @@ write("handler sought: %O from %O\n", hn, handlers[hn]);
   {
     handlers[key] = handler;
   }
+
+
+  class MultiTenantResolver
+  {
+    inherit CompatResolver;
+    string my_key;
+
+    protected void create(mixed key, CompatResolver|void fallback_resolver)
+    {
+       my_key = key;
+       ::create(0, fallback_resolver);
+    }
+
+      mixed resolv(string identifier, string|void current_file,
+               object|void current_handler)
+  {
+    werror("%s.", (string)my_key);
+    return ::resolv(identifier, current_file, current_handler);
+
+  }
+
+    string _sprintf(int t)
+    {
+      return t=='O' && sprintf("MultiTenantResolver(%O)",my_key);
+    }
+
+  }
 }
 
