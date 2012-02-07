@@ -24,11 +24,15 @@ string logfile_path = "/tmp/scriptrunner.log";
 string session_cookie_name = "PSESSIONID";
 int session_timeout = 7200;
 
-Session.SessionManager session_manager;
+//Session.SessionManager session_manager;
+//object /*Fins.Application*/ app;
+//Protocols.HTTP.Server.Port port;
 
-object /*Fins.Application*/ app;
-Protocols.HTTP.Server.Port port;
 program server = fins_app_port;
+
+mapping(object:Session.SessionManager) managers = ([]);
+mapping(object:Thread.Thread) workers = ([]);
+multiset(Protocols.HTTP.Server.Port) ports = (<>);
 
 #if constant(_Protocols_DNS_SD)
 
@@ -53,7 +57,7 @@ array tool_args;
 
 int(0..1) started()
 {
-  if(port && has_started) return 1;
+  if(sizeof(ports) && has_started) return 1;
   else return 0;
 }
 
@@ -144,11 +148,13 @@ int do_startup()
 	}
 
 #endif /* fork() */
+  object app;
+  object port;
 
   Log.info("FinServe starting on port " + my_port);
 
   Log.info("FinServe loading application " + project + " using configuration " + config_name);
-  load_application();
+  app = load_application();
   logger=Tools.Logging.get_default_logger();
 
   app->__fin_serve = this;
@@ -187,10 +193,17 @@ int do_startup()
     logger->info("Advertising this application via Bonjour.");
 #endif
 #endif
-    start_worker_thread(app);
-    call_out(session_startup, 0);
+
+    workers[app] = start_worker_thread(app);
+    ports += (<port>);
+
+    // TODO: do we need to call this for each application?
+    call_out(session_startup, 0, port->get_app());
+
     logger->info("FinServe listening on port " + my_port);
     logger->info("Application ready for business.");
+
+    // TODO: do we need to call this for each application?
     if(ready_callback)
 	call_out(ready_callback, 0, this);
 
@@ -226,9 +239,10 @@ function genlogger(object al)
   return lambda(mapping m){al->do_msg(10,"%O", m);};
 }
 
-void session_startup()
+void session_startup(object app)
 {
   Session.SessionStorage s;
+  Session.SessionManager session_manager;
 
   Log.info("Starting Session Manager.");
 
@@ -287,6 +301,8 @@ void session_startup()
   add_constant("Session", Session.Session);
   add_constant("session_manager", session_manager);
 
+  managers[app] = session_manager;
+
 }
 
 void handle_request(Protocols.HTTP.Server.Request request)
@@ -302,6 +318,7 @@ void handle_request(Protocols.HTTP.Server.Request request)
 
 void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
+  object session_manager = managers[request->fins_app];
   mixed r;
 //access_logger(request);
 //werror("thread_handle_request 1\n");
@@ -309,6 +326,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   if(request->cookies && request->cookies[session_cookie_name]
          || request->variables[session_cookie_name] )
   {
+
     string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
     Session.Session sess = session_manager->get_session(ssid);
     request->get_session_by_id = session_manager->get_session;
@@ -401,7 +419,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   return;
 }
 
-void load_application()
+object load_application()
 {
   object application;
   mixed err = catch(
@@ -413,30 +431,41 @@ void load_application()
     exit(1);
   }
 
-  app = application;
+  return application;
 
 }
-  void new_session(object request, object response, mixed ... args)
-  {
-    string ssid=session_manager->new_sessionid();
-    response->set_cookie(session_cookie_name,
+  
+void new_session(object request, object response, mixed ... args)
+{
+  object session_manager = managers[request->fins_app];
+
+  string ssid=session_manager->new_sessionid();
+  response->set_cookie(session_cookie_name,
                            ssid, time() + session_timeout);
 
-    string req=request->not_query;
-    req += "?PSESSIONID="+ssid;
-    if( sizeof(request->query) )
-    {
-      req += "&"+request->query;
-    }
-    response->redirect(req);
-
-    logger->debug( "Created new session sid='%s' host='%s'",ssid,request->get_client_addr());
+  string req=request->not_query;
+  req += "?PSESSIONID="+ssid;
+  if( sizeof(request->query) )
+  {
+    req += "&"+request->query;
   }
+  response->redirect(req);
+
+  logger->debug( "Created new session sid='%s' host='%s'",ssid,request->get_client_addr());
+}
 
 void destroy()
 {
   if(logger) logger->info("Shutting down Fins application.");
-  if(port) destruct(port);
+  if(sizeof(ports)) 
+  {
+    object port;
+    foreach(ports;object port;)
+    {
+      destruct(port->get_app());
+      destruct(port);
+    }
+  }
 }
 
 
