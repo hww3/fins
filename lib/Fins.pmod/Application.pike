@@ -7,6 +7,8 @@ Log.Logger log = get_logger("fins.application");
 
 object __fin_serve;
 
+function compile_string;
+
 //! provide any context root (location in the virtual filesystem) for this application.  this setting
 //! is derived from the value of the context_root parameter in the application section of the application config file, and defaults to /.
 string context_root = "";
@@ -91,6 +93,7 @@ static void create(.Configuration _config)
 	
 	// the first phase is to set up the various paths, get some configuration values
 	// and set up the l10n system for our app.
+  compile_string = master()->fins_aware_compile_string;
   config = _config;
   static_dir = Stdio.append_path(config->app_dir, "static");
 //werror(Stdio.append_path(config->app_dir, "translations/%L/%P.xml") + "\n");
