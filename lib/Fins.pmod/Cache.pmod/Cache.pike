@@ -5,7 +5,7 @@ import Tools.Logging;
 //!
 //!
 
-Log.Logger log = get_logger("fins.cache");
+Log.Logger log = Tools.Logging.get_logger("fins.cache");
 static mapping(string:array) values = ([]);
 
 static void create()

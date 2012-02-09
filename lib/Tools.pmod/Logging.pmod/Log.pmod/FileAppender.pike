@@ -1,4 +1,4 @@
-inherit Tools.Logging.Log.Logger;
+//inherit Tools.Logging.Log.Logger;
 inherit .Appender;
 
 object output;

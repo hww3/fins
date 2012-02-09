@@ -171,7 +171,7 @@ int start_app(string project, string config_name, int my_port)
   logger=Tools.Logging.get_default_logger();
 
   app = load_application(project, config_name);
-
+if(!app) return -1;
   app->__fin_serve = this;
 
   logger->info("Application %s/%s loaded.", project, config_name);
@@ -436,7 +436,7 @@ object load_application(string project, string config_name)
   {
     if(err) Log.exception("An error occurred while loading the application.", err);
     else Log.critical("An error occurred while loading the application.");
-    exit(1);
+//    exit(1);
   }
 
   return application;

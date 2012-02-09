@@ -108,13 +108,22 @@ string version()
   return "Fins " + __version;
 }
 
+int ts;
+
 static void create()
 {
+  ts = time();
   werror("bootstrap!\n");
-  werror("replacing master!\n");
-  object m = my_master();
- replace_master(m);
+
+  // we don't want to do this if it's already been done.
+  if(!master()->fins_master)
+  {
+    werror("replacing master!\n");
+    object m = my_master();
+    replace_master(m);
+  } 
 }
+
 
 class my_master
 {
@@ -128,10 +137,19 @@ class my_master
   function orig_compile = predef::compile;
   function orig_compile_string = predef::compile_string;
   function orig_compile_file = predef::compile_file;
-
+  
+  constant fins_master = 1;
+  
   //!
   void create()
   {
+  fc=LossyMapping(0, 0);
+  rev_fc=LossyMapping(0, 0);
+  rev_programs=LossyMapping(0, 0);
+  objects=LossyMapping(0, 0);
+  programs=LossyMapping(0, 0);
+  rev_objects=LossyMapping(0,0);
+//  programs=LossyMapping(0, 0);
     add_constant("compile", fins_aware_compile);
     add_constant("compile_string", fins_aware_compile_string);
     add_constant("compile_file", fins_aware_compile_file);
@@ -165,6 +183,14 @@ class my_master
     } else {
       ::create();
     }
+    
+  //   call_out(printreads, 5);
+    
+  }
+  
+  void printreads()
+  {
+    write("reads: " + reads);
   }
   
   array get_program_path(object|void handler)
@@ -276,6 +302,87 @@ write("handler sought: %O from %O\n", hn, handlers[hn]);
       return t=='O' && sprintf("MultiTenantResolver(%O)",my_key);
     }
 
+  }
+  
+  class LossyMapping
+  {
+    mixed timeout, cleanup_interval;
+    mapping vals = ([]);
+    
+          static void create(int _timeout, void|int _cleanup_interval)
+          {
+            timeout = _timeout;
+            cleanup_interval = _cleanup_interval || (_timeout * 2);
+            //call_out(cleanup, cleanup_interval);
+          }
+
+  //!
+          static mixed `[](mixed k)
+          {
+            mixed q;
+            werror("`[](%O)\n", k);
+            if(!has_index(vals, k)) return ([])[0];
+
+            q = vals[k];
+
+            if(q[0] < time()) // have we overstayed our welcome?
+            {
+               m_delete(vals, k);
+               return ([])[0];
+            } 
+            else
+              return q[1];
+          }
+
+  //!     
+          static mixed `->(string k)
+          {
+            werror("`->(%O)\n", k);
+                  return `[](k);
+          }
+
+  //!     
+          static mixed `->=(string k, mixed v)
+          {
+            werror("`->=(%O)\n", k);
+                  return `[]=(k, v);
+          }
+
+  //!     
+          static mixed `[]=(mixed k, mixed v)
+          {
+            werror("`[]=(%O)\n", k);
+            vals[k] = ({time() + timeout, v});
+            return v;
+          }
+
+  //!     
+          static mixed _m_delete(mixed k)
+          {
+            mixed v = m_delete(vals, k);
+            if(v) return v[1];
+            else return ([])[0];
+          }
+
+  //!
+          static int _sizeof()
+          {
+                  return sizeof(vals);
+          }
+
+          void cleanup()
+          {
+            int ct = time();
+
+            foreach(vals; mixed k; mixed v)
+            {
+                  if(v[0] < ct)
+                  {
+                    m_delete(vals, k);
+                  }
+            }
+            call_out(cleanup, cleanup_interval);
+          }
   }
 }
 

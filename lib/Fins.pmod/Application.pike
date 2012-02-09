@@ -983,12 +983,12 @@ public void breakpoint(string desc, mapping state)
     log->debug("breakpoints disabled, skipping breakpoint set from %O",
                  backtrace()[-2][2]);
   }
-  return;
+  return 0;
 }
 
 private void do_breakpoint(string desc, mapping state, array bt)
 {
-  if(!breakpoint_client) return;
+  if(!breakpoint_client) return 0;
    object key = bp_lock->lock();
   breakpoint_cond = Thread.Condition();
   bpbe->call_out(lambda(){breakpoint_hilfe = Helpers.Hilfe.BreakpointHilfe(breakpoint_client, this, state, desc, bt);}, 0);
@@ -1030,7 +1030,7 @@ private void breakpoint_read(int id, string data)
 // everything is handled dynamically, for each request.
 private class FilterRunner
 {
-  inherit .Helpers.Runner;
+  inherit Fins.Helpers.Runner;
 
 	int has_around = 0;
 	int has_before = 0;
@@ -1116,12 +1116,12 @@ private class FilterRunner
       		if(objectp(filter))
       		{ 
         		if(!filter->filter(request, response, @args))
-          		return;
+          		return 0;
       		}
       		else if(functionp(filter))
       		{
         		if(!filter(request, response, @args))
-          		return;
+          		return 0;
       		}
     	}
 	}
@@ -1142,12 +1142,12 @@ private class FilterRunner
       		if(objectp(filter))
       		{ 
         		if(!filter->filter(request, response, @args))
-          		return;
+          		return 0;
       		}
       		else if(functionp(filter))
       		{
         		if(!filter(request, response, @args))
-          		return;
+          		return 0;
       		}
     	}
 	}

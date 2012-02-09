@@ -22,18 +22,19 @@ object load_app(string app_dir, string config_name)
   if(!file_stat(app_dir)) 
     throw(Error.Generic("Application directory " + app_dir + " does not exist.\n"));
   
-  key = app_dir + ":" + config_name;
+  key = app_dir + "#" + config_name;
   handler = master()->MultiTenantResolver(key);  
 //  handler->fallback_resolver = master();
   master()->fins_add_handler(key, handler);
 
-  werror("adding %O\n", combine_path(app_dir, "modules"));
+  werror("adding %O\n", key + ":/:" + combine_path(app_dir, "modules"));
 //  if(config_name=="dev")
-  handler->add_module_path(combine_path(app_dir, "modules")); 
+  handler->add_module_path(key + ":/:" + combine_path(app_dir, "modules")); 
 
-  handler->add_program_path(combine_path(app_dir, "classes")); 
+  handler->add_program_path(key + ":/:" + combine_path(app_dir, "classes")); 
+ // if(config_name=="dev2")
   foreach(master()->pike_module_path;; string m)
-    handler->add_module_path(m); 
+    handler->add_module_path(key + ":/:" + m); 
 
 
   object thread = Thread.Thread(low_load_app, key, app_dir, config_name);  
