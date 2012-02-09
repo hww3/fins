@@ -11,7 +11,7 @@ int main(int argc, array argv) {
 #endif
   if (sizeof(argv) < 2)
     return usage(argv);
-  else run(argv[1]);
+  else return run(argv[1]);
 }
 
 int run(string package)
