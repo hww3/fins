@@ -17,13 +17,23 @@ static void create(.Field f, object parent, void|.DataModelContext c)
 
 static mixed cast(string rt)
 {
-  if(rt != "array")
-    throw(Error.Generic("Cannot cast ObjectArray to " + rt + ".\n"));
+  switch(rt)
+  {
+    case "array":
+      if(changed)
+        get_contents();
+        return contents;
+      break;
+    case "string":
+      if(changed)
+        get_contents();
+        return contents->get_descriptor()*", ";
+      break;
+    default:
+      throw(Error.Generic("Cannot cast ObjectArray to " + rt + ".\n"));
+      break;
+  }
 
-  if(changed)
-    get_contents();
-
-  return contents;
 }
 
 Iterator _get_iterator()

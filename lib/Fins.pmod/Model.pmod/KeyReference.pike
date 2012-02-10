@@ -82,20 +82,21 @@ mixed validate(mixed value, void|.DataObjectInstance i)
 string get_editor_string(mixed|void value, void|.DataObjectInstance i)
 {
   string desc = "";
-  object sc = context->app->model->repository->get_scaffold_controller(context->app->model->repository->get_object(otherobject));
-//werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
-  if(!value) desc = "not set";
-  else 
-  {
-    if(objectp(value) && value->describe)
-      desc = value->describe();
-    else desc = sprintf("%O", value);
+  object obj;
+werror("obther object: %O\n", otherobject);
+ obj =  context->repository->get_object(otherobject);
+  object sc = context->repository->get_scaffold_controller("html", obj);
+werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
 
-    if(sc && sc->display)
-     desc = sprintf("<input type=\"hidden\" name=\"_%s__id\" value=\"%d\"><a href=\"%s\">%s</a>", 
-      name, value?value->get_id():0, context->app->url_for_action(sc->display, ({}), (["id": value?value->get_id():0 ])),  
-      desc);
-  }
+  if(!value) desc = "not set";
+  else if(objectp(value) && value->describe)
+    desc = value->describe();
+  else desc = sprintf("%O", value);
+
+  if(sc && sc->display)
+   desc = sprintf("<input type=\"hidden\" name=\"_%s__id\" value=\"%d\"><a href=\"%s\">%s</a>", 
+    name, value?value->get_id():0, context->app->url_for_action(sc->display, ({}), (["id": value?value->get_id():0 ])),  
+    desc);
 
 //werror("other object is %O\n", otherobject);
   if(sc && sc->pick_one)
@@ -110,7 +111,7 @@ string get_editor_string(mixed|void value, void|.DataObjectInstance i)
   
 optional mixed from_form(mapping value, void|.DataObjectInstance i)
 { 
-  return context->app->model->repository->find_by_id(otherobject, (int)value->id);
+  return context->find_by_id(otherobject, (int)value->id);
 }
   
   
