@@ -234,7 +234,7 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
   m_delete(id->variables, "for_id");
   m_delete(id->variables, "for");
 
-  response->redirect(action_url(action, ({}), id->variables));
+  response->redirect_temp(action_url(action, ({}), id->variables));
 }
 
 public void pick_one(Request id, Response response, Fins.Template.View v, mixed ... args)
@@ -282,7 +282,7 @@ public void delete(Request id, Response response, Fins.Template.View v, mixed ..
     response->set_data("error: invalid data.");
     return;	
   }
-  response->redirect(action_url(dodelete, 0, (["id": id->variables->id])));
+  response->redirect_temp(action_url(dodelete, 0, (["id": id->variables->id])));
 }
 
 public void dodelete(Request id, Response response, Fins.Template.View v, mixed ... args)
@@ -304,7 +304,7 @@ public void dodelete(Request id, Response response, Fins.Template.View v, mixed 
   item->delete();
 
   response->flash("msg", make_nice(model_object->instance_name) + " deleted successfully.");
-  response->redirect(action_url(list));
+  response->redirect_temp(action_url(list));
 
 }
 
@@ -416,7 +416,7 @@ e=catch{
   if(request->variables->___cancel)
   {
 	response->flash("msg", "editing canceled");
-    response->redirect(action_url(list));
+    response->redirect_temp(action_url(list));
     return;	
   }
 
@@ -428,7 +428,7 @@ e=catch{
     return;
   }
 
-  response->redirect(action_url(display, 0, (["id": request->variables->id])));
+  response->redirect_temp(action_url(display, 0, (["id": request->variables->id])));
     
   mapping v = ([]);
 
@@ -532,7 +532,7 @@ e=catch{
   if(request->variables->___cancel)
   {
 	response->flash("msg", "create canceled.");
-    response->redirect(action_url(list));
+    response->redirect_temp(action_url(list));
     return;	
   }
 
@@ -590,12 +590,12 @@ werror("setting: %O\n", v);
   if(e)
   {  
     response->flash("msg", "Record creation failed: " + (Error.mkerror(e)->message()));
-    response->redirect(action_url(new, 0, v));
+    response->redirect_temp(action_url(new, 0, v));
   }
 
   else
   {
-    response->redirect(action_url(list));
+    response->redirect_temp(action_url(list));
     response->flash("msg", "create successful.");
   }
 };
