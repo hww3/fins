@@ -217,6 +217,8 @@ static mixed prompt(string description, int type, void|mixed defval, void|array 
 static class Standalone {
   inherit Fins.AdminTools.FinServe;
 
+  static void create() {}
+
   int main(string appdir, int port, string config) {
 
     project = appdir;
