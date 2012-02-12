@@ -56,7 +56,7 @@ string display_template_string =
   <%action_link action=\"update\" id=\"$item._id\"%>Edit</a><p>
   <table>
   <%foreach var=\"$field_order\" ind=\"key\" val=\"value\"%>
-  <tr><td><b><%humanize var=\"$value.name\"%></b></td><td><%field_describe field=\"$value\" item=\"$item\"%></td></tr>
+  <tr><td><b><%humanize var=\"$value\"%></b></td><td><%field_describe field=\"$value\" item=\"$item\"%></td></tr>
   <%end %>
   </table>
   <p/>
@@ -82,7 +82,7 @@ string update_template_string =
   <form action=\"<% action_url action=\"doupdate\" %>\" method=\"post\">
   <table>
   <%foreach var=\"$field_order\" ind=\"key\" val=\"value\"%>
-  <tr><td><b><%humanize var=\"$value.name\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
+  <tr><td><b><%humanize var=\"$value\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
   <%end %>
   </table>
   <input name=\"___cancel\" value=\"Cancel\" type=\"submit\"> 
@@ -113,7 +113,7 @@ string new_template_string =
   <form action=\"<% action_url action=\"donew\" %>\" method=\"post\">
   <table>
   <%foreach var=\"$field_order\" ind=\"key\" val=\"value\"%>
-  <tr><td><b><%humanize var=\"$value.name\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
+  <tr><td><b><%humanize var=\"$value\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
   <%end %>
   </table>
   <input name=\"___cancel\" value=\"Cancel\" type=\"submit\"> 
@@ -132,11 +132,12 @@ object __get_view(mixed path)
   if(e || !v)
   {
     Log.debug("load of view from template failed, using default template string.\n");
-    Log.exception("Error follows", e);
+    if(!__quiet)
+      Log.exception("Error follows", e);
 
     string pc = ((path/"/")[-1]) + "_template_string";
     string x = `->(this, pc);
-werror("getting simple view for %O: %O, %O\n", pc, x, indices(this));    
+//werror("getting simple view for %O: %O, %O\n", pc, x, indices(this));    
     v = view->get_string_view(x);
   }
 
@@ -150,7 +151,8 @@ static object get_view(function f, string x)
   if(e)
   {
     Log.debug("load of view from template failed, using default template string.\n");
-    Log.exception("Error follows", e);
+    if(!__quiet)
+      Log.exception("Error follows", e);
     v = view->get_string_view(x);
   }
   return v;
@@ -359,9 +361,9 @@ public void update(Fins.Request request, Fins.Response response, Fins.Template.V
 
   foreach(model_object->field_order; int key; mixed value)
   {	
-    if(model_object->primary_key->name != value->name)
+    if(model_object->primary_key->name != value)
     {
-      fields += ({value->name});
+      fields += ({value});
     }
   }
 
@@ -619,8 +621,8 @@ public void new(Fins.Request request, Fins.Response response, Fins.Template.View
 
   foreach(model_object->field_order; int key; mixed value)
  {	
-	if(value->is_primary_key) continue;
-	fields += ({value->name});
+	if(model_object->fields[value]->is_primary_key) continue;
+	fields += ({value});
   }
 
   v->add("field_order", model_object->field_order);

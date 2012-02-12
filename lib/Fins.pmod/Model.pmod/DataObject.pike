@@ -43,6 +43,7 @@ mapping default_values = ([]);
 
 int is_base=1;
 
+private int _field_order_specified = 0;
 //!
 .Field primary_key;
 
@@ -83,13 +84,18 @@ string instance_name = "";
 string table_name = "";
 
 //! used by @[Fins.ScaffoldController] to determine the order fields are displayed in generated forms.
-array(.Field) field_order = ({});
+array(string) field_order = ({});
 
 //! repo is retained, context is not. Data mapping objects that inherit this type are
 //! automatically created by the model configuration mechanism provided by @[Fins.FinsModel].
 void create(.DataModelContext context, .Repository repo)
 {
   repository = repo;
+
+  if(field_order && sizeof(field_order))
+  {
+    _field_order_specified = 1;
+  }
 
    if(define && functionp(define))
    {
@@ -526,18 +532,19 @@ void add_field(.DataModelContext context, .Field f, int|void force)
 {
    if(fields[f->name] && !force) 
    {
-	 log->info("Ignoring attempt to add already defined field " + f->name +"=%O as %O.", fields[f->name], f);
+	   log->info("Ignoring attempt to add already defined field " + f->name +"=%O as %O.", fields[f->name], f);
      return;	
    }
+   
    f->set_context(context);
    fields[f->name] = f;
-   field_order += ({f});
+   if(!_field_order_specified)
+     field_order += ({f->name});
 
    if(Program.inherits(object_program(f), .Relationship))
    {
      relationships[f->name] = f;
    }
-
 }
 
 /*
