@@ -23,7 +23,7 @@ object model_context;
 
 //! Contains default contents of the template used for displaying a list of items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/list.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/list.phtml.
@@ -44,7 +44,7 @@ string list_template_string =
 
 //! Contains default contents of the template used for displaying items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/display.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/display.phtml.
@@ -65,7 +65,7 @@ string display_template_string =
 
 //! Contains default contents of the template used for editing items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/update.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/update.phtml.
@@ -96,7 +96,7 @@ string update_template_string =
 
 //! Contains default contents of the template used for creating items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/new.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/new.phtml.
@@ -123,6 +123,26 @@ string new_template_string =
   <p/>
   <%action_link action=\"list\"%>Return to List</a><p>
   </body></html>";
+
+  //! Contains default contents of the template used to confirm deletion
+  //! in this scaffolding. You may override the use of this string by creating 
+  //! a template file. Store the template file in your templates directory under
+  //! controller/path/delete.phtml. For example, if your scaffold controller
+  //! is mounted at /widgets/, you would store the overriding template file in
+  //! templates/widgets/delete.phtml.
+  string delete_template_string =
+  #  "<html><head><title>Confirm: Really delete <%$type%>?</title>
+    </head>
+    <body>
+    <h1>Confirm Deletion of <%$type%></h1>
+    <div class=\"flash-message\"><% flash var=\"$msg\" %></div>
+    <form action=\"<% action_url action=\"delete\" %>\" method=\"post\">
+    <input name=\"___cancel\" value=\"Cancel\" type=\"submit\"> 
+    <input name=\"___delete\" value=\"Delete\" type=\"submit\"> 
+    <input name=\"id\" value=\"<%$item._id%>\" type=\"hidden\">
+    </form>
+    <p/>
+    </body></html>";
 
 object __get_view(mixed path)
 {  
@@ -241,8 +261,6 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
 
 public void pick_one(Request id, Response response, Fins.Template.View v, mixed ... args)
 {
-werror("data: %O\n", id->variables);
-
   object rv = String.Buffer();
 
   if(!(id->variables->for && id->variables->for_id && id->variables->selected_field))
@@ -251,8 +269,7 @@ werror("data: %O\n", id->variables);
     return;	
   }
 
-  id->variables->old_data = MIME.encode_base64(encode_value(id->variables), 1);
-  werror("%O\n", id->variables->old_data);
+  id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
   rv += "<h1>Choose " + make_nice(model_object->instance_name) + "</h1>\n";
   if(id->misc->flash && id->misc->flash->msg)
     rv += "<i>" + id->misc->flash->msg + "</i><p>\n";
@@ -284,7 +301,26 @@ public void delete(Request id, Response response, Fins.Template.View v, mixed ..
     response->set_data("error: invalid data.");
     return;	
   }
-  response->redirect_temp(action_url(dodelete, 0, (["id": id->variables->id])));
+
+  v->add("type", make_nice(model_object->instance_name));
+
+  object item = model_context->find_by_id(model_object, (int)id->variables->id);
+
+  if(!item)
+  {
+    response->set_data(make_nice(model_object->instance_name) + " not found.");
+    return;
+  }
+  
+  v->add("item", item);
+
+  if(id->variables->___delete)
+    response->redirect_temp(action_url(dodelete, 0, (["id": id->variables->id])));
+  else if(id->variables->___cancel)
+  {
+    response->flash("msg", "Delete cancelled.");
+    response->redirect_temp(action_url(list));
+  }
 }
 
 public void dodelete(Request id, Response response, Fins.Template.View v, mixed ... args)
@@ -329,8 +365,9 @@ public void decode_old_values(mapping variables, mapping orig)
 {
   if(variables->old_data)
   {
-    decode_from_form(decode_value(MIME.decode_base64(variables->old_data)), orig);
-    werror("old data: %O\n", orig);
+    string in = MIME.decode_base64(variables->old_data);
+    mixed inv = decode_value(in);
+    decode_from_form(inv, orig);
     orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
   }
 
