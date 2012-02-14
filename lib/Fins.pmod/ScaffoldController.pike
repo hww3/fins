@@ -144,6 +144,30 @@ string new_template_string =
     <p/>
     </body></html>";
 
+  string pick_one_template_string =
+  # "<html><head><title>Choose Value: <%$type%> for <%$nicefor%></title>
+    </head>
+    <body>
+    <h1>Choose <%$type%> for <%$nicefor%></h1>
+    <div class=\"flash-message\"><% flash var=\"$msg\" %></div>
+    <form action=\"<% action_url action=\"do_pick\"%>\" method=\"post\">
+    <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+    <input type=\"submit\" name=\"__select\" value=\"Select\">
+    <p/>
+    <%foreach var=\"$values\" ind=\"key\" val=\"value\"%>
+      <input type=\"radio\" name=\"selected_id\" value=\"<%$value._id%>\"> <%describe_object var=\"$value\"%><br/>
+    <%end%>
+   <input type=\"hidden\" name=\"old_data\" value=\"<%$old_data%>\">
+   <input type=\"hidden\" name=\"selected_field\" value=\"<%$selected_field%>\">
+   <input type=\"hidden\" name=\"for\" value=\"<%$for%>\">
+   <input type=\"hidden\" name=\"for_id\" value=\"<%$for_id%>\">
+   <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+   <input type=\"submit\" name=\"__select\" value=\"Select\"></form>
+   </form>
+   <p/>
+   </body></html>";
+
+
 object __get_view(mixed path)
 {  
   object v;
@@ -243,7 +267,7 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
     response->set_data("error: invalid data.");
     return;
   }
-
+  
   object sc = model_context->repository->get_scaffold_controller("html", model_context->repository->get_object(id->variables["for"]));
   function action;
 
@@ -251,6 +275,22 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
     action = sc->new;
   else
     action = sc->update;
+  
+  if(id->variables->__return)
+  {
+    response->redirect_temp(action, ({}), (["old_data": id->variables->old_data, "id": id->variables["for_id"]]));
+    return;
+  }
+  
+  werror("var: %O\n", id->variables);
+    
+  if(id->variables->__select && !(int)id->variables->selected_id)
+  {
+    response->flash("msg", "No " + make_nice(model_object->instance_name) + " selected.");
+    response->redirect_temp(action_url(pick_one, ({}), (["old_data": id->variables->old_data, "selected_field": id->variables->selected_field, 
+                "for": id->variables["for"], "for_id": id->variables["for_id"]])));
+    return;
+  }
 
   id->variables->id = id->variables->for_id;
   m_delete(id->variables, "for_id");
@@ -270,28 +310,17 @@ public void pick_one(Request id, Response response, Fins.Template.View v, mixed 
   }
 
   id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
-  rv += "<h1>Choose " + make_nice(model_object->instance_name) + "</h1>\n";
-  if(id->misc->flash && id->misc->flash->msg)
-    rv += "<i>" + id->misc->flash->msg + "</i><p>\n";
-  rv += "<form action=\"" + action_url(do_pick) + "\" method=\"post\">";
+
+  v->add("type", make_nice(model_object->instance_name));
+  v->add("nicefor", make_nice(id->variables["for"]));
 
   array x = model_context->find_all(model_component);
+  v->add("values", x);
 
-  foreach(x;; object o)
-  {
-    rv += "<input type=\"radio\" name=\"selected_id\" value=\"" 
-            + o->get_id() + "\"> " + o->describe() + "<br/>";
-  }
-
-  rv += "<input type=\"hidden\" name=\"old_data\" value=\"" + id->variables->old_data + "\">";
-  rv += "<input type=\"hidden\" name=\"selected_field\" value=\"" + id->variables->selected_field + "\">";
-  rv += "<input type=\"hidden\" name=\"for\" value=\"" + id->variables["for"] + "\">";
-  rv += "<input type=\"hidden\" name=\"for_id\" value=\"" + id->variables["for_id"] + "\">";
-  rv += "<p/><input type=\"submit\" name=\"__return\" value=\"Cancel\"> ";
-  rv += "<input type=\"submit\" value=\"Select\"></form>";
-
-  response->set_data((string)rv);
-  
+  v->add("old_data", id->variables->old_data);
+  v->add("selected_field", id->variables->selected_field);
+  v->add("for", id->variables["for"]);
+  v->add("for_id", id->variables["for_id"]);  
 }
 
 public void delete(Request id, Response response, Fins.Template.View v, mixed ... args)
@@ -368,7 +397,8 @@ public void decode_old_values(mapping variables, mapping orig)
     string in = MIME.decode_base64(variables->old_data);
     mixed inv = decode_value(in);
     decode_from_form(inv, orig);
-    orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
+    if(variables->selected_field)
+      orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
   }
 
 }
