@@ -155,7 +155,11 @@ string new_template_string =
     <input type=\"submit\" name=\"__select\" value=\"Select\">
     <p/>
     <%foreach var=\"$values\" ind=\"key\" val=\"value\"%>
+      <%if data->value->get_id() == data->previous_selection %>
+      <input type=\"radio\" name=\"selected_id\" value=\"<%$value._id%>\" checked=\"1\"> <%describe_object var=\"$value\"%><br/>
+      <%else%>
       <input type=\"radio\" name=\"selected_id\" value=\"<%$value._id%>\"> <%describe_object var=\"$value\"%><br/>
+      <%endif%>
     <%end%>
    <input type=\"hidden\" name=\"old_data\" value=\"<%$old_data%>\">
    <input type=\"hidden\" name=\"selected_field\" value=\"<%$selected_field%>\">
@@ -166,6 +170,29 @@ string new_template_string =
    </form>
    <p/>
    </body></html>";
+
+   string pick_many_template_string =
+   # "<html><head><title>Choose Values: <%$type%> for <%$nicefor%></title>
+     </head>
+     <body>
+     <h1>Choose <%$type%> for <%$nicefor%></h1>
+     <div class=\"flash-message\"><% flash var=\"$msg\" %></div>
+     <form action=\"<% action_url action=\"do_pick\"%>\" method=\"post\">
+     <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+     <input type=\"submit\" name=\"__select\" value=\"Select\">
+     <p/>
+     <%foreach var=\"$values\" ind=\"key\" val=\"value\"%>
+       <input type=\"checkbox\" name=\"selected_id\" value=\"<%$value._id%>\"> <%describe_object var=\"$value\"%><br/>
+     <%end%>
+    <input type=\"hidden\" name=\"old_data\" value=\"<%$old_data%>\">
+    <input type=\"hidden\" name=\"selected_field\" value=\"<%$selected_field%>\">
+    <input type=\"hidden\" name=\"for\" value=\"<%$for%>\">
+    <input type=\"hidden\" name=\"for_id\" value=\"<%$for_id%>\">
+    <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+    <input type=\"submit\" name=\"__select\" value=\"Select\"></form>
+    </form>
+    <p/>
+    </body></html>";
 
 
 object __get_view(mixed path)
@@ -299,10 +326,30 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
   response->redirect_temp(action_url(action, ({}), id->variables));
 }
 
+public void pick_many(Request id, Response response, Fins.Template.View v, mixed ... args)
+{
+  if(!(id->variables->for && id->variables->for_id && id->variables->selected_field))
+  {
+    response->set_data("error: invalid data.");
+    return;	
+  }
+
+  id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
+
+  v->add("type", make_nice(Tools.Language.Inflect.pluralize(model_object->instance_name)));
+  v->add("nicefor", make_nice(id->variables["for"]));
+
+  array x = model_context->find_all(model_component);
+  v->add("values", x);
+
+  v->add("old_data", id->variables->old_data);
+  v->add("selected_field", id->variables->selected_field);
+  v->add("for", id->variables["for"]);
+  v->add("for_id", id->variables["for_id"]);  
+}
+
 public void pick_one(Request id, Response response, Fins.Template.View v, mixed ... args)
 {
-  object rv = String.Buffer();
-
   if(!(id->variables->for && id->variables->for_id && id->variables->selected_field))
   {
     response->set_data("error: invalid data.");
@@ -315,8 +362,10 @@ public void pick_one(Request id, Response response, Fins.Template.View v, mixed 
   v->add("nicefor", make_nice(id->variables["for"]));
 
   array x = model_context->find_all(model_component);
+  object obj = model_context->find_by_id(id->variables["for"], (int)id->variables["for_id"]);
+  
   v->add("values", x);
-
+  v->add("previous_selection", obj[id->variables->selected_field]->get_id());
   v->add("old_data", id->variables->old_data);
   v->add("selected_field", id->variables->selected_field);
   v->add("for", id->variables["for"]);

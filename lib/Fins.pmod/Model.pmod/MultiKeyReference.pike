@@ -87,26 +87,52 @@ string get_editor_string(mixed|void value, void|.DataObjectInstance i)
 {
   string desc = "";
   object obj;
+  int linked = 0;
 werror("obther object: %O\n", otherobject);
  obj =  context->repository->get_object(otherobject);
   object sc = context->repository->get_scaffold_controller("html", obj);
 werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
 
-  if(!value) desc = "not set";
-  else if(objectp(value) && value->describe)
-    desc = value->describe();
-  else desc = sprintf("%O", value);
+  if(!value || !sizeof(value)) 
+  {
+    werror("not set\n");
+    desc = "not set";
+  }
+  else if(objectp(value))
+  {
+    werror("making link list\n");
+    if(sc && sc->display)
+    {
+      array ids = ({});
+      array links = ({});
+      foreach((array)value; int key; mixed value)
+      {
+        ids += ({value->get_id()});
+        links += ({sprintf("<a href=\"%s\">%s</a>", context->app->url_for_action(sc->display, ({}), (["id": value?value->get_id():0 ])),  desc)});
+      }
+       
+      desc = sprintf("<input type=\"hidden\" name=\"_%s__id\" value=\"%s\">%s", 
+       name, ids*",", links * ", ");
+      
+      linked = 1;
+    }
+  }
+  else desc = "AIEEE!";
 
-  if(sc && sc->display)
-   desc = sprintf("<input type=\"hidden\" name=\"_%s__id\" value=\"%d\"><a href=\"%s\">%s</a>", 
-    name, value?value->get_id():0, context->app->url_for_action(sc->display, ({}), (["id": value?value->get_id():0 ])),  
-    desc);
+/*
+  if(!linked)
+  {
+    if(sc && sc->display)
+     desc = sprintf("<input type=\"hidden\" name=\"_%s__id\" value=\"%d\"><a href=\"%s\">%s</a>", 
+      name, (objectp(value)&&value->get_id)?value->get_id():0, context->app->url_for_action(sc->display, ({}), (["id": (objectp(value)&&value->get_id)?value->get_id():0 ])),  
+      desc);
+  }
+*/
 
-//werror("other object is %O\n", otherobject);
-  if(sc && sc->pick_one)
+  if(sc && sc->pick_many)
   {
     desc += sprintf(" <a href='javascript:fire_select(%O)'>select</a>",
-      context->app->url_for_action(sc->pick_one, ({}), (["selected_field": name, "for": i->master_object->instance_name,"for_id": i->get_id()]))
+      context->app->url_for_action(sc->pick_many, ({}), (["selected_field": name, "for": i->master_object->instance_name,"for_id": i->get_id()]))
      );
   }
 //werror("returning %O\n", desc);

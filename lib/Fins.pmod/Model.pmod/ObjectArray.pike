@@ -60,7 +60,7 @@ static array _indices()
     return indices(contents);
 }
 
-int _sizeof()
+static int _sizeof()
 {
   if(changed)
     get_contents();

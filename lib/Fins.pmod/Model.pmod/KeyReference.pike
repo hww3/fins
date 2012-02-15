@@ -98,7 +98,6 @@ werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
     name, value?value->get_id():0, context->app->url_for_action(sc->display, ({}), (["id": value?value->get_id():0 ])),  
     desc);
 
-//werror("other object is %O\n", otherobject);
   if(sc && sc->pick_one)
   {
     desc += sprintf(" <a href='javascript:fire_select(%O)'>select</a>",
