@@ -7,7 +7,7 @@ RUNPIKE=/usr/local/pike/7.8.352/bin/pike
 SYSTEM_DOC_PATH=/usr/local/pike/7.8.352/doc
 AUTODOC_SRC_IN=lib
 CORE_AUTODOC_PATH=/usr/local/pike/7.8.352/doc/autodoc.xml
-FULL_SRCDIR=/Users/hww3/devel/fins
+FULL_SRCDIR=$(CURDIR)
 
 refdoc:
 	@test -d refdoc || mkdir refdoc

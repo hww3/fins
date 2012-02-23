@@ -44,6 +44,7 @@ mapping default_values = ([]);
 int is_base=1;
 
 private int _field_order_specified = 0;
+
 //!
 .Field primary_key;
 
