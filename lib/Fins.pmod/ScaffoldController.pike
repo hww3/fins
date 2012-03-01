@@ -573,7 +573,7 @@ e=catch{
 				mapping x = ([]);
 				foreach(elements;; string e)
 				  x[e[(sizeof(field)+3)..]] = request->variables[e];
-				v[field] = model_object->fields[field]->from_form(x, item);
+				v[field] = model_object->fields[field]->get_renderer()->from_form(x, model_object->fields[field], item);
 				break;
 			}
 		}
@@ -757,7 +757,7 @@ static string make_nice(string v)
 string make_value_describer(string key, void|mixed value, void|object o)
 {
 	werror("make_value_describer(%O=%O)\n", key, value);
-	  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_display_string)
+	  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_renderer()->get_display_string)
 	  {
 	werror("no editor for shadow field " + key + "\n");
 		if(o)
@@ -769,11 +769,11 @@ string make_value_describer(string key, void|mixed value, void|object o)
 	    if(o) return (string)value;	
 	    else return 0;
 	  }
-	  else if(model_object->fields[key]->get_display_string)
+	  else if(model_object->fields[key]->get_renderer()->get_display_string)
 	  {
 	    if(o)
-	      return model_object->fields[key]->get_display_string(value, o);
-		else return model_object->fields[key]->get_display_string();
+	      return model_object->fields[key]->get_renderer()->get_display_string(value, model_object->fields[key], o);
+ 		  else return model_object->fields[key]->get_renderer()->get_display_string(0, model_object->fields[key]);
 	//  else if(stringp(value) || intp(value))
 	//    return "<input type=\"text\" name=\"" + key + "\" value=\"" + value + "\">";
 	  }
@@ -785,7 +785,7 @@ string make_value_describer(string key, void|mixed value, void|object o)
 string make_value_editor(string key, void|mixed value, void|object o)
 {
 werror("make_value_editor(%O=%O)\n", key, model_object->fields[key]);
-  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_editor_string)
+  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_renderer()->get_editor_string)
   {
 werror("no editor for shadow field " + key + "\n");
 	if(o)
@@ -797,11 +797,11 @@ werror("no editor for shadow field " + key + "\n");
     if(o) return "<input type=\"hidden\" name=\"id\" value=\"" + value + "\">" + value;	
     else return 0;
   }
-  else if(model_object->fields[key]->get_editor_string)
+  else if(model_object->fields[key]->get_renderer()->get_editor_string)
   {
     if(o)
-      return model_object->fields[key]->get_editor_string(value, o);
-	else return model_object->fields[key]->get_editor_string();
+      return model_object->fields[key]->get_renderer()->get_editor_string(value, model_object->fields[key], o);
+	else return model_object->fields[key]->get_renderer()->get_editor_string(0, model_object->fields[key]);
 //  else if(stringp(value) || intp(value))
 //    return "<input type=\"text\" name=\"" + key + "\" value=\"" + value + "\">";
   }

@@ -5,6 +5,8 @@ int null;
 string name;
 string default_value;
 
+object renderer = Fins.Helpers.Renderers.StringRenderer(); // ScaffoldRenderer
+
 constant type = "String";
 
 void create(string _name, int _len, int(0..1) _null, string|void _default)

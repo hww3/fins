@@ -15,10 +15,6 @@ string output_unit_format = "%Y-%M-%D %h:%m:%s";
 
 function validate_get = ::validate;
 
-string get_editor_string(void|mixed value, void|.DataObjectInstance i)
-{ return 0; }
-
-
 static void create(string _name, int(0..1) _null)
 {
    name = _name;
@@ -26,7 +22,6 @@ static void create(string _name, int(0..1) _null)
    field_name = translate_fieldname();
 
 }
-
 
 string encode(mixed value, void|.DataObjectInstance i)
 {

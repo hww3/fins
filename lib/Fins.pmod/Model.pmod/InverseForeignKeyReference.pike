@@ -63,10 +63,3 @@ mixed validate(mixed value, void|.DataObjectInstance i)
   return 0;
 }
 
-string get_editor_string(mixed|void value, void|.DataObjectInstance i)
-{
-  return (string)value;
-}
-
-//optional mixed from_form(mapping value, void|.DataObjectInstance i);
-

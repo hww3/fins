@@ -6,6 +6,8 @@ mixed default_value = .Undefined;
 int null = 0;
 .Criteria criteria;
 
+object renderer = Fins.Helpers.Renderers.KeyRenderer(); // ScaffoldRenderer
+
 static void create(string _name, string _myfield, string _otherobject, void|.Criteria _criteria, void|int _null)
 {
   name = _name;
@@ -79,38 +81,4 @@ mixed validate(mixed value, void|.DataObjectInstance i)
 
 
 
-string get_editor_string(mixed|void value, void|.DataObjectInstance i)
-{
-  string desc = "";
-  object obj;
-werror("obther object: %O\n", otherobject);
- obj =  context->repository->get_object(otherobject);
-  object sc = context->repository->get_scaffold_controller("html", obj);
-werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
-
-  if(!value) desc = "not set";
-  else if(objectp(value) && value->describe)
-    desc = value->describe();
-  else desc = sprintf("%O", value);
-
-  if(sc && sc->display)
-   desc = sprintf("<input type=\"hidden\" name=\"_%s__id\" value=\"%d\"><a href=\"%s\">%s</a>", 
-    name, value?value->get_id():0, context->app->url_for_action(sc->display, ({}), (["id": value?value->get_id():0 ])),  
-    desc);
-
-  if(sc && sc->pick_one)
-  {
-    desc += sprintf(" <a href='javascript:fire_select(%O)'>select</a>",
-      context->app->url_for_action(sc->pick_one, ({}), (["selected_field": name, "for": i->master_object->instance_name,"for_id": i->get_id()]))
-     );
-  }
-//werror("returning %O\n", desc);
-  return desc;
-}
-  
-optional mixed from_form(mapping value, void|.DataObjectInstance i)
-{ 
-  return context->find_by_id(otherobject, (int)value->id);
-}
-  
   
