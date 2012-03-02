@@ -112,7 +112,8 @@ void rebuild_fields(object ctx)
 {
    foreach(ctx->repository->object_definitions;; object d)
    {
-	 d->gen_fields(ctx);
+	   d->gen_fields(ctx);
+	   d->_set_renderers();
    }
 }
 

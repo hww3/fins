@@ -11,7 +11,10 @@ static void create(.Field f, object parent, void|.DataModelContext c)
   field = f; 
   parentobject = parent;
   context = c || parent->context;
+//werror("Creating objectArray: %O\n", field->otherobject);
   otherobject = context->repository["get_object"](field->otherobject);
+  if(!otherobject)
+    throw(Error.Generic("unable to find object type '" + field->otherobject + "' in model.\n"));
   changed = 1;
 }
 

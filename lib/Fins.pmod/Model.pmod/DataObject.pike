@@ -68,6 +68,10 @@ static  mapping _fieldnames = ([]);
 static  mapping _fieldnames_low = ([]);
 static  string _fields_string = "";
 
+// used during initialization
+protected mapping renderers = ([]);
+protected int renderers_set = 0;
+
 //!
 mapping relationships = ([]);
 
@@ -156,6 +160,28 @@ void set_cacheable(int timeout)
     _objs_by_alt = ([]);
     set_weak_flag(_objs_by_alt, Pike.WEAK);
   }
+}
+
+void set_renderer_for_field(string field, Fins.Helpers.Renderers.Renderer renderer)
+{
+  if(!renderers_set)
+    renderers[field] = renderer;
+  else really_set_renderer(field, renderer);
+}
+
+void _set_renderers()
+{
+  foreach(renderers; string field; object r)
+    really_set_renderer(field, r);  
+  renderers_set = 1;
+}
+
+protected void really_set_renderer(string field, Fins.Helpers.Renderers.Renderer renderer)
+{
+  if(fields[field])
+    fields[field]->set_renderer(renderer);
+  else
+    throw(Error.Generic("set_renderer_for_field(): No Field " + field + " defined.\n"));
 }
 
 string describe_value(string key, mixed value, .DataObjectInstance|void i)

@@ -676,7 +676,7 @@ e=catch{
      if(item->master_object->get_primary_key()->name == field) continue; 
 
 	array elements = glob( "_" + field + "__*", inds);
-//	werror ("elements: %O\n", elements);
+	werror ("elements: %O\n", elements);
 	if(sizeof(elements) > 0)
 	{
 		foreach(elements;; string e)
@@ -688,7 +688,7 @@ e=catch{
 				mapping x = ([]);
 				foreach(elements;; string e)
 				  x[e[(sizeof(field)+3)..]] = request->variables[e];
-				v[field] = model_object->fields[field]->from_form(x, item);
+				v[field] = model_object->fields[field]->get_renderer()->from_form(x, item);
 				break;
 		}
 	}
