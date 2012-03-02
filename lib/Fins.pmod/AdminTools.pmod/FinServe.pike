@@ -146,6 +146,7 @@ int do_startup()
   Log.info("FinServe starting on port " + my_port);
 
   Log.info("FinServe loading application " + project + " using configuration " + config_name);
+  Log.info("Fins version " + Fins.__version);
   load_application();
   logger=Tools.Logging.get_default_logger();
 

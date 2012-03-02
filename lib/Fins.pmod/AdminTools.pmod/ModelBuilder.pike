@@ -18,6 +18,7 @@ void create(array args)
 	
 //  Log.set_level(0);
   Log.info("ModelBuilder module loading");
+  Log.info("Fins version " + Fins.__version);
 
   if(!sizeof(args))
   {

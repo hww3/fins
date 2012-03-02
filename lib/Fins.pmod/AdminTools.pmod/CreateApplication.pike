@@ -156,6 +156,7 @@ void create(array args)
 int run()
 {
   Log.info("CreateApplication module running.");
+  Log.info("Fins version " + Fins.__version);
 
   Log.info("Creating application %s in %s.", newappname, getcwd());
 
