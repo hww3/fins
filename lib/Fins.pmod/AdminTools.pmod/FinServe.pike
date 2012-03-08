@@ -11,6 +11,7 @@ function(object:void) ready_callback;
 constant default_port = 8080;
 constant my_version = "0.1";
 int my_port;
+int my_port_specified = 1;
 
 // we really want the default to be RAM.
 string session_storagetype = "ram";
@@ -86,6 +87,7 @@ int main(int argc, array(string) argv)
       {
 		case "port":
 		my_port = opt[1];
+                my_port_specified = 1;
 		break;
 		
 		case "config":
@@ -143,11 +145,17 @@ int do_startup()
 
 #endif /* fork() */
 
-  Log.info("FinServe starting on port " + my_port);
 
   Log.info("FinServe loading application " + project + " using configuration " + config_name);
   Log.info("Fins version " + Fins.__version);
   load_application();
+
+  if(app->config["web"])
+  {
+    int p = (int)app->config["web"]["port"];
+    if(p) my_port = p;
+  }
+
   logger=Tools.Logging.get_default_logger();
 
   app->__fin_serve = this;
