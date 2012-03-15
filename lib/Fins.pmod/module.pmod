@@ -17,15 +17,11 @@ static void create()
   // we don't want to do this if it's already been done.
   if(!master()->fins_master)
   {
-    werror("compile_string: %O\n", compile_string);
-    werror("replacing master!\n");
-    object m = my_master();
+        object m = my_master();
     werror("got master!\n");
     m->do_replace_master();
     werror("replaced master.\n");
-    werror("compile_string: %O\n", compile_string);
-   // master()->root_module;
-  } 
+      } 
   else
     werror("no master replacement needed!");
 }
@@ -42,6 +38,10 @@ class my_master
   constant fins_master = 1;
   int created = 0;
   
+  mixed get_fc()
+  {
+    return fc;
+  }
 protected mixed `->root_module()
 {
   object t = Thread.this_thread();
@@ -91,13 +91,12 @@ protected void `->pike_program_path=(mixed val)
 
 protected mixed `->pike_module_path()
 {
-  werror("OOOO\n");
   object t = Thread.this_thread();
   object h;
   
   h = get_handler_for_thread(t);
   
-  werror("module path: %O %O\n", h, h->pike_module_path);
+  //werror("module path: %O %O\n", h, h->pike_module_path);
   return h->pike_module_path;
 }  
 
@@ -105,7 +104,7 @@ protected void `->pike_module_path=(mixed val)
 {
   object t = Thread.this_thread();
   object h;
-werror("module path=: %O\n", val);  
+//werror("module path=: %O\n", val);  
   h = get_handler_for_thread(t);
 
   h->pike_module_path = val;      
@@ -131,25 +130,65 @@ protected void `->pike_include_path=(mixed val)
   h->pike_include_path = val;      
 }
 
-  protected mixed `->fc()
-  {
-    object t = Thread.this_thread();
-    object h;
-    
-    h = get_handler_for_thread(t);
-    
-    return h->fc;
-  }  
+protected mixed `->resolv_cache()
+{
+  object t = Thread.this_thread();
+  object h;
   
-  protected void `->fc=(mixed val)
-  {
-    object t = Thread.this_thread();
-    object h;
-    
-    h = get_handler_for_thread(t);
+  h = get_handler_for_thread(t);
+  
+  return h->resolv_cache;
+}  
 
-    h->fc = val;      
-  }
+protected void `->resolv_cache=(mixed val)
+{
+  object t = Thread.this_thread();
+  object h;
+  
+  h = get_handler_for_thread(t);
+
+  h->resolv_cache = val;      
+}
+
+protected mixed `->dir_cache()
+{
+  object t = Thread.this_thread();
+  object h;
+  
+  h = get_handler_for_thread(t);
+  
+  return h->dir_cache;
+}  
+
+protected void `->dir_cache=(mixed val)
+{
+  object t = Thread.this_thread();
+  object h;
+  
+  h = get_handler_for_thread(t);
+
+  h->dir_cache = val;      
+}
+  
+    protected mixed `->fc()
+    {
+      object t = Thread.this_thread();
+      object h;
+
+      h = get_handler_for_thread(t);
+//werror("`->fc(%O)\n",indices(h->fc));
+      return h->fc;
+    }  
+
+    protected void `->fc=(mixed val)
+    {
+      object t = Thread.this_thread();
+      object h;
+
+      h = get_handler_for_thread(t);
+
+      h->fc = val;      
+    }
 
   protected mixed `->programs()
   {
@@ -168,7 +207,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->programs = val;      
+  //  h->programs = val;      
   }
 
   protected mixed `->objects()
@@ -188,7 +227,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->objects = val;      
+  //  h->objects = val;      
   }
 
   protected mixed `->rev_programs()
@@ -208,7 +247,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->rev_programs = val;      
+   // h->rev_programs = val;      
   }
 
   protected mixed `->rev_fc()
@@ -228,7 +267,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->rev_fc = val;      
+    //h->rev_fc = val;      
   }
 
   protected mixed `->rev_objects()
@@ -248,7 +287,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->rev_objects = val;      
+    //h->rev_objects = val;      
   }
 
   protected mixed `->documentation()
@@ -268,7 +307,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->documentation = val;      
+ //   h->documentation = val;      
   }
 
   protected mixed `->source_cache()
@@ -288,7 +327,7 @@ protected void `->pike_include_path=(mixed val)
     
     h = get_handler_for_thread(t);
 
-    h->source_cache = val;      
+//    h->source_cache = val;      
   }
   
   void do_replace_master()
@@ -440,7 +479,10 @@ protected void `->pike_include_path=(mixed val)
 //write("handler sought: %O from %O\n", hn, (handlers));
     if(hn) return handlers[hn];
     else
+    {
+//      werror("using default handler.\n");
      return handlers[DEFAULT_KEY];
+   }
   }
 
   void fins_add_handler(string key, object handler)
@@ -450,7 +492,7 @@ protected void `->pike_include_path=(mixed val)
 
   object new_handler(string key)
   {
-    werror("handlers: %O\n", handlers);
+    //werror("handlers: %O\n", handlers);
       object h = MultiTenantCompileContainer(key);
       object d = handlers[DEFAULT_KEY];
       if(!d) // we must be in an old master.
@@ -467,7 +509,7 @@ protected void `->pike_include_path=(mixed val)
         h->root_module = low_get_root_module();
       }
 
-werror("path: %O %O\n",d,  d->pike_module_path);
+//werror("path: %O %O\n",d,  d->pike_module_path);
       h->pike_include_path = d->pike_include_path;
       h->pike_program_path = d->pike_program_path;
       
@@ -476,10 +518,10 @@ werror("path: %O %O\n",d,  d->pike_module_path);
 
       foreach(reverse(d->pike_module_path);; string p)
       {
-        werror("adding %O\n", p);
+        //werror("adding %O\n", p);
         h->add_module_path(p);
       }
-werror("module_path: %O %O\n", h, h->pike_module_path);      
+//werror("module_path: %O %O\n", h, h->pike_module_path);      
       handlers[key] = h;
       return h;
   }
@@ -489,20 +531,21 @@ werror("module_path: %O %O\n", h, h->pike_module_path);
      joinnode node;
      // Check for _static_modules.
      mixed static_modules = _static_modules;
-
+     //werror("getting root module()\n");
+return joinnode(({static_modules}), 0, 0, "predef::");
      node = joinnode(({ instantiate_static_modules(static_modules),
                         // Copy relevant stuff from the root module.
-                        @filter(root_module->joined_modules,
+                    /*    @filter(root_module->joined_modules,
                                 lambda(mixed x) {
                                   return objectp(x) && x->is_resolv_dirnode;
-                                }) }),
+                                }) */ }),
                      0,
-                     root_module->fallback_module,
+/*                     root_module->fallback_module*/ 0,
                      "predef::");
 
      // FIXME: Is this needed?
      // Kluge to get _static_modules to work at top level.
-     node->cache->_static_modules = static_modules;
+   //  node->cache->_static_modules = static_modules;
 
      return node;
    }
@@ -513,7 +556,7 @@ werror("module_path: %O %O\n", h, h->pike_module_path);
     string my_key;
   static void create(string _my_key)
   {
-    werror("MultiTenantCompileContainer()\n");
+    //werror("MultiTenantCompileContainer()\n");
     my_key = _my_key;
   }
   
@@ -529,8 +572,10 @@ werror("module_path: %O %O\n", h, h->pike_module_path);
     mapping(program:object) documentation = ([]);
     mapping(program:string) source_cache = ([]);
     mapping (program:object|NoValue) objects=([]);
+    mapping(string:multiset(string))dir_cache=([]);
+    mapping resolv_cache=([]);
     object root_module;
-        
+    
     void add_module_path(string tmp)
     {
 //      werror("adding %O\n", tmp);

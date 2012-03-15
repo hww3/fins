@@ -24,14 +24,15 @@ object load_app(string app_dir, string config_name)
   
   key = app_dir + "#" + config_name;
   handler = master()->new_handler(key);
-werror("have handler.\n");
+  werror("have handler.\n");
+  //werror("adding %O\n", combine_path(app_dir, "modules"));
 
-  werror("adding %O\n", combine_path(app_dir, "modules"));
-
+  // we shouldn't need to lock here.
+  master()->handlers_for_thread[Thread.this_thread()] = key;
   handler->add_module_path(combine_path(app_dir, "modules")); 
+  m_delete(master()->handlers_for_thread, Thread.this_thread());
 
   handler->add_program_path(combine_path(app_dir, "classes")); 
-
   object thread = Thread.Thread(low_load_app, key, app_dir, config_name);  
 
   return thread->wait();
@@ -44,7 +45,6 @@ object low_load_app(string handler_name, string app_dir, string config_name)
    
   write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
   master()->handlers_for_thread[Thread.this_thread()] = handler_name;
-
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");
   Tools.Logging.set_config_variables((["appdir": app_dir, "config": config_name, "home": getenv("HOME") ]));
 
@@ -81,6 +81,8 @@ mixed err = catch
     access_logger = genlogger(al);
 
   a->access_logger = access_logger;
+
+  //werror("FC: %O", master()->get_fc());
 
   return a;
 }
