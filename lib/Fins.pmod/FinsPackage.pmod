@@ -221,11 +221,7 @@ static class Standalone {
 
   int main(string appdir, int port, string config) {
 
-    project = appdir;
-    config_name = config;
-    my_port = port;
-    
-    return do_startup();
+    return do_startup(({appdir}), ({config}), port);
   }
   
 }

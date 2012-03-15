@@ -153,8 +153,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
   foreach(projects;int i;string project)
   {
-    int p = (int)app->config["web"]["port"];
-    int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, p||((int)my_port++));
+    int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, ((int)my_port++));
     if(res == 0) return 0;
   }
 
@@ -194,14 +193,15 @@ if(!app) return -1;
   }
   else
   {
-    port = server(handle_request, (int)my_port);  
+    int p = (int)app->config["web"]["port"];
+    port = server(handle_request, p||((int)my_port));  
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;
 
 #if constant(_Protocols_DNS_SD)
 #if constant(Protocols.DNS_SD.Service);
     bonjour = Protocols.DNS_SD.Service("Fins Application (" + project + "/" + config_name + ")",
-                     "_http._tcp", "", (int)my_port);
+                     "_http._tcp", "", p||((int)my_port));
 
     logger->info("Advertising this application via Bonjour.");
 #endif
