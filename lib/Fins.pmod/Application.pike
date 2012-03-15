@@ -7,8 +7,6 @@ Log.Logger log = get_logger("fins.application");
 
 object __fin_serve;
 
-function compile_string;
-
 //! provide any context root (location in the virtual filesystem) for this application.  this setting
 //! is derived from the value of the context_root parameter in the application section of the application config file, and defaults to /.
 string context_root = "";
@@ -90,10 +88,8 @@ string get_app_name()
 //! as @[start]() will be called immediately from this method.
 static void create(.Configuration _config)
 {
-	
 	// the first phase is to set up the various paths, get some configuration values
 	// and set up the l10n system for our app.
-  compile_string = master()->fins_aware_compile_string;
   config = _config;
   static_dir = Stdio.append_path(config->app_dir, "static");
 //werror(Stdio.append_path(config->app_dir, "translations/%L/%P.xml") + "\n");
@@ -255,8 +251,8 @@ static object low_load_controller(string controller_name)
 //werror("file: %O\n",f);
   if(f)
   {
-    write("compiling.\n");
-    c = compile_string(Stdio.read_file(f), f);
+    string s = Stdio.read_file(f);
+    c = compile_string(s, f);
   }
   else 
   { 
