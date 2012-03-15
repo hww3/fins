@@ -43,6 +43,8 @@ mapping default_values = ([]);
 
 int is_base=1;
 
+private int _field_order_specified = 0;
+
 //!
 .Field primary_key;
 
@@ -66,6 +68,10 @@ static  mapping _fieldnames = ([]);
 static  mapping _fieldnames_low = ([]);
 static  string _fields_string = "";
 
+// used during initialization
+protected mapping renderers = ([]);
+protected int renderers_set = 0;
+
 //!
 mapping relationships = ([]);
 
@@ -83,13 +89,18 @@ string instance_name = "";
 string table_name = "";
 
 //! used by @[Fins.ScaffoldController] to determine the order fields are displayed in generated forms.
-array(.Field) field_order = ({});
+array(string) field_order = ({});
 
 //! repo is retained, context is not. Data mapping objects that inherit this type are
 //! automatically created by the model configuration mechanism provided by @[Fins.FinsModel].
 void create(.DataModelContext context, .Repository repo)
 {
   repository = repo;
+
+  if(field_order && sizeof(field_order))
+  {
+    _field_order_specified = 1;
+  }
 
    if(define && functionp(define))
    {
@@ -149,6 +160,28 @@ void set_cacheable(int timeout)
     _objs_by_alt = ([]);
     set_weak_flag(_objs_by_alt, Pike.WEAK);
   }
+}
+
+void set_renderer_for_field(string field, Fins.Helpers.Renderers.Renderer renderer)
+{
+  if(!renderers_set)
+    renderers[field] = renderer;
+  else really_set_renderer(field, renderer);
+}
+
+void _set_renderers()
+{
+  foreach(renderers; string field; object r)
+    really_set_renderer(field, r);  
+  renderers_set = 1;
+}
+
+protected void really_set_renderer(string field, Fins.Helpers.Renderers.Renderer renderer)
+{
+  if(fields[field])
+    fields[field]->set_renderer(renderer);
+  else
+    throw(Error.Generic("set_renderer_for_field(): No Field " + field + " defined.\n"));
 }
 
 string describe_value(string key, mixed value, .DataObjectInstance|void i)
@@ -526,18 +559,19 @@ void add_field(.DataModelContext context, .Field f, int|void force)
 {
    if(fields[f->name] && !force) 
    {
-	 log->info("Ignoring attempt to add already defined field " + f->name +"=%O as %O.", fields[f->name], f);
+	   log->info("Ignoring attempt to add already defined field " + f->name +"=%O as %O.", fields[f->name], f);
      return;	
    }
+   
    f->set_context(context);
    fields[f->name] = f;
-   field_order += ({f});
+   if(!_field_order_specified)
+     field_order += ({f->name});
 
    if(Program.inherits(object_program(f), .Relationship))
    {
      relationships[f->name] = f;
    }
-
 }
 
 /*

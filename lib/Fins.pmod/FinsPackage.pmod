@@ -59,9 +59,13 @@ int main() {
     int retcode = server->main(Stdio.append_path(appdir, NAME), (int)port, CONFIG);
     
     if(retcode < 0)
-      r->write(sprintf("Connect on port %d to this host with your web browser (probably http://localhost:%d/) to view the application.\n", port, port), 1);
-
-    return retcode;
+    {
+      call_out(lambda(){
+          r->write(sprintf("*** Connect on port %d to this host with your web browser (probably http://localhost:%d/) to view the application.\n", port, port), 1);
+        }, 5);
+      return -1;
+    }
+    else return retcode;
   }
 }
 
@@ -212,6 +216,8 @@ static mixed prompt(string description, int type, void|mixed defval, void|array 
 
 static class Standalone {
   inherit Fins.AdminTools.FinServe;
+
+  static void create() {}
 
   int main(string appdir, int port, string config) {
 

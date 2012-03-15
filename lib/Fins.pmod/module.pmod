@@ -1,5 +1,5 @@
 constant __author = "Bill Welliver <hww3@riverweb.com>";
-constant __version = "0.4";
+constant __version = "0.9.5";
 
 //!
 string version()

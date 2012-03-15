@@ -23,7 +23,7 @@ object model_context;
 
 //! Contains default contents of the template used for displaying a list of items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/list.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/list.phtml.
@@ -44,7 +44,7 @@ string list_template_string =
 
 //! Contains default contents of the template used for displaying items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/display.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/display.phtml.
@@ -56,7 +56,7 @@ string display_template_string =
   <%action_link action=\"update\" id=\"$item._id\"%>Edit</a><p>
   <table>
   <%foreach var=\"$field_order\" ind=\"key\" val=\"value\"%>
-  <tr><td><b><%humanize var=\"$value.name\"%></b></td><td><%field_describe field=\"$value\" item=\"$item\"%></td></tr>
+  <tr><td><b><%humanize var=\"$value\"%></b></td><td><%field_describe field=\"$value\" item=\"$item\"%></td></tr>
   <%end %>
   </table>
   <p/>
@@ -65,7 +65,7 @@ string display_template_string =
 
 //! Contains default contents of the template used for editing items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/update.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/update.phtml.
@@ -82,7 +82,7 @@ string update_template_string =
   <form action=\"<% action_url action=\"doupdate\" %>\" method=\"post\">
   <table>
   <%foreach var=\"$field_order\" ind=\"key\" val=\"value\"%>
-  <tr><td><b><%humanize var=\"$value.name\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
+  <tr><td><b><%humanize var=\"$value\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
   <%end %>
   </table>
   <input name=\"___cancel\" value=\"Cancel\" type=\"submit\"> 
@@ -96,7 +96,7 @@ string update_template_string =
 
 //! Contains default contents of the template used for creating items
 //! in this scaffolding. You may override the use of this string by creating 
-//! a template file. store the template file in your templates directory under
+//! a template file. Store the template file in your templates directory under
 //! controller/path/new.phtml. For example, if your scaffold controller
 //! is mounted at /widgets/, you would store the overriding template file in
 //! templates/widgets/new.phtml.
@@ -113,7 +113,7 @@ string new_template_string =
   <form action=\"<% action_url action=\"donew\" %>\" method=\"post\">
   <table>
   <%foreach var=\"$field_order\" ind=\"key\" val=\"value\"%>
-  <tr><td><b><%humanize var=\"$value.name\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
+  <tr><td><b><%humanize var=\"$value\"%></b></td><td><%field_editor item=\"$item\" field=\"$value\" orig=\"$orig\"%></td></tr>
   <%end %>
   </table>
   <input name=\"___cancel\" value=\"Cancel\" type=\"submit\"> 
@@ -124,6 +124,77 @@ string new_template_string =
   <%action_link action=\"list\"%>Return to List</a><p>
   </body></html>";
 
+  //! Contains default contents of the template used to confirm deletion
+  //! in this scaffolding. You may override the use of this string by creating 
+  //! a template file. Store the template file in your templates directory under
+  //! controller/path/delete.phtml. For example, if your scaffold controller
+  //! is mounted at /widgets/, you would store the overriding template file in
+  //! templates/widgets/delete.phtml.
+  string delete_template_string =
+  #  "<html><head><title>Confirm: Really delete <%$type%>?</title>
+    </head>
+    <body>
+    <h1>Confirm Deletion of <%$type%></h1>
+    <div class=\"flash-message\"><% flash var=\"$msg\" %></div>
+    <form action=\"<% action_url action=\"delete\" %>\" method=\"post\">
+    <input name=\"___cancel\" value=\"Cancel\" type=\"submit\"> 
+    <input name=\"___delete\" value=\"Delete\" type=\"submit\"> 
+    <input name=\"id\" value=\"<%$item._id%>\" type=\"hidden\">
+    </form>
+    <p/>
+    </body></html>";
+
+  string pick_one_template_string =
+  # "<html><head><title>Choose Value: <%$type%> for <%$nicefor%></title>
+    </head>
+    <body>
+    <h1>Choose <%$type%> for <%$nicefor%></h1>
+    <div class=\"flash-message\"><% flash var=\"$msg\" %></div>
+    <form action=\"<% action_url action=\"do_pick\"%>\" method=\"post\">
+    <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+    <input type=\"submit\" name=\"__select\" value=\"Select\">
+    <p/>
+    <%foreach var=\"$values\" ind=\"key\" val=\"value\"%>
+      <%if data->value->get_id() == data->previous_selection %>
+      <input type=\"radio\" name=\"selected_id\" value=\"<%$value._id%>\" checked=\"1\"> <%describe_object var=\"$value\"%><br/>
+      <%else%>
+      <input type=\"radio\" name=\"selected_id\" value=\"<%$value._id%>\"> <%describe_object var=\"$value\"%><br/>
+      <%endif%>
+    <%end%>
+   <input type=\"hidden\" name=\"old_data\" value=\"<%$old_data%>\">
+   <input type=\"hidden\" name=\"selected_field\" value=\"<%$selected_field%>\">
+   <input type=\"hidden\" name=\"for\" value=\"<%$for%>\">
+   <input type=\"hidden\" name=\"for_id\" value=\"<%$for_id%>\">
+   <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+   <input type=\"submit\" name=\"__select\" value=\"Select\"></form>
+   </form>
+   <p/>
+   </body></html>";
+
+   string pick_many_template_string =
+   # "<html><head><title>Choose Values: <%$type%> for <%$nicefor%></title>
+     </head>
+     <body>
+     <h1>Choose <%$type%> for <%$nicefor%></h1>
+     <div class=\"flash-message\"><% flash var=\"$msg\" %></div>
+     <form action=\"<% action_url action=\"do_pick\"%>\" method=\"post\">
+     <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+     <input type=\"submit\" name=\"__select\" value=\"Select\">
+     <p/>
+     <%foreach var=\"$values\" ind=\"key\" val=\"value\"%>
+       <input type=\"checkbox\" name=\"selected_id\" value=\"<%$value._id%>\"> <%describe_object var=\"$value\"%><br/>
+     <%end%>
+    <input type=\"hidden\" name=\"old_data\" value=\"<%$old_data%>\">
+    <input type=\"hidden\" name=\"selected_field\" value=\"<%$selected_field%>\">
+    <input type=\"hidden\" name=\"for\" value=\"<%$for%>\">
+    <input type=\"hidden\" name=\"for_id\" value=\"<%$for_id%>\">
+    <p/><input type=\"submit\" name=\"__return\" value=\"Cancel\">
+    <input type=\"submit\" name=\"__select\" value=\"Select\"></form>
+    </form>
+    <p/>
+    </body></html>";
+
+
 object __get_view(mixed path)
 {  
   object v;
@@ -132,11 +203,12 @@ object __get_view(mixed path)
   if(e || !v)
   {
     Log.debug("load of view from template failed, using default template string.\n");
-    Log.exception("Error follows", e);
+    if(!__quiet)
+      Log.exception("Error follows", e);
 
     string pc = ((path/"/")[-1]) + "_template_string";
     string x = `->(this, pc);
-werror("getting simple view for %O: %O, %O\n", pc, x, indices(this));    
+//werror("getting simple view for %O: %O, %O\n", pc, x, indices(this));    
     v = view->get_string_view(x);
   }
 
@@ -150,7 +222,8 @@ static object get_view(function f, string x)
   if(e)
   {
     Log.debug("load of view from template failed, using default template string.\n");
-    Log.exception("Error follows", e);
+    if(!__quiet)
+      Log.exception("Error follows", e);
     v = view->get_string_view(x);
   }
   return v;
@@ -221,7 +294,7 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
     response->set_data("error: invalid data.");
     return;
   }
-
+  
   object sc = model_context->repository->get_scaffold_controller("html", model_context->repository->get_object(id->variables["for"]));
   function action;
 
@@ -229,50 +302,74 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
     action = sc->new;
   else
     action = sc->update;
+  
+  if(id->variables->__return)
+  {
+    response->redirect_temp(action, ({}), (["old_data": id->variables->old_data, "id": id->variables["for_id"]]));
+    return;
+  }
+  
+  werror("var: %O\n", id->variables);
+    
+  if(id->variables->__select && !(int)id->variables->selected_id)
+  {
+    response->flash("msg", "No " + make_nice(model_object->instance_name) + " selected.");
+    response->redirect_temp(action_url(pick_one, ({}), (["old_data": id->variables->old_data, "selected_field": id->variables->selected_field, 
+                "for": id->variables["for"], "for_id": id->variables["for_id"]])));
+    return;
+  }
 
   id->variables->id = id->variables->for_id;
   m_delete(id->variables, "for_id");
   m_delete(id->variables, "for");
 
-  response->redirect(action_url(action, ({}), id->variables));
+  response->redirect_temp(action_url(action, ({}), id->variables));
 }
 
-public void pick_one(Request id, Response response, Fins.Template.View v, mixed ... args)
+public void pick_many(Request id, Response response, Fins.Template.View v, mixed ... args)
 {
-werror("data: %O\n", id->variables);
-
-  object rv = String.Buffer();
-
   if(!(id->variables->for && id->variables->for_id && id->variables->selected_field))
   {
     response->set_data("error: invalid data.");
     return;	
   }
 
-  id->variables->old_data = MIME.encode_base64(encode_value(id->variables), 1);
-  werror("%O\n", id->variables->old_data);
-  rv += "<h1>Choose " + make_nice(model_object->instance_name) + "</h1>\n";
-  if(id->misc->flash && id->misc->flash->msg)
-    rv += "<i>" + id->misc->flash->msg + "</i><p>\n";
-  rv += "<form action=\"" + action_url(do_pick) + "\" method=\"post\">";
+  id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
+
+  v->add("type", make_nice(Tools.Language.Inflect.pluralize(model_object->instance_name)));
+  v->add("nicefor", make_nice(id->variables["for"]));
 
   array x = model_context->find_all(model_component);
+  v->add("values", x);
 
-  foreach(x;; object o)
+  v->add("old_data", id->variables->old_data);
+  v->add("selected_field", id->variables->selected_field);
+  v->add("for", id->variables["for"]);
+  v->add("for_id", id->variables["for_id"]);  
+}
+
+public void pick_one(Request id, Response response, Fins.Template.View v, mixed ... args)
+{
+  if(!(id->variables->for && id->variables->for_id && id->variables->selected_field))
   {
-    rv += "<input type=\"radio\" name=\"selected_id\" value=\"" 
-            + o->get_id() + "\"> " + o->describe() + "<br/>";
+    response->set_data("error: invalid data.");
+    return;	
   }
 
-  rv += "<input type=\"hidden\" name=\"old_data\" value=\"" + id->variables->old_data + "\">";
-  rv += "<input type=\"hidden\" name=\"selected_field\" value=\"" + id->variables->selected_field + "\">";
-  rv += "<input type=\"hidden\" name=\"for\" value=\"" + id->variables["for"] + "\">";
-  rv += "<input type=\"hidden\" name=\"for_id\" value=\"" + id->variables["for_id"] + "\">";
-  rv += "<p/><input type=\"submit\" name=\"__return\" value=\"Cancel\"> ";
-  rv += "<input type=\"submit\" value=\"Select\"></form>";
+  id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
 
-  response->set_data((string)rv);
+  v->add("type", make_nice(model_object->instance_name));
+  v->add("nicefor", make_nice(id->variables["for"]));
+
+  array x = model_context->find_all(model_component);
+  object obj = model_context->find_by_id(id->variables["for"], (int)id->variables["for_id"]);
   
+  v->add("values", x);
+  v->add("previous_selection", obj[id->variables->selected_field]->get_id());
+  v->add("old_data", id->variables->old_data);
+  v->add("selected_field", id->variables->selected_field);
+  v->add("for", id->variables["for"]);
+  v->add("for_id", id->variables["for_id"]);  
 }
 
 public void delete(Request id, Response response, Fins.Template.View v, mixed ... args)
@@ -282,7 +379,26 @@ public void delete(Request id, Response response, Fins.Template.View v, mixed ..
     response->set_data("error: invalid data.");
     return;	
   }
-  response->redirect(action_url(dodelete, 0, (["id": id->variables->id])));
+
+  v->add("type", make_nice(model_object->instance_name));
+
+  object item = model_context->find_by_id(model_object, (int)id->variables->id);
+
+  if(!item)
+  {
+    response->set_data(make_nice(model_object->instance_name) + " not found.");
+    return;
+  }
+  
+  v->add("item", item);
+
+  if(id->variables->___delete)
+    response->redirect_temp(action_url(dodelete, 0, (["id": id->variables->id])));
+  else if(id->variables->___cancel)
+  {
+    response->flash("msg", "Delete cancelled.");
+    response->redirect_temp(action_url(list));
+  }
 }
 
 public void dodelete(Request id, Response response, Fins.Template.View v, mixed ... args)
@@ -304,7 +420,7 @@ public void dodelete(Request id, Response response, Fins.Template.View v, mixed 
   item->delete();
 
   response->flash("msg", make_nice(model_object->instance_name) + " deleted successfully.");
-  response->redirect(action_url(list));
+  response->redirect_temp(action_url(list));
 
 }
 
@@ -327,9 +443,11 @@ public void decode_old_values(mapping variables, mapping orig)
 {
   if(variables->old_data)
   {
-    decode_from_form(decode_value(MIME.decode_base64(variables->old_data)), orig);
-    werror("old data: %O\n", orig);
-    orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
+    string in = MIME.decode_base64(variables->old_data);
+    mixed inv = decode_value(in);
+    decode_from_form(inv, orig);
+    if(variables->selected_field)
+      orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
   }
 
 }
@@ -359,9 +477,9 @@ public void update(Fins.Request request, Fins.Response response, Fins.Template.V
 
   foreach(model_object->field_order; int key; mixed value)
   {	
-    if(model_object->primary_key->name != value->name)
+    if(model_object->primary_key->name != value)
     {
-      fields += ({value->name});
+      fields += ({value});
     }
   }
 
@@ -416,7 +534,7 @@ e=catch{
   if(request->variables->___cancel)
   {
 	response->flash("msg", "editing canceled");
-    response->redirect(action_url(list));
+    response->redirect_temp(action_url(list));
     return;	
   }
 
@@ -428,7 +546,7 @@ e=catch{
     return;
   }
 
-  response->redirect(action_url(display, 0, (["id": request->variables->id])));
+  response->redirect_temp(action_url(display, 0, (["id": request->variables->id])));
     
   mapping v = ([]);
 
@@ -455,7 +573,7 @@ e=catch{
 				mapping x = ([]);
 				foreach(elements;; string e)
 				  x[e[(sizeof(field)+3)..]] = request->variables[e];
-				v[field] = model_object->fields[field]->from_form(x, item);
+				v[field] = model_object->fields[field]->get_renderer()->from_form(x, model_object->fields[field], item);
 				break;
 			}
 		}
@@ -532,7 +650,7 @@ e=catch{
   if(request->variables->___cancel)
   {
 	response->flash("msg", "create canceled.");
-    response->redirect(action_url(list));
+    response->redirect_temp(action_url(list));
     return;	
   }
 
@@ -558,7 +676,7 @@ e=catch{
      if(item->master_object->get_primary_key()->name == field) continue; 
 
 	array elements = glob( "_" + field + "__*", inds);
-//	werror ("elements: %O\n", elements);
+	werror ("elements: %O\n", elements);
 	if(sizeof(elements) > 0)
 	{
 		foreach(elements;; string e)
@@ -570,7 +688,7 @@ e=catch{
 				mapping x = ([]);
 				foreach(elements;; string e)
 				  x[e[(sizeof(field)+3)..]] = request->variables[e];
-				v[field] = model_object->fields[field]->from_form(x, item);
+				v[field] = model_object->fields[field]->get_renderer()->from_form(x, item);
 				break;
 		}
 	}
@@ -590,12 +708,12 @@ werror("setting: %O\n", v);
   if(e)
   {  
     response->flash("msg", "Record creation failed: " + (Error.mkerror(e)->message()));
-    response->redirect(action_url(new, 0, v));
+    response->redirect_temp(action_url(new, 0, v));
   }
 
   else
   {
-    response->redirect(action_url(list));
+    response->redirect_temp(action_url(list));
     response->flash("msg", "create successful.");
   }
 };
@@ -619,8 +737,8 @@ public void new(Fins.Request request, Fins.Response response, Fins.Template.View
 
   foreach(model_object->field_order; int key; mixed value)
  {	
-	if(value->is_primary_key) continue;
-	fields += ({value->name});
+	if(model_object->fields[value]->is_primary_key) continue;
+	fields += ({value});
   }
 
   v->add("field_order", model_object->field_order);
@@ -639,7 +757,7 @@ static string make_nice(string v)
 string make_value_describer(string key, void|mixed value, void|object o)
 {
 	werror("make_value_describer(%O=%O)\n", key, value);
-	  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_display_string)
+	  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_renderer()->get_display_string)
 	  {
 	werror("no editor for shadow field " + key + "\n");
 		if(o)
@@ -651,11 +769,11 @@ string make_value_describer(string key, void|mixed value, void|object o)
 	    if(o) return (string)value;	
 	    else return 0;
 	  }
-	  else if(model_object->fields[key]->get_display_string)
+	  else if(model_object->fields[key]->get_renderer()->get_display_string)
 	  {
 	    if(o)
-	      return model_object->fields[key]->get_display_string(value, o);
-		else return model_object->fields[key]->get_display_string();
+	      return model_object->fields[key]->get_renderer()->get_display_string(value, model_object->fields[key], o);
+ 		  else return model_object->fields[key]->get_renderer()->get_display_string(0, model_object->fields[key]);
 	//  else if(stringp(value) || intp(value))
 	//    return "<input type=\"text\" name=\"" + key + "\" value=\"" + value + "\">";
 	  }
@@ -667,7 +785,7 @@ string make_value_describer(string key, void|mixed value, void|object o)
 string make_value_editor(string key, void|mixed value, void|object o)
 {
 werror("make_value_editor(%O=%O)\n", key, model_object->fields[key]);
-  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_editor_string)
+  if(model_object->fields[key]->is_shadow && !model_object->fields[key]->get_renderer()->get_editor_string)
   {
 werror("no editor for shadow field " + key + "\n");
 	if(o)
@@ -679,11 +797,11 @@ werror("no editor for shadow field " + key + "\n");
     if(o) return "<input type=\"hidden\" name=\"id\" value=\"" + value + "\">" + value;	
     else return 0;
   }
-  else if(model_object->fields[key]->get_editor_string)
+  else if(model_object->fields[key]->get_renderer()->get_editor_string)
   {
     if(o)
-      return model_object->fields[key]->get_editor_string(value, o);
-	else return model_object->fields[key]->get_editor_string();
+      return model_object->fields[key]->get_renderer()->get_editor_string(value, model_object->fields[key], o);
+	else return model_object->fields[key]->get_renderer()->get_editor_string(0, model_object->fields[key]);
 //  else if(stringp(value) || intp(value))
 //    return "<input type=\"text\" name=\"" + key + "\" value=\"" + value + "\">";
   }

@@ -49,6 +49,9 @@ mixed cast(string t)
   {
     case "mapping":
       return get_atomic();
+    case "string":
+       return describe();
+     // return get_alt() || (get_descriptor()+ "/" + get_id);
     default:
      throw(Error.Generic("Unable to cast DataObjectInstance to " + t + ".\n"));
   }

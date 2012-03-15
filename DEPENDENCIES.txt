@@ -1,4 +1,4 @@
 Fins Dependencies:
 
 Public.Tools.ConfigFiles
-Public.Parser.XML2 ?
+Public.Parser.XML2 (only if you want to use XSLT templates.)

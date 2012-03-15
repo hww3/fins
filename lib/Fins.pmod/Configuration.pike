@@ -25,7 +25,7 @@ static void create(string appdir, string|mapping _config_file)
     config_file = _config_file;
 	array _cn = (basename(config_file)/".");
 	config_name = _cn[0..sizeof(_cn)-2]*".";
-	
+
     string fc = Stdio.read_file(config_file);
 
     // the "spec" says that the file is utf-8 encoded.

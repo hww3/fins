@@ -11,19 +11,32 @@ static void create(.Field f, object parent, void|.DataModelContext c)
   field = f; 
   parentobject = parent;
   context = c || parent->context;
+//werror("Creating objectArray: %O\n", field->otherobject);
   otherobject = context->repository["get_object"](field->otherobject);
+  if(!otherobject)
+    throw(Error.Generic("unable to find object type '" + field->otherobject + "' in model.\n"));
   changed = 1;
 }
 
 static mixed cast(string rt)
 {
-  if(rt != "array")
-    throw(Error.Generic("Cannot cast ObjectArray to " + rt + ".\n"));
+  switch(rt)
+  {
+    case "array":
+      if(changed)
+        get_contents();
+        return contents;
+      break;
+    case "string":
+      if(changed)
+        get_contents();
+        return contents->get_descriptor()*", ";
+      break;
+    default:
+      throw(Error.Generic("Cannot cast ObjectArray to " + rt + ".\n"));
+      break;
+  }
 
-  if(changed)
-    get_contents();
-
-  return contents;
 }
 
 Iterator _get_iterator()
@@ -50,7 +63,7 @@ static array _indices()
     return indices(contents);
 }
 
-int _sizeof()
+static int _sizeof()
 {
   if(changed)
     get_contents();

@@ -17,6 +17,8 @@ int null;
 mixed default_value;
 string name;
 
+object renderer = Fins.Helpers.Renderers.DateRenderer(); // ScaffoldRenderer
+
 function encode_get = encode;
 function validate_get = validate;
 
@@ -122,73 +124,6 @@ mixed validate(mixed value, void|.DataObjectInstance i)
    
    return value;
 }
-
-string get_display_string(void|mixed value, void|.DataObjectInstance i)
-{
-	if(value && objectp(value))
-    	return value->format_ymd();
-	else return (string)value;
-}
-
-string get_editor_string(void|mixed value, void|.DataObjectInstance i)
-{
-        string rrv = "";
-        int def = 0;
-        array vals = ({});
-
-        if(!value)
-        { 
-          def = 1; 
-          value = Calendar.now();
-        }
-        foreach(({"month_no", "month_day", "year_no"});; string part)
-        {
-	        string rv = "";
-		string current_val = 0;
-		int from, to;
-
-                if(value)
-                {
-		  current_val = value[part]();
-		}
-
-		switch(part)
-		{
-		  case "month_no":
-		    from = 1; to = 12;
-		    break;
-		  case "year_no":
-		    object cy;
-		    if(current_val) cy = Calendar.ISO.Year(current_val); else cy = Calendar.ISO.Year();
-		    from = (cy - 80)->year_no(); to = (cy + 20)->year_no();
-		    break;
-		  case "month_day":
-		    from = 1; to = 31;
-		    break;
-		}
-		rv += "<select name=\"_" + name + "__" + part + "\">\n";
-		for(int i = from; i <= to; i++) 
-                  rv += "<option " + ((int)current_val == i?"selected":"") + ">" + i + "\n";
-		rv += "</select>\n";
-
-		if(!def)
-                  rv += "<input type=\"hidden\" name=\"\"__old_value_" + name + "__" + part + "\" value=\"" + current_val + "\">";
-	
-		vals += ({rv});
-        }
-
-	rrv += (vals * " / ");
-
-      return rrv;
-}
-
-
-mixed from_form(mapping value, void|.DataObjectInstance i)
-{
-  object c = Calendar.dwim_time(sprintf("%04d-%02d-%02d", (int)value->year_no, (int)value->month_no, (int)value->month_day));
-        return c;
-}
-
 
 string make_qualifier(mixed v)
 {

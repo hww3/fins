@@ -7,19 +7,7 @@ string name;
 
 constant type = "Float";
 
-string get_editor_string(void|string value, void|.DataObjectInstance i)
-{
-  if(!value && zero_type(value)) value = "";
-
-  if(i)
-  {
-    return ("<input type=\"hidden\" name=\"__old_value_" + name + "\" value=\"" + value + "\">" "<input type=\"text\" size=\"" + len + "\" name=\"" + name + "\" value = \"" + value + "\">");
-  }
-  else
-  {
-    return ("<input type=\"text\" size=\"" + len + "\" name=\"" + name + "\" value = \"\">"); 
-  }
-}
+object renderer = Fins.Helpers.Renderers.FloatRenderer(); // ScaffoldRenderer
 
 void create(string _name, int _len, int(0..1) _null, float|void _default)
 {

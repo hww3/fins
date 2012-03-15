@@ -11,7 +11,7 @@ int main(int argc, array argv) {
 #endif
   if (sizeof(argv) < 2)
     return usage(argv);
-  else run(argv[1]);
+  else return run(argv[1]);
 }
 
 int run(string package)
@@ -57,6 +57,7 @@ int install_package(string package) {
   }
   else if (err) {
     Log.critical("Error.  Package file corrupt.");
+    master()->describe_backtrace(err);
     return 1;
   }
   master()->set_inhibit_compile_errors(0);
@@ -66,6 +67,7 @@ int install_package(string package) {
 static class ErrorContainer() {
 
   array err = ({});
+  array warn = ({});
 
   string get() {
     string ret = "";
@@ -84,7 +86,7 @@ static class ErrorContainer() {
   }
 
   void compile_warning(string filename, int line, string msg) {
-    err += ({ ({ filename, line, msg }) });
+    warn += ({ ({ filename, line, msg }) });
   }
 
   void compile_exception(mixed exception) {

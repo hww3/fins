@@ -3,7 +3,7 @@ The inner workings of a Fins Application.
 
 Prerequisites
 
-Fins runs on Pike 7.6 or higher. Pike 7.7 and a Bonjour ready system 
+Fins runs on Pike 7.8 or higher. Using a Bonjour ready system 
 (such as MacOS X) will get you automatic announcement of your Fins apps. 
 If you want to use XSLT templating, you'll need to install libxml, 
 libxslt and the Public.Parser.XML2 module. To use Simple templates, you 
@@ -12,10 +12,12 @@ Pike.
  
 To create a new web application, simply create the following file 
 hierarchy. You'll probably want to customize all of the files in it, 
-based on your needs.
+based on your needs. You can use the following command to create a working
+application:
 
+pike -Mpath/to/fins/lib -x fins create MyAppName
 
-Absolute Bare Minimum:
+If you want to go it yourself, consider the following as Absolute Bare Minimum:
 
 APPDIR/
 APPDIR/config

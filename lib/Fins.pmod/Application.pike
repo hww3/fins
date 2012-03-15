@@ -99,7 +99,7 @@ static void create(.Configuration _config)
     context_root = config["application"]["context_root"];
 
   cache_events = (int)config["controller"]["cache_events"];
-  exp = (int)config["application"]["static_expire_period"] || (24*10);
+  exp = (config["application"] && (int)config["application"]["static_expire_period"]) || (24*10);
 
   controller_autoreload = (int)(config["controller"]["reload"]);
  

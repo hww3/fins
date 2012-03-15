@@ -88,6 +88,7 @@ object configure_context(mapping config_section, int is_default)
     repository->set_object_module(o);
 
  string url = config_section["datasource"];
+ if(!url) throw(Error.Generic("Unable to load model: no datasource defined.\n"));
  object d = get_context(config_section);
  d->context_id = config_section["id"] || "_default";
  d->set_url(url);
@@ -111,7 +112,8 @@ void rebuild_fields(object ctx)
 {
    foreach(ctx->repository->object_definitions;; object d)
    {
-	 d->gen_fields(ctx);
+	   d->gen_fields(ctx);
+	   d->_set_renderers();
    }
 }
 

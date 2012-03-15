@@ -4,9 +4,17 @@ object context; // DataModelContext
 constant type = "";
 int is_shadow = 0;
 
-optional string get_editor_string(mixed|void value, void|object i);
-optional mixed from_form(mapping value, void|object i);
+object renderer;// = Fins.Helpers.Renderers.Renderer(); // ScaffoldRenderer
 
+object get_renderer()
+{
+  return renderer;
+}
+
+void set_renderer(object _renderer)
+{
+  renderer = _renderer;
+}
 mixed validate(mixed value, void|object i)
 {
   return value;
@@ -40,11 +48,6 @@ string make_qualifier(mixed v)
     return .InCriteria(v)->get(field_name);
   else
     return field_name + "=" + encode(v);
-}
-
-string get_display_string(void|mixed value, void|object i)
-{
-  	return (string)(value);
 }
 
 string describe(mixed v, void|object i)
