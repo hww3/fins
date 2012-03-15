@@ -27,7 +27,11 @@ object load_app(string app_dir, string config_name)
   werror("have handler.\n");
   //werror("adding %O\n", combine_path(app_dir, "modules"));
 
-  // we shouldn't need to lock here.
+  // add_module_path calls root_module->add_path(), which consults fc.
+  // therefore, unless we want to share a module directory with the default 
+  // environment, we need to temporarily tell the master to use a non-default handler
+  // on this thread. we could also alter add_module_path() to take and use the handler key instead.
+  // also note that we shouldn't need to lock here.
   master()->handlers_for_thread[Thread.this_thread()] = key;
   handler->add_module_path(combine_path(app_dir, "modules")); 
   m_delete(master()->handlers_for_thread, Thread.this_thread());
@@ -42,8 +46,9 @@ object low_load_app(string handler_name, string app_dir, string config_name)
 {
   string cn;
   object a;
-   
+
   write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
+  
   master()->handlers_for_thread[Thread.this_thread()] = handler_name;
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");
   Tools.Logging.set_config_variables((["appdir": app_dir, "config": config_name, "home": getenv("HOME") ]));
