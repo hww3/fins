@@ -19,7 +19,12 @@ void start()
 
   else
   {
+#if constant(Public.Protocols.Stomp)
      stomp = Public.Protocols.Stomp.Client(config["stomp"]["broker"], 1);
+#else
+
+  throw(Error.Generic("Public.Protocols.Stomp module not available.\n"));
+#endif
   }
 }
 

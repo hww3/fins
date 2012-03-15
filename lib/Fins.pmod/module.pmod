@@ -34,7 +34,7 @@ class my_master
 #define DEFAULT_KEY "_fins_default"
  
   mapping(string:object) handlers;
-  mapping(object:string) handlers_for_thread;
+  mapping(object:string) handlers_for_thread = ([]);
   constant fins_master = 1;
   int created = 0;
   
@@ -42,6 +42,7 @@ class my_master
   {
     return fc;
   }
+#if 0
 protected mixed `->root_module()
 {
   object t = Thread.this_thread();
@@ -329,7 +330,8 @@ protected void `->dir_cache=(mixed val)
 
 //    h->source_cache = val;      
   }
-  
+#endif 
+
   void do_replace_master()
   {
     replace_master(this);
@@ -363,7 +365,7 @@ protected void `->dir_cache=(mixed val)
     object o = this_object();
 
     /* Copy variables from the original master */
-    foreach(indices(mm) - ({ 
+    foreach(indices(mm) /* - ({ 
       "handler_root_modules",
       "show_if_constant_errors",
       "_master_file_name",
@@ -392,7 +394,9 @@ protected void `->dir_cache=(mixed val)
       "is_pike_master",
       "compat_minor",
       "compat_major",
-      "want_warnings",    }), string varname) {
+      "want_warnings",    }) */
+     
+      , string varname) {
         if(!catch(o[varname] = mm[varname]))
         werror("%O,\n", varname);
       /* Ignore errors when copying functions */
@@ -471,7 +475,7 @@ protected void `->dir_cache=(mixed val)
     { 
       werror("settin' up shop\n");
       handlers = ([]);
-      handlers_for_thread = ([]);
+      if(!handlers_for_thread) handlers_for_thread = ([]);
       handlers[DEFAULT_KEY] = new_handler(DEFAULT_KEY);
     }
 //write("handlers: %O %O\n", handlers_for_thread, Thread.this_thread());
@@ -532,7 +536,16 @@ protected void `->dir_cache=(mixed val)
      // Check for _static_modules.
      mixed static_modules = _static_modules;
      //werror("getting root module()\n");
+#if __VERSION__ <  7.9
+return joinnode(({static_modules,  @filter(root_module->joined_modules,
+                                lambda(mixed x) {
+                                  return objectp(x) && x->is_resolv_dirnode;
+                                })  })
+, 0);
+#else
 return joinnode(({static_modules}), 0, 0, "predef::");
+#endif
+#if 0
      node = joinnode(({ instantiate_static_modules(static_modules),
                         // Copy relevant stuff from the root module.
                     /*    @filter(root_module->joined_modules,
@@ -542,7 +555,7 @@ return joinnode(({static_modules}), 0, 0, "predef::");
                      0,
 /*                     root_module->fallback_module*/ 0,
                      "predef::");
-
+#endif
      // FIXME: Is this needed?
      // Kluge to get _static_modules to work at top level.
    //  node->cache->_static_modules = static_modules;
