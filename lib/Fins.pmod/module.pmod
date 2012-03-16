@@ -42,7 +42,6 @@ class my_master
   {
     return fc;
   }
-#if 0
 protected mixed `->root_module()
 {
   object t = Thread.this_thread();
@@ -330,7 +329,6 @@ protected void `->dir_cache=(mixed val)
 
 //    h->source_cache = val;      
   }
-#endif 
 
   void do_replace_master()
   {

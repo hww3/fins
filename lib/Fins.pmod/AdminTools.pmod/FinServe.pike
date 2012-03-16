@@ -193,7 +193,8 @@ if(!app) return -1;
   }
   else
   {
-    int p = (int)app->config["web"]["port"];
+    int p;
+    catch(p = (int)app->config["web"]["port"]);
     port = server(handle_request, p||((int)my_port));  
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;
@@ -214,7 +215,7 @@ if(!app) return -1;
     call_out(session_startup, 0, port->get_app());
 
     logger->info("FinServe listening on port " + my_port);
-    logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), (int)my_port);
+    logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p||((int)my_port));
 
     // TODO: do we need to call this for each application?
     if(ready_callback)
