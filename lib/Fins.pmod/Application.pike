@@ -56,6 +56,8 @@ object bp_lock = Thread.Mutex();
 object breakpoint_hilfe;
 object bpbe;
 object bpbet;
+object abe; // the application backend
+protected int _shutdown; // used by abe thread to know when to stop
 
 //! if set to true, controllers will be reloaded on access if they are changed. this setting
 //! is derived from the value of the reload parameter in the controller section of the application config file.
@@ -82,6 +84,18 @@ string get_config_name()
 string get_app_name()
 {
   return config->app_name;
+}
+
+//! override this in your app to do on-shutdown cleanup.
+void stop()
+{
+}
+
+void shutdown()
+{
+  stop();
+  if(abe) call_out(lambda(){_shutdown = 1;}, 0);
+  destruct(this);
 }
 
 //! constructor for the Fins application. It is normally not necessary to override this method,
@@ -186,7 +200,7 @@ static void load_breakpoint()
   if(config["application"] && (int)config["application"]["breakpoint"])
   {
     bpbe = Pike.Backend();
-    bpbet = Thread.Thread(lambda(){ do { catch(bpbe()); } while (1); });
+    bpbet = master()->fins_aware_create_thread(lambda(){ do { catch(bpbe()); } while (1); });
 
     if((int)config["application"]["breakpoint_port"]) breakpoint_port_no = (int)config["application"]["breakpoint_port"];
     log->info("Starting Breakpoint Server on port %d.", breakpoint_port_no);
@@ -208,6 +222,34 @@ static void load_view()
   if(viewclass)
     view = ((program)viewclass)(this);
   else log->debug("No view defined!");
+}
+
+mixed call_out(function f, float|int delay, mixed ... args)
+{
+  if(!abe)
+    create_app_backend();
+  return abe->call_out(f, delay, @args);
+}
+
+void create_app_backend()
+{
+  abe = Pike.Backend();
+  create_thread(run_backend_thread);
+}
+
+void run_backend_thread()
+{
+  do
+  {
+werror("application backend running\n");
+    abe(100.0);
+  }
+  while(!_shutdown);
+}
+
+object create_thread(function f, mixed ... args)
+{
+  return master()->fins_aware_create_thread(f, args);
 }
 
 object get_master_for_thread()
@@ -252,7 +294,9 @@ static object low_load_controller(string controller_name)
   if(f)
   {
     string s = Stdio.read_file(f);
+    object a = _disable_threads();
     c = compile_string(s, f);
+    a = 0;
   }
   else 
   { 

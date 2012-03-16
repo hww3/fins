@@ -68,7 +68,7 @@ static object load_controller(string controller_name)
   if(!has_suffix(cn, ".pike"))
     cn = cn + ".pike";
 
-  foreach( ({""}) + master()->pike_program_path;; string p)
+  foreach( ({""}) + master()->get_program_path();; string p)
   {
     f = Stdio.append_path(p, cn);
     object stat = file_stat(f);
@@ -167,7 +167,8 @@ static void create(object a)
   if(functionp(start))
   {
   //  log->debug("scheduling startup of controller %O.\n", this);
-    call_out(start, 0);
+      start();
+//    app->call_out(start, 0);
   }
 }
 

@@ -208,13 +208,12 @@ if(!app) return -1;
 #endif
 #endif
 
-    workers[app] = start_worker_thread(app);
+    workers[app] = start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name);
     ports += (<port>);
 
     // TODO: do we need to call this for each application?
     call_out(session_startup, 0, port->get_app());
 
-    logger->info("FinServe listening on port " + my_port);
     logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p||((int)my_port));
 
     // TODO: do we need to call this for each application?
@@ -227,14 +226,29 @@ if(!app) return -1;
   }
 }
 
-Thread.Thread start_worker_thread(object app)
+Thread.Thread start_worker_thread(object app, string key)
 {
-  Thread.Thread t = Thread.Thread(run_worker, app);
+  // NOTE should not need to lock here because startup is single-threaded.
+  if(key)
+  {
+    master()->handlers_for_thread[Thread.this_thread()] = key;
+  }
+
+  Thread.Thread t = master()->fins_aware_create_thread(run_worker, app);
+
+  if(key)
+  {
+    m_delete(master()->handlers_for_thread, Thread.this_thread());
+  }
+
   return t;
 }
 
 void run_worker(object app)
 {
+
+  // TODO we should probably have a little more sophistication built in here; probably
+  // need to consider what happen if we want to shut down, etc.
   int keep_running = 1;
   
   do
@@ -321,7 +335,7 @@ void handle_request(Protocols.HTTP.Server.Request request)
 //  werror("APP: %O\n", request->fins_app);
   queue = request->fins_app->queue;
   //thread_handle_request(request);
-//  werror("QUEUE: %O->%O\n", request->fins_app, queue);
+  werror("QUEUE: %O->%O\n", request->fins_app, queue);
   queue->write(request);  
 }
 
@@ -438,6 +452,7 @@ object load_application(string project, string config_name)
   {
     if(err) Log.exception("An error occurred while loading the application.", err);
     else Log.critical("An error occurred while loading the application.");
+    return 0;
 //    exit(1);
   }
 

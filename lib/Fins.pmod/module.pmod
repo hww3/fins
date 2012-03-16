@@ -363,7 +363,25 @@ protected void `->dir_cache=(mixed val)
     object o = this_object();
 
     /* Copy variables from the original master */
-    foreach(indices(mm) /* - ({ 
+    foreach(indices(mm) 
+- 
+({
+
+
+"fc",
+"rev_programs",
+"rev_objects",
+"rev_fc",
+"programs",
+"objects",
+"dir_cache",
+"source_cache",
+"documentation",
+"resolv_cache",
+"root_module"
+})
+/* - ({ 
+     
       "handler_root_modules",
       "show_if_constant_errors",
       "_master_file_name",
@@ -431,6 +449,7 @@ protected void `->dir_cache=(mixed val)
   
   array get_program_path(object|void handler)
   {
+werror("handler: %O=>%O\n", get_handler_for_thread(Thread.this_thread()), get_handler_for_thread(Thread.this_thread())->pike_program_path);
     return pike_program_path;
   }
   
@@ -439,6 +458,7 @@ protected void `->dir_cache=(mixed val)
       werror("add_module_path(%O)\n", tmp);
       ::add_module_path(tmp);
     }
+
   object fins_aware_create_thread(function(mixed ... :void) f, mixed ... args)
   {
     string hn;
@@ -608,6 +628,7 @@ return joinnode(({static_modules}), 0, 0, "predef::");
       tmp=normalize_path(combine_path_with_cwd(tmp));
       pike_program_path-=({tmp});
       pike_program_path=({tmp})+pike_program_path;
+werror("program_path: %O->%O\n", this, pike_program_path);
     }
     
     string _sprintf(int t)

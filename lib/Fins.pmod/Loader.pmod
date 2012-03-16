@@ -33,6 +33,8 @@ object load_app(string app_dir, string config_name)
   // on this thread. we could also alter add_module_path() to take and use the handler key instead.
   // also note that we shouldn't need to lock here.
   master()->handlers_for_thread[Thread.this_thread()] = key;
+  foreach(handler->pike_module_path;;string p)
+    handler->add_module_path(p);
   handler->add_module_path(combine_path(app_dir, "modules")); 
   m_delete(master()->handlers_for_thread, Thread.this_thread());
 
