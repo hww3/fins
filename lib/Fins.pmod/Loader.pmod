@@ -48,17 +48,30 @@ object low_load_app(string handler_name, string app_dir, string config_name)
 {
   string cn;
   object a;
+string b = "";
 
   write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
   
   master()->handlers_for_thread[Thread.this_thread()] = handler_name;
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");
-  Tools.Logging.set_config_variables((["appdir": app_dir, "config": config_name, "home": getenv("HOME") ]));
+    
+/*
+  why, gentle reader, do we do the following?
+  
+*/
 
-  Log.info("Loading log configuration from " + logcfg + ", if present.");
-
+ string stub = 
+#"void f(string app_dir, string config_name, string logcfg) {
+Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"config\": config_name, \"home\": getenv(\"HOME\") ]));
   if(file_stat(logcfg))
+  {
     Tools.Logging.set_config_file(logcfg);
+  }
+ }
+";
+
+ Log.info("Loading log configuration from " + logcfg + ", if present.");
+ compile_string(stub)()->f(app_dir, config_name, logcfg);
 
   Fins.Configuration config = load_configuration(app_dir, config_name);
   Log.info("Preparing to load application " + config->app_name + ".");
@@ -81,7 +94,14 @@ mixed err = catch
 
   object access_logger;
 
-  object al = Tools.Logging.get_logger("access");
+ stub = 
+#"object f() {
+   return Tools.Logging.get_logger(\"access\");
+ }
+";
+
+ object al = (compile_string(stub)()->f());
+
   if(al->log)
     access_logger = al->log;
   else
@@ -104,5 +124,5 @@ Fins.Configuration load_configuration(string app_dir, string config_name)
   if(!stat || stat->isdir)
     throw(Error.Generic("Unable to load configuration file " + config_file + "\n"));
 
-  return Fins.Configuration(app_dir, config_file);
+  return master()->resolv("Fins.Configuration")(app_dir, config_file);
 }

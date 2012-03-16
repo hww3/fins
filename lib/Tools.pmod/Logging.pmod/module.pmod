@@ -83,6 +83,7 @@ void set_config_variables(mapping vars)
 void set_config_file(string configfile)
 {
   default_logger->info("setting configuration file using " + configfile);
+  default_logger->warn("thread: %O, handler: %O\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
   if(!file_stat(configfile))
   {
     throw(Error.Generic("Configuration file " + configfile + " does not exist.\n"));
@@ -172,8 +173,10 @@ mapping build_logger_config(string loggername)
   int isroot;
 
   if(!is_configed) 
+  {
     default_logger->warn("logging system has not been configured yet. only default logger is available.");
-
+    default_logger->warn("thread: %O, handler: %O\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
+  }
   // first, find the nearest logger in the hierarchy.
 
   if(!(_cx = config_values["logger." + loggername]))  // if we don't have an exact match   

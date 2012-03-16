@@ -34,13 +34,8 @@ mapping(object:Session.SessionManager) managers = ([]);
 mapping(object:Thread.Thread) workers = ([]);
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 
-#if constant(_Protocols_DNS_SD)
+#if constant(_Protocols_DNS_SD) &&  constant(Protocols.DNS_SD.Service);
 
-#if constant(Protocols.DNS_SD.Service);
-
-Protocols.DNS_SD.Service bonjour;
-
-#endif
 #endif
 int hilfe_mode = 0;
 int go_background = 0;
@@ -199,13 +194,11 @@ if(!app) return -1;
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;
 
-#if constant(_Protocols_DNS_SD)
-#if constant(Protocols.DNS_SD.Service);
-    bonjour = Protocols.DNS_SD.Service("Fins Application (" + project + "/" + config_name + ")",
-                     "_http._tcp", "", p||((int)my_port));
+#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
+    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + project + "/" + config_name + ")",
+                     "_http._tcp", "", p||((int)my_port)));
 
     logger->info("Advertising this application via Bonjour.");
-#endif
 #endif
 
     workers[app] = start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name);
@@ -335,7 +328,7 @@ void handle_request(Protocols.HTTP.Server.Request request)
 //  werror("APP: %O\n", request->fins_app);
   queue = request->fins_app->queue;
   //thread_handle_request(request);
-  werror("QUEUE: %O->%O\n", request->fins_app, queue);
+//  werror("QUEUE: %O->%O\n", request->fins_app, queue);
   queue->write(request);  
 }
 
@@ -499,7 +492,21 @@ class fins_app_port
   inherit Protocols.HTTP.Server.Port;
 
   protected object app;
+  // why we need both ifs i don't know
+#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
+  protected Protocols.DNS_SD.Service bonjour;
 
+  public void set_bonjour(object _bonjour)
+  {
+    bonjour = _bonjour;
+  }
+
+  public object get_bonjour()
+  {
+    return bonjour;
+  }
+#endif
+  
   public void set_app(object application)
   {
 //    werror("*** setting app: %O\n", application);
