@@ -43,7 +43,6 @@ int clear(string key)
 //!   via the get() method.
 int set(string key, mixed value, int|void timeout, int|void sliding)
 {
-
   values[key] = ({timeout + time(), value, sliding, timeout});
   return 1;
 }
