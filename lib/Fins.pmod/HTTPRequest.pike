@@ -8,16 +8,23 @@ void parse_post()
 {
   ::parse_post();
 
+  foreach(variables; string k; string v)
+    catch(variables[k] = utf8_to_string(v));
+
   if(variables["_lang"])
   {
     set_lang(variables["_lang"]);
     m_delete(variables, "_lang");
   }
+
 }
 
 void parse_request()
 {
   ::parse_request();
+
+  foreach(variables; string k; string v)
+    catch(variables[k] = utf8_to_string(v));
 
   remoteaddr = ((my_fd->query_address()||"")/":")[0];
   string n_not_query = Protocols.HTTP.Server.http_decode_string(not_query);

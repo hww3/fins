@@ -702,9 +702,12 @@ array get_event(.Request request)
   mixed ci;
   string req;
   req = request->not_query;
-  if(req[0] == '/')
+
+  while(req && sizeof(req) && req[0] == '/')
     req = req[1..];
+
   array r = req/"/";
+  
 
 //werror("req: %O\n", r);
 
