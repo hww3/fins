@@ -1,3 +1,5 @@
+inherit Fins.FinsBase;
+
 //! retrieves a value from a mapping given a dot separated variable name. 
 //! 
 //! @returns 

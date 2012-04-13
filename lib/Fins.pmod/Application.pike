@@ -193,6 +193,16 @@ static void load_view()
   else log->debug("No view defined!");
 }
 
+mixed call_out(mixed ... args)
+{
+  return predef::call_out(@args);
+}
+
+mixed create_thread(mixed ... args)
+{
+  return Thread.Thread(@args);
+}
+
 object get_master_for_thread()
 {	
   if(master()->findprog_handler)
