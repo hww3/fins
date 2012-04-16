@@ -19,7 +19,8 @@
 //! "Appname.DataMappings.User."
 //! 
 
-object log = Tools.Logging.get_logger("model.dataobject");
+object log = Tools.Logging.get_logger("fins.model.dataobject");
+object querylog = Tools.Logging.get_logger("fins.model.query");
 
 string default_operator = " AND ";
 
@@ -698,7 +699,7 @@ array find(.DataModelContext context, mapping qualifiers, .Criteria|void criteri
     query += (" " + _default_sort_order_cached);
   }
 
-  if(context->debug) log->debug("%O: %O\n", Tools.Function.this_function(), query);
+  querylog->debug("%O: %O", Tools.Function.this_function(), query);
   
   array qr = context->sql->query(query);
 
@@ -752,7 +753,6 @@ int(0..1) load(.DataModelContext context, mixed id, .DataObjectInstance i, int|v
 
 mapping objs, objs_by_alt;
 
-   if(context->debug)
      log->debug("%O: loading object with id=%O, force=%d", Tools.Function.this_function(), id, force);
 
    if(!id) return 0;
@@ -771,7 +771,6 @@ else
   objs = _objs;
 }
 
-   if(context->debug)
      log->debug("%O: must ask db? %O\n", Tools.Function.this_function(), force || !(id && objs[id]));
 
    if(force || !(id  && objs[id])) // not a new object, so there might be an opportunity to load from cache.
@@ -779,7 +778,7 @@ else
      string query = sprintf(single_select_query, (_fields_string), 
        table_name, primary_key->field_name, primary_key->encode(id, i));
 
-     if(context->debug) log->debug("%O: %O", Tools.Function.this_function(), query);
+     querylog->debug("%O: %O", Tools.Function.this_function(), query);
 
      array result = context->sql->query(query);
 
@@ -837,7 +836,7 @@ else
      string query = sprintf(single_select_query, (_fields_string), 
        table_name, alternate_key->field_name, alternate_key->encode(id, i));
 
-  if(context->debug) log->debug("%O: %O\n", Tools.Function.this_function(), query);
+    querylog->debug("%O: %O", Tools.Function.this_function(), query);
 
 
      array result = context->sql->query(query);
@@ -911,7 +910,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
 {
   mapping objs, objs_by_alt;
 
-  if(context->debug) log->debug("%O(%O, %O, %O)", Tools.Function.this_function(), context, field, i);
+  log->debug("%O(%O, %O, %O)", Tools.Function.this_function(), context, field, i);
 
   if(field == "_id")
     field = primary_key->name;
@@ -951,7 +950,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
     return i->object_data[field];
   }
 
-  if(context->debug) log->debug("%O(): loading data from db.", Tools.Function.this_function());
+  log->debug("%O(): loading data from db.", Tools.Function.this_function());
     load(context, id, i, 0);
 
   if(objs[id])
@@ -969,7 +968,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
    string query = sprintf(single_select_query, fields[field]->field_name, table_name, 
      primary_key->field_name, primary_key->encode(id, i));
 
-  if(context->debug) log->debug("%O(): %O\n", Tools.Function.this_function(), query);
+   querylog->debug("%O(): %O", Tools.Function.this_function(), query);
 
    mixed result = context->sql->query(query);
 
@@ -1014,8 +1013,8 @@ int set_atomic(.DataModelContext context, mapping values, int|void no_validation
       mixed key;
       commit_changes(context, fields_set, object_data, no_validation, 0, i);
       key = primary_key->get_id(i);
-      if(context->debug)
-        log->debug("%O: created new object with id=%O\n", Tools.Function.this_function(), key);
+
+      log->debug("%O: created new object with id=%O\n", Tools.Function.this_function(), key);
       i->set_id(key);
       i->set_new_object(0);
       i->set_saved(1);
@@ -1082,7 +1081,8 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
 
      string update_query = sprintf(single_update_query, table_name, fields[field]->field_name, new_value, primary_key->name, key_value);
      i->set_saved(1);
-  if(context->debug) log->debug("%O: %O\n", Tools.Function.this_function(), update_query);
+
+     querylog->debug("%O: %O", Tools.Function.this_function(), update_query);
      context->sql->query(update_query);
      load(context, i->get_id(), i, 1);   
    }
@@ -1154,7 +1154,7 @@ mapping objs, objs_by_alt;
 
    string delete_query = sprintf(single_delete_query, table_name, primary_key->name, key_value);
 
-  if(context->debug) log->debug("%O: %O\n", Tools.Function.this_function(), delete_query);
+   querylog->debug("%O: %O", Tools.Function.this_function(), delete_query);
    context->sql->query(delete_query);
 
 
@@ -1347,8 +1347,7 @@ static int commit_changes(.DataModelContext context, multiset fields_set, mappin
          string values_clause = "(" + (qvalues * ", ") + ")";
 
          query = sprintf(insert_query, table_name, fields_clause, values_clause);
-
-  		 if(context->debug) log->debug("%O: %O\n", Tools.Function.this_function(), query);
+	 querylog->debug("%O: %O", Tools.Function.this_function(), query);
       }
       else
       {
@@ -1363,7 +1362,7 @@ static int commit_changes(.DataModelContext context, multiset fields_set, mappin
          set_clause = (set * ", ");
          
          query = sprintf(multi_update_query, table_name, set_clause, primary_key->field_name, primary_key->encode(update_id, i));
-  if(context->debug) log->debug("%O: %O\n", Tools.Function.this_function(), query);
+	 querylog->debug("%O: %O", Tools.Function.this_function(), query);
       }
       context->sql->query(query);
 }
@@ -1375,8 +1374,7 @@ int save(.DataModelContext context, int|void no_validation, .DataObjectInstance 
       mixed key;
       commit_changes(context, i->fields_set, i->object_data, no_validation, 0, i);
       key = primary_key->get_id(i);
-      if(context->debug)
-        log->debug("%O: created new object with id=%O\n", Tools.Function.this_function(), key);
+      log->debug("%O: created new object with id=%O\n", Tools.Function.this_function(), key);
 
       i->set_id(key);
       i->set_new_object(0);
