@@ -187,11 +187,14 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
   if(args->args)
     uargs = args->args/"/";
 
+ string target = (args["#"]?("#" + args["#"]):"");
+
   m_delete(args, "controller");
   m_delete(args, "action");
   m_delete(args, "args");
+  m_delete(args, "#");
 
-  string url = app->url_for_action(action, uargs, args);
+  string url = app->url_for_action(action, uargs, args) + target;
 
   return url;
 }
