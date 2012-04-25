@@ -45,7 +45,7 @@ string simple_macro_available_languages(Fins.Template.TemplateData data, mapping
 {
     // we do this to force a language update, if it hasn't happened already.
     string lang = data->get_request()->get_lang();
-    data->get_data()[args->name] = data->get_request()->fins_app->available_languages();	
+    data->get_data()[args->name] = app->available_languages();	
 	return "";
 }
 
@@ -58,7 +58,7 @@ string simple_macro_language_selector(Fins.Template.TemplateData data, mapping|v
 
     // we do this to force a language update, if it hasn't happened already.
     string lang = data->get_request()->get_lang();
- 	mapping l = data->get_request()->fins_app->available_languages();	
+ 	mapping l = app->available_languages();	
 
 	buf += "<form id=\"language_form\">\n";
         buf += (args->text || "Language: ");
@@ -95,9 +95,9 @@ string simple_macro_action_link(Fins.Template.TemplateData data, mapping|void ar
     event = args->action;
 //  if(!event) throw(Error.Generic("action_link: event name must be provided.\n"));
 
-  controller = request->controller;
+  catch(controller = request->controller);
   if(args->controller)
-    controller = data->get_request()->fins_app->get_controller_for_path(args->controller, controller);
+    controller = app->get_controller_for_path(args->controller, controller);
   if(!controller) throw(Error.Generic("action_link: controller " + args->controller + " can not be resolved.\n"));
 
   mixed action = controller[event];
@@ -112,7 +112,7 @@ string simple_macro_action_link(Fins.Template.TemplateData data, mapping|void ar
   m_delete(args, "action");
   m_delete(args, "args");
 
-  string url = data->get_request()->fins_app->url_for_action(action, uargs, args);
+  string url = app->url_for_action(action, uargs, args);
 
   return "<a href=\"" + url + "\">";
 }
@@ -132,7 +132,7 @@ string simple_macro_action_form(Fins.Template.TemplateData data, mapping|void ar
 
   controller = request->controller;
   if(args->controller)
-    controller = data->get_request()->fins_app->get_controller_for_path(args->controller, controller);
+    controller = app->get_controller_for_path(args->controller, controller);
   if(!controller) throw(Error.Generic("action_form: controller " + args->controller + " can not be resolved.\n"));
 
   mixed action = controller[event];
@@ -154,7 +154,7 @@ string simple_macro_action_form(Fins.Template.TemplateData data, mapping|void ar
   m_delete(args, "method");
   m_delete(args, "enctype");
 
-  string url = data->get_request()->fins_app->url_for_action(action, uargs, args);
+  string url = app->url_for_action(action, uargs, args);
 
   return "<form action=\"" + url + "\"" + other + ">";
 }
@@ -173,7 +173,7 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
 
   controller = request->controller;
   if(args->controller)
-    controller = data->get_request()->fins_app->get_controller_for_path(args->controller, controller);
+    controller = app->get_controller_for_path(args->controller, controller);
   if(!controller) throw(Error.Generic("action_link: controller " + args->controller + " can not be resolved.\n"));
 
   mixed action = controller[event];
@@ -188,7 +188,7 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
   m_delete(args, "action");
   m_delete(args, "args");
 
-  string url = data->get_request()->fins_app->url_for_action(action, uargs, args);
+  string url = app->url_for_action(action, uargs, args);
 
   return url;
 }
@@ -462,7 +462,7 @@ string simple_macro_describe_datetime(Fins.Template.TemplateData data, mapping|v
 //!
 string simple_macro_context_root(Fins.Template.TemplateData data, mapping|void args)
 {
-  return data->get_request()->fins_app->context_root;
+  return app->context_root;
 }
 
 //! args: var, format
