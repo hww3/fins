@@ -26,6 +26,11 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added a new logger "model.dataobject.query" that will log all db 
+      queries when set to DEBUG.
+-  If a datatype is a key and has an alternate key, you may use either
+   id or the alternate key when performing searches: 
+      context->find->users((["group": "editors"])
 -  Added "_pipe_in_progress" option for telling FinServe that the any
      response to the client will be managed by the application.
 -  Added "enable" config setting for Tools.Logging loggers and appenders. 

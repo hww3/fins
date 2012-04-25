@@ -108,13 +108,16 @@ string simple_macro_action_link(Fins.Template.TemplateData data, mapping|void ar
   if(args->args)
     uargs = ((string)args->args)/"/";
 
+  string target = (args["#"]?("#" + args["#"]):"");
+
   m_delete(args, "controller");
   m_delete(args, "action");
   m_delete(args, "args");
+  m_delete(args, "#");
 
   string url = app->url_for_action(action, uargs, args);
 
-  return "<a href=\"" + url + "\">";
+  return "<a href=\"" + url + target + "\">";
 }
 
 //! args: controller, action, args, method, enctype
@@ -176,7 +179,7 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
     controller = app->get_controller_for_path(args->controller, controller);
   if(!controller) throw(Error.Generic("action_link: controller " + args->controller + " can not be resolved.\n"));
 
-  mixed action = controller[event];
+  mixed action = controller[event||"index"];
   if(!action) throw(Error.Generic("action_link: action " + args->action + " can not be resolved.\n"));
 //werror("********* action: %O\n", action);
   array uargs;
@@ -184,11 +187,14 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
   if(args->args)
     uargs = args->args/"/";
 
+ string target = (args["#"]?("#" + args["#"]):"");
+
   m_delete(args, "controller");
   m_delete(args, "action");
   m_delete(args, "args");
+  m_delete(args, "#");
 
-  string url = app->url_for_action(action, uargs, args);
+  string url = app->url_for_action(action, uargs, args) + target;
 
   return url;
 }

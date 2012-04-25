@@ -496,7 +496,8 @@ string get_path_for_action(function|object action, int|void nocontextroot)
     {
       object c = function_object(action);
       string path1 = get_path_for_controller(c);
-      path = combine_path(nocontextroot?"":context_root, path1, function_name(action));
+      string fn;
+      path = combine_path(nocontextroot?"":context_root, path1, ((fn=function_name(action))=="index")?"":fn);
     }
     else if(Program.implements(object_program(action), Fins.Helpers.Runner))
     {

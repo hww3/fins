@@ -55,6 +55,10 @@ appender=default_debuglog
 [logger.fins.model]
 level=DEBUG
 
+# set to debug in order to log db queries
+[logger.fins.model.query]
+appender=default_console
+
 [appender.default_console]
 class=Tools.Logging.Log.ConsoleAppender
 

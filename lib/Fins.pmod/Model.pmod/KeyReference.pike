@@ -51,6 +51,8 @@ mixed validate(mixed value, void|.DataObjectInstance i)
 {
 //Log.debug("%O(%O, %O)", Tools.Function.this_function(), value, i);
 
+   mixed o;
+
    if(intp(value)) return value;
 
    if(value == .Undefined && !null && default_value == .Undefined)
@@ -72,6 +74,10 @@ mixed validate(mixed value, void|.DataObjectInstance i)
    else if(stringp(value) && ((int)value || value == "0"))
    {
      return (int)value;
+   }
+   else if(stringp(value) && (o = context->repository->get_object(otherobject)) && o->alternate_key)
+   {
+      return context->find_by_alternate(otherobject, value);
    }
    else if(!objectp(value))
      throw(Error.Generic(sprintf("Got a non-object value instead of expected %s.\n", otherobject)));
