@@ -555,6 +555,11 @@ public mixed handle_http(.Request request)
 {
   function event;
 
+  while(sizeof(request->not_query) && request->not_query[0] == '/')
+    catch(request->not_query = request->not_query[1..]);
+
+  request->not_query = "/" + request->not_query;
+
   // we have to short circuit this one...
   if(request->not_query == "/favicon.ico")
   {
