@@ -241,7 +241,7 @@ void run_backend_thread()
 {
   do
   {
-werror("application backend running\n");
+//werror("application backend running\n");
     abe(100.0);
   }
   while(!_shutdown);
@@ -610,6 +610,11 @@ public mixed handle_http(.Request request)
 {
   function event;
 
+  while(sizeof(request->not_query) && request->not_query[0] == '/')
+    catch(request->not_query = request->not_query[1..]);
+
+  request->not_query = "/" + request->not_query;
+
   // we have to short circuit this one...
   if(request->not_query == "/favicon.ico")
   {
@@ -806,7 +811,7 @@ array get_event(.Request request)
 
   cc = controller;
   request->controller = cc;
-write("controller: %O\n", cc);
+//write("controller: %O\n", cc);
   request->controller_name = cc->__controller_name;
 
 
