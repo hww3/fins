@@ -9,14 +9,21 @@ string simple_macro_sessionid(Fins.Template.TemplateData data, mapping|void args
 //! args id, string
 string simple_macro_LOCALE(Fins.Template.TemplateData data, mapping|void args)
 {
-	object r = data->get_request();
-if(!r)
-{
-  return args["string"];
-}
-else
-	return Locale.translate(r->get_project(), r->get_lang(), 
-					(int)args["id"], args["string"]);
+  object r = data->get_request();
+
+  string t;
+
+  if(!r)
+  {
+    t = args["string"];
+  }
+  else
+  {
+    if(catch(t = Locale.translate(r->get_project(), r->get_lang(), 
+      (int)args["id"], args["string"])))
+      werror("r: %O, args: %O\n", r, args);
+  }
+    return t;
 }
 
 //! args: var

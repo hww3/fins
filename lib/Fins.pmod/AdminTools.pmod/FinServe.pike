@@ -156,6 +156,17 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
 }
 
+void run_hilfe(object app)
+{
+  write("\nStarting interactive interpreter...\n");
+  add_constant("application", app);
+  object in = Stdio.FILE("stdin");
+  object out = Stdio.File("stdout");
+  object o = Fins.Helpers.Hilfe.FinsHilfe();
+  exit(1);
+  return;
+}
+
 int start_app(string project, string config_name, int my_port)
 {
   object app;
@@ -179,12 +190,8 @@ if(!app) return -1;
     Pike.DefaultBackend(0.0);
     Pike.DefaultBackend(0.0);
 
-    write("\nStarting interactive interpreter...\n");
-    add_constant("application", app);
-    object in = Stdio.FILE("stdin");
-    object out = Stdio.File("stdout");
-    object o = Fins.Helpers.Hilfe.FinsHilfe();
-    return 0;
+  app->create_thread(run_hilfe, app);
+  return -1;
   }
   else
   {
