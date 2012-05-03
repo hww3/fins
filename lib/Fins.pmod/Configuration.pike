@@ -10,6 +10,9 @@ string config_file;
 //! the name of the configuration in use, such as dev
 string config_name;
 
+//! the name of the multi-tenant handler, if present
+string handler_name;
+
 static mapping values;
 
 //!
@@ -19,6 +22,14 @@ static void create(string appdir, string|mapping _config_file)
 
   if(appdir)
     app_name = ((appdir/"/")-({""}))[-1];
+
+
+  // TODO: should we have the following bit of code here?
+  // I'm somewhat dubious.
+  object m = master();
+  if(m->handlers_for_thread)
+    handler_name = m->handlers_for_thread[Thread.this_thread()];
+
 
   if(stringp(_config_file))
   {

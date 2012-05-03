@@ -53,6 +53,7 @@ string b = "";
   write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
   
   master()->handlers_for_thread[Thread.this_thread()] = handler_name;
+
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");
     
 /*
