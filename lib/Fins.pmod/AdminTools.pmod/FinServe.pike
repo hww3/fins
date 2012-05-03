@@ -146,6 +146,12 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
   config_name += allocate(sizeof(projects) - sizeof(config_name));
 
+  if(hilfe_mode && sizeof(projects) > 1)
+  {
+    werror("hilfe mode is only available when starting 1 application.\n");
+    exit(1);
+  }
+
   foreach(projects;int i;string project)
   {
     int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, ((int)my_port++));
@@ -167,7 +173,7 @@ void run_hilfe(object app)
   return;
 }
 
-int start_app(string project, string config_name, int my_port)
+int start_app(string project, string config_name, int my_port, int|void solo)
 {
   object app;
   object port;
