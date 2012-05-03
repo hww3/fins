@@ -196,7 +196,7 @@ if(!app) return -1;
     Pike.DefaultBackend(0.0);
     Pike.DefaultBackend(0.0);
 
-  app->create_thread(run_hilfe, app);
+  master()->low_create_thread(run_hilfe, app->config->handler_name, app);
   return -1;
   }
   else
