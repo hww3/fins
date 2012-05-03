@@ -21,44 +21,59 @@ object load_app(string app_dir, string config_name)
   
   if(!file_stat(app_dir)) 
     throw(Error.Generic("Application directory " + app_dir + " does not exist.\n"));
+
+  object _master = master();
   
-  key = app_dir + "#" + config_name;
-  handler = master()->new_handler(key);
-  werror("have handler.\n");
-  //werror("adding %O\n", combine_path(app_dir, "modules"));
+  if(_master->multi_tenant_aware)
+  {
+    key = app_dir + "#" + config_name;
+    handler = master()->new_handler(key);
+    werror("have handler.\n");
+    //werror("adding %O\n", combine_path(app_dir, "modules"));
 
   // add_module_path calls root_module->add_path(), which consults fc.
   // therefore, unless we want to share a module directory with the default 
   // environment, we need to temporarily tell the master to use a non-default handler
   // on this thread. we could also alter add_module_path() to take and use the handler key instead.
   // also note that we shouldn't need to lock here.
-  master()->handlers_for_thread[Thread.this_thread()] = key;
-  foreach(handler->pike_module_path;;string p)
-    handler->add_module_path(p);
-  handler->add_module_path(combine_path(app_dir, "modules")); 
-  m_delete(master()->handlers_for_thread, Thread.this_thread());
+  //
+  // do we do the re-add of the module path in order to force the new
+  // handler to re-init itself? seems like a kluge but may have been
+  // simpler to accept this ugliness rather than rewriting more of the master.
+    master()->handlers_for_thread[Thread.this_thread()] = key;
+    foreach(handler->pike_module_path;;string p)
+      handler->add_module_path(p);
+    handler->add_module_path(combine_path(app_dir, "modules")); 
+    m_delete(master()->handlers_for_thread, Thread.this_thread());
 
-  handler->add_program_path(combine_path(app_dir, "classes")); 
-  object thread = Thread.Thread(low_load_app, key, app_dir, config_name);  
+    handler->add_program_path(combine_path(app_dir, "classes")); 
+    object thread = Thread.Thread(low_load_app, key, app_dir, config_name);  
 
-  return thread->wait();
+    return thread->wait();
+  }
+  else // not running multi-tenant mode.
+  {
+    add_module_path(combine_path(app_dir, "modules")); 
+    add_program_path(combine_path(app_dir, "classes")); 
+    return low_load_app(0, app_dir, config_name);
+  }
 }
 
 object low_load_app(string handler_name, string app_dir, string config_name)
 {
   string cn;
   object a;
-string b = "";
-
-  write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
-  
-  master()->handlers_for_thread[Thread.this_thread()] = handler_name;
-
+  string b = "";
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");
-    
+
+  if(master()->multi_tenant_aware)
+  {
+    write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
+    master()->handlers_for_thread[Thread.this_thread()] = handler_name;
+  }
+
 /*
-  why, gentle reader, do we do the following?
-  
+  why, gentle reader, do we do the following?  
 */
 
  string stub = 

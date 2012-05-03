@@ -83,7 +83,9 @@ void set_config_variables(mapping vars)
 void set_config_file(string configfile)
 {
   default_logger->info("setting configuration file using " + configfile);
-  default_logger->warn("thread: %O, handler: %O\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
+
+  if(master()->multi_tenant_aware)    
+    default_logger->warn("thread: %O, handler: %O\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
   if(!file_stat(configfile))
   {
     throw(Error.Generic("Configuration file " + configfile + " does not exist.\n"));

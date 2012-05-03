@@ -68,7 +68,7 @@ static object load_controller(string controller_name)
   if(!has_suffix(cn, ".pike"))
     cn = cn + ".pike";
 
-  foreach( ({""}) + master()->get_program_path();; string p)
+  foreach( ({""}) + app->get_program_path();; string p)
   {
     f = Stdio.append_path(p, cn);
     object stat = file_stat(f);

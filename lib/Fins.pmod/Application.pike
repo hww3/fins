@@ -200,7 +200,7 @@ static void load_breakpoint()
   if(config["application"] && (int)config["application"]["breakpoint"])
   {
     bpbe = Pike.Backend();
-    bpbet = master()->fins_aware_create_thread(lambda(){ do { catch(bpbe()); } while (1); });
+    bpbet = create_thread(lambda(){ do { catch(bpbe(1000.0)); } while (1); });
 
     if((int)config["application"]["breakpoint_port"]) breakpoint_port_no = (int)config["application"]["breakpoint_port"];
     log->info("Starting Breakpoint Server on port %d.", breakpoint_port_no);
@@ -249,20 +249,25 @@ void run_backend_thread()
 
 object create_thread(function f, mixed ... args)
 {
-  return master()->fins_aware_create_thread(f, args);
+  if(master()->multi_tenant_aware)
+    return master()->fins_aware_create_thread(f, args);
+  else
+    return Thread.Thread(f, @args);
 }
 
 object get_master_for_thread()
 {	
-  if(master()->findprog_handler)
-   return master()->get_findprog_handler_for_thread();	
+  if(master()->multi_tenant_aware)
+    return master()->get_findprog_handler_for_thread();	
   else return master();
 }
 
 //! returns the current thead's program path
 array get_program_path()
 {
-	return master()->get_program_path();
+  if(master()->multi_tenant_aware)
+    return master()->get_program_path();
+  else return master()->pike_program_path;
 }
 
 static object low_load_controller(string controller_name)

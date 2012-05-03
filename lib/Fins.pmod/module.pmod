@@ -1,6 +1,10 @@
 constant __author = "Bill Welliver <hww3@riverweb.com>";
 constant __version = "0.9.5";
 
+#if __VERSION__ >= 7.9.5
+#define FINS_MULTI_TENANT 1
+#endif
+
 //!
 string version()
 {
@@ -14,6 +18,8 @@ static void create()
   ts = time();
   werror("bootstrap!\n");
 
+#ifdef FINS_MULTI_TENANT
+
   // we don't want to do this if it's already been done.
   if(!master()->fins_master)
   {
@@ -24,12 +30,17 @@ static void create()
       } 
   else
     werror("no master replacement needed!");
+#endif
 }
 
+
+#ifdef FINS_MULTI_TENANT
 
 class my_master
 {
   inherit "/master": old_master;
+
+  constant multi_tenant_aware = 1;
 
 #define DEFAULT_KEY "_fins_default"
  
@@ -559,7 +570,7 @@ werror("handler: %O=>%O\n", get_handler_for_thread(Thread.this_thread()), get_ha
      // Check for _static_modules.
      mixed static_modules = _static_modules;
      //werror("getting root module()\n");
-#if __VERSION__ <  7.9
+#ifdef FINS_MULTI_TENANT
 return joinnode(({static_modules,  @filter(root_module->joined_modules,
                                 lambda(mixed x) {
                                   return objectp(x) && x->is_resolv_dirnode;
@@ -642,3 +653,5 @@ werror("program_path: %O->%O\n", this, pike_program_path);
     }
   } 
 }
+
+#endif /* MULTI_TENANT */

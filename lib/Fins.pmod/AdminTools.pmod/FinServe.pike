@@ -67,7 +67,7 @@ int run()
 
 int main(int argc, array(string) argv)
 {
-  int my_port = default_port;
+  int my_port;
   array(string) config_name = ({});
 
   foreach(Getopt.find_all_options(argv,aggregate(
@@ -152,6 +152,12 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
     exit(1);
   }
 
+  if(sizeof(projects) > 1 && !master()->multi_tenant_aware)
+  {
+    werror("multi-tenant mode is only available when running Pike 7.9 or higher.\n");
+    exit(1);
+  }
+
   foreach(projects;int i;string project)
   {
     int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, ((int)my_port++));
@@ -196,20 +202,31 @@ if(!app) return -1;
     Pike.DefaultBackend(0.0);
     Pike.DefaultBackend(0.0);
 
-  master()->low_create_thread(run_hilfe, app->config->handler_name, app);
+  object _master = master();
+
+  if(_master->multi_tenant_aware)
+  {
+    _master->low_create_thread(run_hilfe, app->config->handler_name, app);
+  }
+  else
+  {
+    Thread.Thread(run_hilfe, app);
+  }
   return -1;
   }
   else
   {
     int p;
     catch(p = (int)app->config["web"]["port"]);
-    port = server(handle_request, p||((int)my_port));  
+    // prefer command line specification to config file to default.
+    p = (int)my_port || p || default_port;
+    port = server(handle_request, p);  
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;
 
 #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
     port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + project + "/" + config_name + ")",
-                     "_http._tcp", "", p||((int)my_port)));
+                     "_http._tcp", "", p);
 
     logger->info("Advertising this application via Bonjour.");
 #endif
@@ -220,7 +237,7 @@ if(!app) return -1;
     // TODO: do we need to call this for each application?
     call_out(session_startup, 0, port->get_app());
 
-    logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p||((int)my_port));
+    logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p);
 
     // TODO: do we need to call this for each application?
     if(ready_callback)
@@ -234,19 +251,28 @@ if(!app) return -1;
 
 Thread.Thread start_worker_thread(object app, string key)
 {
-  // NOTE should not need to lock here because startup is single-threaded.
-  if(key)
+  Thread.Thread t;
+  object _master = master();
+
+  if(_master->multi_tenant_aware)
   {
-    master()->handlers_for_thread[Thread.this_thread()] = key;
+    // NOTE should not need to lock here because startup is single-threaded.
+    if(key)
+    {
+      _master->handlers_for_thread[Thread.this_thread()] = key;
+    }
+
+    t = _master->fins_aware_create_thread(run_worker, app);
+
+    if(key)
+    {
+      m_delete(_master->handlers_for_thread, Thread.this_thread());
+    }
   }
-
-  Thread.Thread t = master()->fins_aware_create_thread(run_worker, app);
-
-  if(key)
+  else 
   {
-    m_delete(master()->handlers_for_thread, Thread.this_thread());
+    t = Thread.Thread(run_worker, app);
   }
-
   return t;
 }
 
