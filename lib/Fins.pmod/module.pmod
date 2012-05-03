@@ -464,8 +464,13 @@ werror("handler: %O=>%O\n", get_handler_for_thread(Thread.this_thread()), get_ha
     string hn;
     hn = handlers_for_thread[Thread.this_thread()];
 
-    object t = Thread.Thread(splice(setup_thread, f), hn, @args);
-    handlers_for_thread[t] = hn;
+    return low_create_thread(f, handler, @args);
+  }
+
+  object low_create_thread(function(mixed ... :void) f, string handler, mixed ... args)
+  {
+    object t = Thread.Thread(splice(setup_thread, f), handler, @args);
+    return t;
   }
 
   void setup_thread(string hn, mixed ... args)
