@@ -2,6 +2,9 @@ Version 0.9.5
 
 INCOMPATIBLE CHANGES
 
+- Requires Pike 7.9+ due to multi-tenant changes.
+- When running in multi-tenant mode, call_out() and create_thread() must
+    be changed to use those present in the application.
 - Fins.Model is no longer the go-to location for finding objects.
     In its place, you want to use context->find and friends. To get 
     a context for your data model, use Fins.DataSource.modelid, where
@@ -26,6 +29,11 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  FinsServe now supports "multi-tenant" mode. This allows multiple apps
+      (as well as multiple copies of the same app) to run within a single
+      process. This is currently only available under Pike 7.9+ and
+      requires the use of special call_out() and create_thread() methods
+      located in Fins.Application, instead of out of the box versions.
 -  Added a new logger "model.dataobject.query" that will log all db 
       queries when set to DEBUG.
 -  If a datatype is a key and has an alternate key, you may use either
