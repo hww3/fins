@@ -2,7 +2,6 @@ Version 0.9.5
 
 INCOMPATIBLE CHANGES
 
-- Requires Pike 7.9+ due to multi-tenant changes.
 - When running in multi-tenant mode, call_out() and create_thread() must
     be changed to use those present in the application.
 - Fins.Model is no longer the go-to location for finding objects.
