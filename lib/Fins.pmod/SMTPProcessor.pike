@@ -17,7 +17,22 @@ inherit Processor;
 
 object smtp;
 
-program server = Protocols.SMTP.Server;
+program server = SMTPServer;
+
+class SMTPServer
+{
+  inherit Protocols.SMTP.Server;
+
+  static void create(array domains, int port, string host, function _cb_mailfrom,
+    function _cb_rcptto, function _cb_data, object app)
+  {
+    fins_app = app;
+    ::create(domains, port, host, _cb_mailfrom, _cb_rcptto, _cb_data);
+    fdport->set_backend(fins_app->get_backend());
+  }
+
+  object fins_app;
+}
 
 array supported_protocols()
 {
@@ -36,8 +51,8 @@ void start()
     array|string domains = config["smtp"]["domain"];
     if(stringp(domains)) domains = ({ domains });
     Log.info("Opening SMTP Listener on %s:%d for domains %s.", host, port, domains*", ");
-    smtp = Protocols.SMTP.Server(domains, port, (host=="*"?0:host), 
-	_cb_mailfrom, _cb_rcptto, _cb_data);
+    smtp = server(domains, port, (host=="*"?0:host), 
+	_cb_mailfrom, _cb_rcptto, _cb_data, app);
   }
 }
 

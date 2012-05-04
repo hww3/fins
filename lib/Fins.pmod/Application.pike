@@ -237,6 +237,13 @@ void create_app_backend()
   create_thread(run_backend_thread);
 }
 
+object get_backend()
+{
+  if(!abe)
+    create_app_backend();
+  return abe;
+}
+
 void run_backend_thread()
 {
   do
@@ -250,9 +257,12 @@ void run_backend_thread()
 object create_thread(function f, mixed ... args)
 {
   if(master()->multi_tenant_aware)
-    return master()->fins_aware_create_thread(f, args);
+    return master()->fins_aware_create_thread(f, @args);
   else
+  {
+ werror("***\n*** just a regfular thread.\n***\n");
     return Thread.Thread(f, @args);
+  }
 }
 
 object get_master_for_thread()
