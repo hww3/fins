@@ -29,6 +29,7 @@ int session_timeout = 7200;
 //Protocols.HTTP.Server.Port port;
 
 program server = fins_app_port;
+int _ports_defaulted;
 
 mapping(object:Session.SessionManager) managers = ([]);
 mapping(object:Thread.Thread) workers = ([]);
@@ -160,7 +161,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
   foreach(projects;int i;string project)
   {
-    int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, ((int)my_port++));
+    int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, ((int)my_port));
     if(res == 0) return 0;
   }
 
@@ -184,7 +185,6 @@ int start_app(string project, string config_name, int my_port, int|void solo)
   object app;
   object port;
 
-  Log.info("FinServe starting on port " + my_port);
   Log.info("FinServe loading application " + project + " using configuration " + config_name);
   logger=Tools.Logging.get_default_logger();
 
@@ -219,7 +219,7 @@ if(!app) return -1;
     int p;
     catch(p = (int)app->config["web"]["port"]);
     // prefer command line specification to config file to default.
-    p = (int)my_port || p || default_port;
+    p = (int)my_port || p || (default_port + (_ports_defaulted++));
     port = server(handle_request, p);  
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;

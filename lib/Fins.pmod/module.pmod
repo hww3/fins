@@ -498,7 +498,8 @@ werror("low_Create_thread: %O\n", handler);
       {
         mixed a;
         f(@args);
-        [a, args] = Array.shift(args);
+        if(sizeof(args))
+          [a, args] = Array.shift(args);
       }
     }
   }
