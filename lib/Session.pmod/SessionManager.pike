@@ -9,7 +9,7 @@ array session_storage = ({});
 void create()
 {
   log = Tools.Logging.get_logger("session");
-  call_out(start_session_cleaner, 5);
+  call_out(start_session_cleaner, random(30));
 
 }
 
@@ -24,7 +24,7 @@ void session_cleaner()
       engine->clean_sessions(default_timeout);
     } 
 
-    sleep(cleaner_interval);
+    sleep((cleaner_interval/0.75) + random(cleaner_interval/2.0));
   } 
   while(1);
 }
