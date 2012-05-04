@@ -523,6 +523,8 @@ void destroy()
       destruct(port);
     }
   }
+
+  exit(0);
 }
 
 
