@@ -16,7 +16,7 @@ int ts;
 static void create()
 {
   ts = time();
-  werror("bootstrap!\n");
+  //werror("bootstrap!\n");
 
 #ifdef FINS_MULTI_TENANT
 
@@ -24,12 +24,12 @@ static void create()
   if(!master()->fins_master)
   {
         object m = my_master();
-    werror("got master!\n");
+    //werror("got master!\n");
     m->do_replace_master();
-    werror("replaced master.\n");
+    //werror("replaced master.\n");
       } 
   else
-    werror("no master replacement needed!");
+    ; //werror("no master replacement needed!");
 #endif
 }
 
@@ -425,7 +425,7 @@ protected void `->dir_cache=(mixed val)
      
       , string varname) {
         if(!catch(o[varname] = mm[varname]))
-        werror("%O,\n", varname);
+       ;// werror("%O,\n", varname);
       /* Ignore errors when copying functions */
     }
 
@@ -449,7 +449,7 @@ protected void `->dir_cache=(mixed val)
       ::create();
     }
 
-    werror("created!\n");
+    //werror("created!\n");
     created = 1;
     
     // it appears that some during-master-object-creation initialization logic is wiping out the pre-set variables.
@@ -460,13 +460,13 @@ protected void `->dir_cache=(mixed val)
   
   array get_program_path(object|void handler)
   {
-werror("handler: %O=>%O\n", get_handler_for_thread(Thread.this_thread()), get_handler_for_thread(Thread.this_thread())->pike_program_path);
+//werror("handler: %O=>%O\n", get_handler_for_thread(Thread.this_thread()), get_handler_for_thread(Thread.this_thread())->pike_program_path);
     return pike_program_path;
   }
   
     void add_module_path(string tmp)
     {
-      werror("add_module_path(%O)\n", tmp);
+      //werror("add_module_path(%O)\n", tmp);
       ::add_module_path(tmp);
     }
 
@@ -480,13 +480,14 @@ werror("handler: %O=>%O\n", get_handler_for_thread(Thread.this_thread()), get_ha
 
   object low_create_thread(function(mixed ... :void) f, string handler, mixed ... args)
   {
-werror("low_Create_thread: %O\n", handler);
+//werror("low_Create_thread: %O\n", handler);
     object t = Thread.Thread(splice(setup_thread, f), handler, @args);
     return t;
   }
 
   void setup_thread(string hn, mixed ... args)
-  {   werror("adding handler %O for %O\n", hn, Thread.this_thread());
+  {   
+//werror("adding handler %O for %O\n", hn, Thread.this_thread());
       handlers_for_thread[Thread.this_thread()] = hn;
   }
 
@@ -509,7 +510,7 @@ werror("low_Create_thread: %O\n", handler);
     string hn;
     if(!handlers) // we might get here via __INIT, which means none of the object-global variables are initialized.
     { 
-      werror("settin' up shop\n");
+      //werror("settin' up shop\n");
       handlers = ([]);
       if(!handlers_for_thread) handlers_for_thread = ([]);
       handlers[DEFAULT_KEY] = new_handler(DEFAULT_KEY);
@@ -538,13 +539,13 @@ werror("low_Create_thread: %O\n", handler);
       if(!d) // we must be in an old master.
       {
 //        if(created) throw("Wowza!\n");
-        werror("we're an old master!\n");
+        //werror("we're an old master!\n");
         d = master();
         h->root_module = d->get_root_module();
       }
       else
       {
-        werror("we're not an old master\n");
+        //werror("we're not an old master\n");
 //        throw("wowza2!\n");
         h->root_module = low_get_root_module();
       }
@@ -646,7 +647,7 @@ return joinnode(({static_modules}), 0, 0, "predef::");
       tmp=normalize_path(combine_path_with_cwd(tmp));
       pike_program_path-=({tmp});
       pike_program_path=({tmp})+pike_program_path;
-werror("program_path: %O->%O\n", this, pike_program_path);
+//werror("program_path: %O->%O\n", this, pike_program_path);
     }
     
     string _sprintf(int t)
