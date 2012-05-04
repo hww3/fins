@@ -128,7 +128,7 @@ void register_types(object ctx)
   object im = ctx->repository->get_object_module();
   object mm = ctx->repository->get_model_module();
 
-   log->debug("Data mapping module: %O\n", mm);
+   log->debug("Data mapping module: %O", mm);
   foreach(mkmapping(indices(mm), values(mm));string n; program c)
   {
     object d = c(ctx);
