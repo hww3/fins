@@ -1,7 +1,7 @@
 #!/usr/local/bin/pike -Mlib -DLOCALE_DEBUG
 
 //import Fins;
-import Tools.Logging;
+//import Tools.Logging;
 //inherit Fins.Bootstrap;
 
 #define DEFAULT_CONFIG_NAME "dev"
@@ -31,7 +31,7 @@ int session_timeout = 7200;
 program server = fins_app_port;
 int _ports_defaulted;
 
-mapping(object:Session.SessionManager) managers = ([]);
+mapping/*(object:Session.SessionManager)*/ managers = ([]);
 mapping(object:Thread.Thread) workers = ([]);
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 
@@ -185,8 +185,8 @@ int start_app(string project, string config_name, int my_port, int|void solo)
   object app;
   object port;
 
-  Log.info("FinServe loading application " + project + " using configuration " + config_name);
-  logger=Tools.Logging.get_default_logger();
+  logger=master()->resolv("Tools.Logging.get_default_logger")();
+  logger->info("FinServe loading application " + project + " using configuration " + config_name);
 
   app = load_application(project, config_name);
 if(!app) return -1;
@@ -235,7 +235,7 @@ if(!app) return -1;
     ports += (<port>);
 
     // TODO: do we need to call this for each application?
-    call_out(session_startup, 0, port->get_app());
+    port->get_app()->call_out(session_startup, 2, port->get_app());
 
     logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p);
 
@@ -296,12 +296,12 @@ void run_worker(object app)
 
 void session_startup(object app)
 {
-  Session.SessionStorage s;
-  Session.SessionManager session_manager;
+  object s;
+  object session_manager;
 
-  Log.info("Starting Session Manager for %s/%s.", app->get_app_name(), app->get_config_name());
+  logger->info("Starting Session Manager for %s/%s.", app->get_app_name(), app->get_config_name());
 
-  session_manager = Session.SessionManager();
+  session_manager = master()->resolv("Session.SessionManager")();
 
   if(app->config["web"])
   {
@@ -318,34 +318,34 @@ void session_startup(object app)
     case "file":
       if(!session_storagedir)
       {
-        Log.error("You must specify a filesystem location in order to use file-based session storage.");
+        logger->error("You must specify a filesystem location in order to use file-based session storage.");
         exit(1);
       }
-      Log.info("SessionManager will use files in " + session_storagedir + " to store session data.");
-      s = Session.FileSessionStorage();
+      logger->info("SessionManager will use files in " + session_storagedir + " to store session data.");
+      s = master()->resolv("Session.FileSessionStorage")();
       s->set_storagedir(session_storagedir);
       break;
 
     case "sqlite":
       if(!session_storagedir)
       {
-        Log.error("You must specify a database location in order to use SQLite session storage.");
+        logger->error("You must specify a database location in order to use SQLite session storage.");
         exit(1);
       }
-      Log.info("SessionManager will use SQLite database " + session_storagedir + " to store session data.");
-      s = Session.SQLiteSessionStorage();
+      logger->info("SessionManager will use SQLite database " + session_storagedir + " to store session data.");
+      s = master()->resolv("Session.SQLiteSessionStorage")();
       s->set_storagedir(session_storagedir);
       break;
 
     case "ram":
-      Log.info("SessionManager will use RAM to store session data.");
-      s = Session.RAMSessionStorage();
+      logger->info("SessionManager will use RAM to store session data.");
+      s = master()->resolv("Session.RAMSessionStorage")();
       break;
 	
     default:
-      Log.warn("Unknown session storage type '" + session_storagetype + "'."); 
-      Log.info("SessionManager will use RAM to store session data.");
-      s = Session.RAMSessionStorage();
+      logger->warn("Unknown session storage type '" + session_storagetype + "'."); 
+      logger->info("SessionManager will use RAM to store session data.");
+      s = master()->resolv("Session.RAMSessionStorage")();
       break;
   }
 
@@ -353,7 +353,7 @@ void session_startup(object app)
   session_manager->set_cleaner_interval(session_timeout + random(session_timeout)/2	);
   session_manager->session_storage = ({s});
 
-  add_constant("Session", Session.Session);
+  add_constant("Session", master()->resolv("Session.Session"));
   add_constant("session_manager", session_manager);
 
   managers[app] = session_manager;
@@ -383,7 +383,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   {
 
     string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
-    Session.Session sess = session_manager->get_session(ssid);
+    object /*Session.Session*/ sess = session_manager->get_session(ssid);
     request->get_session_by_id = session_manager->get_session;
     request->misc->_session = sess;
     request->misc->session_id = sess->id;
@@ -396,7 +396,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 
   if(e)
   {
-    Log.exception("Error occurred while handling request!", e);
+    logger->exception("Error occurred while handling request!", e);
     mapping response = ([]);
     response->error=500;
     response->type="text/html";
@@ -433,8 +433,8 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     }
     else
     {
-      Log.debug("Got nothing from the application for the request %O, referrer: %O. Probably means the request passed through an index action unhandled.\n", request, request->referrer);
-      if(e) Log.exception("An error occurred while processing the request\n", e);
+      logger->debug("Got nothing from the application for the request %O, referrer: %O. Probably means the request passed through an index action unhandled.\n", request, request->referrer);
+      if(e) logger->exception("An error occurred while processing the request\n", e);
       mapping response = ([]);
       response->server="FinServe " + my_version;
       response->type = "text/html";
@@ -482,8 +482,8 @@ object load_application(string project, string config_name)
   application = master()->resolv("Fins.Loader")->load_app(combine_path(getcwd(), project), config_name));
   if(err || !application)
   {
-    if(err) Log.exception("An error occurred while loading the application.", err);
-    else Log.critical("An error occurred while loading the application.");
+    if(err) logger->exception("An error occurred while loading the application.", err);
+    else logger->critical("An error occurred while loading the application.");
     return 0;
 //    exit(1);
   }

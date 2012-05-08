@@ -77,8 +77,8 @@ object low_load_app(string handler_name, string app_dir, string config_name)
 */
 
  string stub = 
-#"void f(string app_dir, string config_name, string logcfg) {
-Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"config\": config_name, \"home\": getenv(\"HOME\") ]));
+#"void f(string app_dir, string config_name, string logcfg, string app_name) {
+Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"config\": config_name, \"home\": getenv(\"HOME\") ]));
   if(file_stat(logcfg))
   {
     Tools.Logging.set_config_file(logcfg);
@@ -86,10 +86,12 @@ Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"config\": config_nam
  }
 ";
 
- Log.info("Loading log configuration from " + logcfg + ", if present.");
- compile_string(stub)()->f(app_dir, config_name, logcfg);
 
+ Log.info("Loading app configuration from " + app_dir + ".");
   Fins.Configuration config = load_configuration(app_dir, config_name);
+ Log.info("Loading log configuration from " + logcfg + ", if present.");
+ compile_string(stub)()->f(app_dir, config_name, logcfg, config->app_name);
+
   Log.info("Preparing to load application " + config->app_name + ".");
 
   program p;
