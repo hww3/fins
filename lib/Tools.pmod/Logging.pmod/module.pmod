@@ -38,10 +38,19 @@ object default_logger = Tools.Logging.Log.Logger();
 //!
 //!  class=Some.Pike.Class <-- use the specified pike class for appending
 //!
+//!  format=someformatstring
+//!  you may include replacements in the format to place different data according to your preferences. the format 
+//!  for specifying a replacement is %{field}, available fields differ between loggers, but generally include 
+//!  the following: name, level, msg, pid, host plus any of the values from @[localtime]().
+//!
+//!  see also the note below about configuration variables, which may be inserted into your format string (values
+//!  are inserted at configuration time, and are static thereafter).
+//!
 //!  enable=true/false/yes/no <-- whether the appender should generate entries
 //!  
 //!  example: Tools.Logging.Log.FileAppender uses argument "file" to specify logging file
 //!
+//!  @note 
 //!  if the configuring application specifies any, you may use substitution variables
 //!  in the form ${varname} in your configuration values. By default, "host", "user" and "pid"
 //!  are available.
@@ -56,7 +65,7 @@ static void create()
 {
   create_default_appender();
   config_values["logger.default"] = _default_logger_config;
-  config_variables = _default_config_variables;
+  set_config_variables(([]));
 }
 
 static void create_default_appender()
@@ -76,7 +85,8 @@ object get_default_logger()
 //! values of "host", "pid" and "user".
 void set_config_variables(mapping vars)
 {
-   config_variables =  _default_config_variables + mkmapping(("${" + indices(vars)[*])[*] + "}", values(vars)); 
+  mapping v = _default_config_variables + vars;
+   config_variables =  mkmapping(("${" + indices(v)[*])[*] + "}", values(v)); 
 }
 
 //! specifies a configuration file to be used, which will be loaded and parsed.
@@ -144,9 +154,12 @@ void load_config_file()
 Tools.Logging.Log.Logger get_logger(string|program loggername, int|void no_default_logger)
 {
 
+//  if(master()->multi_tenant_aware)
+//    default_logger->warn("logger thread: %O, handler: %O", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
+
+
   if(programp(loggername))
     loggername = replace(lower_case(sprintf("%O", loggername)), "/", ".");
- // werror("get_logger(%s)\n", loggername);
   if(!loggers[loggername]) 
     loggers[loggername] = create_logger(loggername);
 
