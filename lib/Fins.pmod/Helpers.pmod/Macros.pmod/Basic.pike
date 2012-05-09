@@ -21,7 +21,7 @@ string simple_macro_LOCALE(Fins.Template.TemplateData data, mapping|void args)
   {
     if(catch(t = Locale.translate(r->get_project(), r->get_lang(), 
       (int)args["id"], args["string"])))
-      werror("r: %O, args: %O\n", r, args);
+      werror("LOCALE macro failed: %O, args: %O\n", r, args);
   }
     return t;
 }
