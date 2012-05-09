@@ -63,6 +63,8 @@ object default_logger = Tools.Logging.Log.Logger();
 
 static void create()
 {
+
+//werror("***\n*** %O -> %O\n***\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
   create_default_appender();
   config_values["logger.default"] = _default_logger_config;
   set_config_variables(([]));
@@ -92,6 +94,9 @@ void set_config_variables(mapping vars)
 //! specifies a configuration file to be used, which will be loaded and parsed.
 void set_config_file(string configfile)
 {
+  is_configed = 1;
+
+//werror("***\n*** set cf %O -> %O\n***\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
   default_logger->info("setting configuration file using " + configfile);
 
   if(master()->multi_tenant_aware)    
@@ -114,9 +119,7 @@ void set_config_file(string configfile)
   {
     default_logger->configure(config_values["logger.default"]);
     Tools.Logging.Log.configure(config_values["logger.default"]);
-  }
-  
-  is_configed = 1;
+  }  
 }
 
 void load_config_file()
@@ -189,6 +192,8 @@ mapping build_logger_config(string loggername)
 
   if(!is_configed) 
   {
+//werror("***\n*** set cf %O -> %O\n***\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
+//werror("backtrace: %O\n", backtrace());
     default_logger->warn("logging system has not been configured yet. only default logger is available.");
     default_logger->warn("logger thread: %O, handler: %O", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
   }
