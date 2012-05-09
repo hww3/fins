@@ -2,6 +2,8 @@
 static int default_timeout = 3600;
 static int cleaner_interval = 3600;
 
+static object app;
+
 Tools.Logging.Log.Logger log;
 
 array session_storage = ({});
@@ -9,22 +11,22 @@ array session_storage = ({});
 void create()
 {
   log = Tools.Logging.get_logger("session");
-  call_out(start_session_cleaner, random(30));
-
+  start_session_cleaner();
 }
 
-void session_cleaner()
+void session_cleaner(int immediate)
 {
 
   do
   {
+
     log->info("SessionManager: starting session cleaner run.");
     foreach(session_storage;; .SessionStorage engine)
     {
       engine->clean_sessions(default_timeout);
     } 
-
-    sleep((cleaner_interval/0.75) + random(cleaner_interval/2.0));
+    mixed sleepy = (cleaner_interval/0.75) + random(cleaner_interval/2.0);
+    sleep(sleepy);
   } 
   while(1);
 }
