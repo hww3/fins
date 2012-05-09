@@ -1,5 +1,4 @@
-import Tools.Logging;
-
+object logger = Tools.Logging.get_logger("finserve");
 //! @param app_dir
 //!   the full path to the application directory.
 
@@ -87,12 +86,12 @@ Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"c
 ";
 
 
- Log.info("Loading app configuration from " + app_dir + ".");
+ logger->info("Loading app configuration from " + app_dir + ".");
   Fins.Configuration config = load_configuration(app_dir, config_name);
- Log.info("Loading log configuration from " + logcfg + ", if present.");
+ logger->info("Loading log configuration from " + logcfg + ", if present.");
  compile_string(stub)()->f(app_dir, config_name, logcfg, config->app_name);
 
-  Log.info("Preparing to load application " + config->app_name + ".");
+  logger->info("Preparing to load application " + config->app_name + ".");
 
   program p;
 
@@ -106,7 +105,7 @@ mixed err = catch
 
   if(err)
   {
-    Log.exception("error occurred while loading the application.", Error.mkerror(err));
+    logger->exception("error occurred while loading the application.", Error.mkerror(err));
     return a;
   }
 
@@ -136,14 +135,14 @@ Fins.Configuration load_configuration(string app_dir, string config_name)
 {
   string config_file = combine_path(app_dir, "config", config_name+".cfg");
 
-  Log.debug("config file: " + config_file);
+  logger->debug("config file: " + config_file);
 
   Stdio.Stat stat = file_stat(config_file);
   if(!stat || stat->isdir)
   {
     mixed err = Error.Generic("Unable to load configuration file " + config_file + "\n");
 
-    Log.exception("Problem loading configuration.", err);
+    logger->exception("Problem loading configuration.", err);
     throw(err);
   }
   return master()->resolv("Fins.Configuration")(app_dir, config_file);

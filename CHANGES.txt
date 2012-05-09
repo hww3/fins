@@ -28,6 +28,9 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Runing FinServe in daemon mode (with -d option) fully detaches from
+      the controlling console and logs its output to a log file that is 
+      configurable with the -f option and defaults to "finserve.log".
 -  FinsServe now supports "multi-tenant" mode. This allows multiple apps
       (as well as multiple copies of the same app) to run within a single
       process. This is currently only available under Pike 7.9+ and

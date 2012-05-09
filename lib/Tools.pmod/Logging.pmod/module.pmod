@@ -97,7 +97,7 @@ void set_config_file(string configfile)
   is_configed = 1;
 
 //werror("***\n*** set cf %O -> %O\n***\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
-  default_logger->info("setting configuration file using " + configfile);
+  default_logger->info("setting log configuration using " + configfile);
 
   if(master()->multi_tenant_aware)    
     default_logger->warn("logger thread: %O, handler: %O", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
@@ -192,10 +192,8 @@ mapping build_logger_config(string loggername)
 
   if(!is_configed) 
   {
-//werror("***\n*** set cf %O -> %O\n***\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
-//werror("backtrace: %O\n", backtrace());
-    default_logger->warn("logging system has not been configured yet. only default logger is available.");
-    default_logger->warn("logger thread: %O, handler: %O", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
+    default_logger->warn("logging system has not been configured yet, using default settings.");
+//    default_logger->warn("logger thread: %O, handler: %O", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
   }
   // first, find the nearest logger in the hierarchy.
 
@@ -249,6 +247,7 @@ mapping build_logger_config(string loggername)
   }
 
   cx += (config_values["logger." + cn]);
+  cx["name"] = cn;
   cx["_name"] = cn;
 
   return cx;

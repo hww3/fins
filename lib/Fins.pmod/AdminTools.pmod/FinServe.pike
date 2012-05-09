@@ -19,8 +19,8 @@ string session_storagetype = "ram";
 //string session_storagetype = "sqlite";
 //string session_storagedir = "/tmp/scriptrunner_storage";
 string session_storagedir = 0;
+string logfile = "finserve.log";
 
-string logfile_path = "/tmp/scriptrunner.log";
 string session_cookie_name = "PSESSIONID";
 int session_timeout = 7200;
 
@@ -44,7 +44,7 @@ private int has_started = 0;
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [-s ram|file|sqlite|--session-manager=ram|file|sqlite [-l "
-		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d]  appname [appname [appname]]\n");
+		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d] [--logfile|-f logfilename] appname [appname [appname]]\n");
 }
 
 array tool_args;
@@ -78,6 +78,7 @@ int main(int argc, array(string) argv)
     ({"sessionloc",Getopt.HAS_ARG,({"-l", "--session-storage-location"}) }),
 #if constant(fork)
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
+    ({"logfile",Getopt.HAS_ARG,({"-f", "--logfile"}) }),
 #endif /* fork() */
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
@@ -86,38 +87,42 @@ int main(int argc, array(string) argv)
       switch(opt[0])
       {
 		case "port":
-		my_port = (int)opt[1];
-		break;
+		  my_port = (int)opt[1];
+		  break;
 		
 		case "config":
-		config_name += ({opt[1]});
-		break;
+		  config_name += ({opt[1]});
+		  break;
 
 		case "sessionloc":
-		session_storagedir = opt[1];
-                break;
+		  session_storagedir = opt[1];
+                  break;
 
 		case "sessionmgr":
-		if(!(<"sqlite", "ram", "file">)[opt[1]])
-		{
-		  werror("Error: invalid session manager type '%s'. Valid options are sqlite, ram, file.", opt[1]);
-		  exit(1);
-		}
-		session_storagetype = opt[1];
-		break;
+		  if(!(<"sqlite", "ram", "file">)[opt[1]])
+		  {
+  		    werror("Error: invalid session manager type '%s'. Valid options are sqlite, ram, file.", opt[1]);
+		    exit(1);
+		  }
+		  session_storagetype = opt[1];
+		  break;
 		
 		case "hilfe":
-		hilfe_mode = 1;
-		break;
+		  hilfe_mode = 1;
+		  break;
 		
 		case "daemon":
-		go_background = 1;
-		break;
+		  go_background = 1;
+		  break;
 		
-        case "help":
-		print_help();
-		return 0;
-		break;
+		case "logfile":
+		  logfile = opt[1];
+		  break;
+		
+                case "help":
+	          print_help();
+		  return 0;
+		  break;
 	  }
 	}
 	
@@ -136,26 +141,48 @@ int main(int argc, array(string) argv)
 int do_startup(array(string) projects, array(string) config_name, int my_port)
 {
 
+  if(sizeof(projects) > 1 && !master()->multi_tenant_aware)
+  {
+    werror("multi-tenant mode is only available when running Pike 7.9 or higher.\n");
+    exit(1);
+  }
+
 #if constant(fork)
   if(!hilfe_mode && go_background && fork())
-	{
-		werror("Entered Daemon mode...\n");
-		return 0;
-	}
-
+  {
+    // first, we attempt to open the log file; if we can't, bail out.
+    object lf;
+    mixed e = catch(lf = Stdio.File(logfile, "crwa"));
+    if(e) 
+    {
+      werror("Unable to open log file: " + Error.mkerror(e)->message());
+      werror("Exiting.\n");
+      exit(1);
+    }
+    write("Entering Daemon mode...\n");
+    write("Directing output to %s.\n", logfile);
+    return 0;
+  }
+  if(!hilfe_mode && go_background)
+  {
+    // we should be in the forked copy.
+    write("FinServe daemon pid: %d\n", getpid());
+    Stdio.stdin.close();
+    Stdio.stdin.open("/dev/null", "crwa");
+    Stdio.stdout.close();
+    Stdio.stdout.open(logfile, "crwa");
+    Stdio.stderr.close();
+    Stdio.stderr.open(logfile, "crwa");
+  }
 #endif /* fork() */
+
+  logger=master()->resolv("Tools.Logging.get_logger")("finserve");
 
   config_name += allocate(sizeof(projects) - sizeof(config_name));
 
   if(hilfe_mode && sizeof(projects) > 1)
   {
     werror("hilfe mode is only available when starting 1 application.\n");
-    exit(1);
-  }
-
-  if(sizeof(projects) > 1 && !master()->multi_tenant_aware)
-  {
-    werror("multi-tenant mode is only available when running Pike 7.9 or higher.\n");
     exit(1);
   }
 
@@ -185,7 +212,6 @@ int start_app(string project, string config_name, int my_port, int|void solo)
   object app;
   object port;
 
-  logger=master()->resolv("Tools.Logging.get_default_logger")();
   logger->info("FinServe loading application " + project + " using configuration " + config_name);
 
   app = load_application(project, config_name);
@@ -433,7 +459,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     }
     else
     {
-      logger->debug("Got nothing from the application for the request %O, referrer: %O. Probably means the request passed through an index action unhandled.\n", request, request->referrer);
+      logger->debug("Got nothing from the application for the request %O, referrer: %O. Probably means the request passed through an index action unhandled.", request, request->referrer);
       if(e) logger->exception("An error occurred while processing the request\n", e);
       mapping response = ([]);
       response->server="FinServe " + my_version;
@@ -508,12 +534,16 @@ void new_session(object request, object response, mixed ... args)
   }
   response->redirect(req);
 
-  logger->debug( "Created new session sid='%s' host='%s'",ssid,request->get_client_addr());
+  logger->debug( "Created new session app='%s/%s' sid='%s' host='%s'",
+    request->fins_app->config->app_name, 
+    request->fins_app->config->config_name,
+    ssid,
+    request->get_client_addr());
 }
 
 void destroy()
 {
-  if(logger) logger->info("Shutting down Fins applications.");
+  if(logger && sizeof(ports)) logger->info("Shutting down Fins applications.");
   if(sizeof(ports)) 
   {
     object port;
