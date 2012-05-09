@@ -36,6 +36,20 @@ string log_config_contents =
 [logger.default]
 appender=default_console
 appender=default_debuglog
+level=INFO
+
+# this is the base logger for fins
+[logger.fins]
+level=INFO
+appender=default_console
+appender=default_debuglog
+
+[logger.fins.model.query]
+level=INFO
+appender=default_console
+
+[logger.fins.model]
+level=DEBUG
 
 [logger.access]
 appender=access_log
@@ -46,28 +60,17 @@ level=INFO
 appender=default_console
 appender=default_debuglog
 
-# this is the base logger for fins
-[logger.fins]
-level=INFO
-appender=default_console
-appender=default_debuglog
-
-[logger.fins.model]
-level=DEBUG
-
-# set to debug in order to log db queries
-[logger.fins.model.query]
-appender=default_console
-
 [appender.default_console]
 class=Tools.Logging.Log.ConsoleAppender
+format=%{mday:02d}/%{mon:02d}/%{year} %{hour:02d}:%{min:02d} - %{name} %{level} - ${app}/${config} - %{msg}
 
 [appender.default_debuglog]
 class=Tools.Logging.Log.FileAppender
-file=${appdir}/logs/debug.log
+file=${appdir}/logs/${config}_debug.log
+format=%{mday:02d}/%{mon:02d}/%{year} %{hour:02d}:%{min:02d} - %{name} %{level} - ${app}/${config} - %{msg}
 
 [appender.access_log]
-file=${appdir}/logs/access.log
+file=${appdir}/logs/${config}_access.log
 class=Tools.Logging.Log.AccessFileAppender
 ";
 
