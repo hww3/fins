@@ -3,7 +3,7 @@ import Tools.Logging;
 
 //! this is the base application class.
 
-Log.Logger log = get_logger("fins.application");
+Log.Logger logger = get_logger("fins.application");
 
 object __fin_serve;
 
@@ -118,9 +118,9 @@ static void create(.Configuration _config)
   controller_autoreload = (int)(config["controller"]["reload"]);
  
   if(controller_autoreload)
-    log->info("Automatic reload of controllers is enabled.");
+    logger->info("Automatic reload of controllers is enabled.");
   else if(cache_events)
-    log->info("Event caching is enabled.");
+    logger->info("Event caching is enabled.");
 
   // next, let's load up the various components of our application.
   load_breakpoint();
@@ -170,17 +170,17 @@ static void load_processor(string proc)
 
   if(proc)
     processor = ((program)proc)(this);
-  else log->debug("No processor defined!");
+  else logger->debug("No processor defined!");
 
   if(!Program.implements(object_program(processor), Fins.Processor))
   {
-    log->error("class %s does not implement Fins.Processor.", proc);
+    logger->error("class %s does not implement Fins.Processor.", proc);
   }
   else
   {
     foreach(processor->supported_protocols();; string protocol)
     {
-      log->info("Loaded processor for " + protocol);
+      logger->info("Loaded processor for " + protocol);
       processors[protocol] = processor;
     }
   }   
@@ -203,7 +203,7 @@ static void load_breakpoint()
     bpbet = create_thread(lambda(){ do { catch(bpbe(1000.0)); } while (1); });
 
     if((int)config["application"]["breakpoint_port"]) breakpoint_port_no = (int)config["application"]["breakpoint_port"];
-    log->info("Starting Breakpoint Server on port %d.", breakpoint_port_no);
+    logger->info("Starting Breakpoint Server on port %d.", breakpoint_port_no);
     breakpoint_port = Stdio.Port(breakpoint_port_no, handle_breakpoint_client);
     breakpoint_port->set_backend(bpbe);
   }
@@ -211,7 +211,7 @@ static void load_breakpoint()
 
 static void load_cache()
 {
-  log->info("Starting Cache.");
+  logger->info("Starting Cache.");
 
   cache = .FinsCache();
 }
@@ -221,7 +221,7 @@ static void load_view()
   string viewclass = (config["view"] ? config["view"]["class"] :0);
   if(viewclass)
     view = ((program)viewclass)(this);
-  else log->debug("No view defined!");
+  else logger->debug("No view defined!");
 }
 
 mixed call_out(function f, float|int delay, mixed ... args)
@@ -315,10 +315,10 @@ static object low_load_controller(string controller_name)
   }
   else 
   { 
-    log->error("Unable to load controller %s, no file found", controller_name);
+    logger->error("Unable to load controller %s, no file found", controller_name);
     return 0;
   }
-  if(!c) log->error("Unable to load controller %s", controller_name);
+  if(!c) logger->error("Unable to load controller %s", controller_name);
 
   
   object o = c(this);
@@ -341,7 +341,7 @@ static object low_load_controller(string controller_name)
 //!  } 
 static void load_controller()
 {
-  log->debug("%O->load_controller()", this);
+  logger->debug("%O->load_controller()", this);
   string conclass = (config["controller"]? config["controller"]["class"] :0);
   if(conclass)
   {
@@ -354,7 +354,7 @@ static void load_controller()
 //     controller->__controller_name = conclass;
 // 
   }
-  else log->debug("No controller defined!");
+  else logger->debug("No controller defined!");
 }
 
 // instantiates the model class defined in the configuration file
@@ -363,10 +363,10 @@ static void load_model()
   string modclass = (config["model"] ? config["model"]["class"] : 0);
   if(modclass)
   {
-    log->info("loading model from " + modclass);
+    logger->info("loading model from " + modclass);
     model = ((program)modclass)(this);
   }
-  else log->debug("No model defined!");
+  else logger->debug("No model defined!");
 }
 
 // checks to see if a given controller object has been updated on disk 
@@ -387,7 +387,7 @@ int controller_updated(object controller, object container, string cn)
 
 void reload_controllers()
 {
-  log->debug("Reloading controllers.");
+  logger->debug("Reloading controllers.");
 //  if(object_program(container) == object_program(this))
   load_controller();
   action_path_cache = ([]);
@@ -607,7 +607,7 @@ public mixed handle_request(.Request request)
   request->fins_app = this;
   request->controller_path="";
 
-  //  log->info("SESSION INFO: %O", request->misc->session_variables);
+  //  logger->info("SESSION INFO: %O", request->misc->session_variables);
 
   if(request->low_protocol == "HTTP")
   {
@@ -669,7 +669,7 @@ public mixed handle_http(.Request request)
 
     if(er)
     {
-       log->exception(sprintf("An exception occurred while executing event %O", event), er);
+       logger->exception(sprintf("An exception occurred while executing event %O", event), er);
       er = Error.mkerror(er);
       {
 //		werror("handling error %O.\n", er);
@@ -851,7 +851,7 @@ array get_event(.Request request)
 	    }
 	    else
 	    {
-	      log->info("Controller has no index method: %O", cc);
+	      logger->info("Controller has no index method: %O", cc);
 	    }
 	    break;
       }
@@ -1044,7 +1044,7 @@ public void breakpoint(string desc, mapping state)
   }
   else
   {
-    log->debug("breakpoints disabled, skipping breakpoint set from %O",
+    logger->debug("breakpoints disabled, skipping breakpoint set from %O",
                  backtrace()[-2][2]);
   }
   return 0;
@@ -1056,7 +1056,7 @@ private void do_breakpoint(string desc, mapping state, array bt)
    object key = bp_lock->lock();
   breakpoint_cond = Thread.Condition();
   bpbe->call_out(lambda(){breakpoint_hilfe = Helpers.Hilfe.BreakpointHilfe(breakpoint_client, this, state, desc, bt);}, 0);
-  log->info("Hilfe started for Breakpoint on %s.", desc);
+  logger->info("Hilfe started for Breakpoint on %s.", desc);
   breakpoint_cond->wait(key);
   key = 0;
   // now, we must wait for the hilfe session to end.
