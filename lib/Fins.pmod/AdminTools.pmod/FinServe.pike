@@ -252,7 +252,7 @@ if(!app) return -1;
 
 #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
     port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + project + "/" + config_name + ")",
-                     "_http._tcp", "", p);
+                     "_http._tcp", "", p));
 
     logger->info("Advertising this application via Bonjour.");
 #endif

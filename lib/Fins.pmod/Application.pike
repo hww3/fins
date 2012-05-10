@@ -260,7 +260,6 @@ object create_thread(function f, mixed ... args)
     return master()->fins_aware_create_thread(f, @args);
   else
   {
- werror("***\n*** just a regfular thread.\n***\n");
     return Thread.Thread(f, @args);
   }
 }
