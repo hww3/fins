@@ -44,8 +44,8 @@ class my_master
 
 #define DEFAULT_KEY "_fins_default"
  
-  mapping(string:object) handlers;
-  mapping(object:string) handlers_for_thread = ([]);
+  mapping(string:object) handlers = set_weak_flag(([]), Pike.WEAK_VALUES);
+  mapping(object:string) handlers_for_thread = set_weak_flag(([]), Pike.WEAK_INDICES);
   constant fins_master = 1;
   int created = 0;
   
@@ -361,7 +361,7 @@ protected void `->dir_cache=(mixed val)
   protected void create()
   {
     object mm = master();
-    
+        
 //    add_constant("fins_add_handler", fins_aware_add_handler);  
 //handlers_for_thread = ([]);
     set_weak_flag(handlers_for_thread, Pike.WEAK_INDICES);
@@ -511,8 +511,8 @@ protected void `->dir_cache=(mixed val)
     if(!handlers) // we might get here via __INIT, which means none of the object-global variables are initialized.
     { 
       //werror("settin' up shop\n");
-      handlers = ([]);
-      if(!handlers_for_thread) handlers_for_thread = ([]);
+      handlers = set_weak_flag(([]), Pike.WEAK_VALUES);
+      if(!handlers_for_thread) handlers_for_thread = set_weak_flag(([]), Pike.WEAK_INDICES);
       handlers[DEFAULT_KEY] = new_handler(DEFAULT_KEY);
     }
 //write("handlers: %O %O\n", handlers_for_thread, Thread.this_thread());
