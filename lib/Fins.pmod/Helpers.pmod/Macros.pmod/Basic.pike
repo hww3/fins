@@ -1,5 +1,7 @@
 inherit .Base;
 
+object localeLogger = Tools.Logging.get_logger("fins.macros.LOCALE");
+
 //!
 string simple_macro_sessionid(Fins.Template.TemplateData data, mapping|void args)
 {
@@ -19,9 +21,16 @@ string simple_macro_LOCALE(Fins.Template.TemplateData data, mapping|void args)
   }
   else
   {
-    if(catch(t = Locale.translate(r->get_project(), r->get_lang(), 
+    if(!objectp(r)) // a real request will be an object, otherwise we won't be able to make Locale work. 
+    {
+      localeLogger->debug("returning string without Locale translation. request=%O, args=%O", r, args);
+      return args["string"];
+    }
+
+    mixed e;
+    if(e = catch(t = Locale.translate(r->get_project(), r->get_lang(), 
       (int)args["id"], args["string"])))
-      werror("LOCALE macro failed: %O, args: %O\n", r, args);
+      localeLogger->exception(sprintf("LOCALE macro failed: %O, args: %O\n", r, args), e);
   }
     return t;
 }
