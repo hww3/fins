@@ -998,8 +998,8 @@ array get_event(.Request request)
 
   response->set_header("Cache-Control", "max-age=" + (3600*exp));
   response->set_header("Expires", (Calendar.Second() + (3600*exp*2))->format_http());
-  response->set_type(Protocols.HTTP.Server.filename_to_type(basename(fn)));
   response->set_file(Stdio.File(fn));
+  response->set_type(Protocols.HTTP.Server.filename_to_type(basename(fn)));
 
   int _handled;
   string t = response->get_type();
