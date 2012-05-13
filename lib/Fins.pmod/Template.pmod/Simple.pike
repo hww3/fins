@@ -404,7 +404,10 @@ class PikeBlock
 
       foreach(e;;string ep)
       {
-        expr += "[\"" + ep + "\"]";
+        if(!sizeof((ep/"")- ({"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"})))
+          expr += "[(int)" + ep + "]";
+        else
+          expr += "[\"" + ep + "\"]";
       }
 
       return(i + "\n// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\nexpr = " + expr + "; buf->add((string)(!zero_type(expr)?expr:\"\"));" + f);

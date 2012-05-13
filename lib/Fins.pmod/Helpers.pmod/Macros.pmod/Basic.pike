@@ -98,7 +98,7 @@ string simple_macro_language_selector(Fins.Template.TemplateData data, mapping|v
 
 
 
-//! args: controller, action, args 
+//! args: controller, action, args, _id=dom element id
 //!
 //! any arguments other than those above will be considered variables to 
 //! be added to the url above.
@@ -125,7 +125,13 @@ string simple_macro_action_link(Fins.Template.TemplateData data, mapping|void ar
     uargs = ((string)args->args)/"/";
 
   string target = (args["#"]?("#" + args["#"]):"");
+  
+  string id;
 
+  if(args->_id) 
+    id = args->_id;
+
+  m_delete(args, "_id");
   m_delete(args, "controller");
   m_delete(args, "action");
   m_delete(args, "args");
@@ -133,7 +139,7 @@ string simple_macro_action_link(Fins.Template.TemplateData data, mapping|void ar
 
   string url = app->url_for_action(action, uargs, args);
 
-  return "<a href=\"" + url + target + "\">";
+  return "<a href=\"" + url + target + "\"" + (id?(" id=\"" + id + "\">"):">");
 }
 
 //! args: controller, action, args, method, enctype

@@ -28,6 +28,9 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  action_link macro turns _id argument into dom node id.
+-  Arrays may be indexed in Simple views. For example, if view data contains
+      an array called foo, we can index element 2 by using <%$foo.2%>
 -  Runing FinServe in daemon mode (with -d option) fully detaches from
       the controlling console and logs its output to a log file that is 
       configurable with the -f option and defaults to "finserve.log".

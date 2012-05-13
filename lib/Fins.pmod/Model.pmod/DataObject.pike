@@ -1145,6 +1145,7 @@ mapping objs, objs_by_alt;
 
      else if(Program.inherits(object_program(r), .MultiKeyReference))
      {
+werror("removing relationships: %O=%O\n",n, get(context,n,i));
        foreach(get(context, n, i);; object mem)
          i[n]-=mem;
      }
