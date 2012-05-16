@@ -495,8 +495,52 @@ string simple_macro_context_root(Fins.Template.TemplateData data, mapping|void a
 
 //! args: var, format
 //! where format is a Calendar object format type; default is ext_ymd.
+//!
+//! short_date: 13 Jun 2012
+//! year: 2012
+//! short_month_name: Jun
+//! month_name: June
+//! month_day: 13
+//  time12: 3:55 PM
+//  time24/time: 15:55
+//! 
+//!
+//! iso_short: 20120513T15:55:47
+//! time_xshort: 120513 15:55:47
+//! time_short: 20120513 15:55:47
+//! ext_time_short: Sun, 13 May 2012 15:55:47 EDT
+//! ymd_short: 20120513
+//! week_short: 2012w19
+//! month_short: 201205
+//! tod_short: 155547
+//! ymd_xshort: 120513
+//! iso_week_short: 201219
+//! commonlog: 13/May/2012:15:55:47 -0400
+//! iso_ymd: 2012-05-13 (May) -W19-7 (Sun)
+//! ext_ymd: Sunday, 13 May 2012
+//! ymd: 2012-05-13
+//! smtp: Sun, 13 May 2012 15:55:47 -0400
+//! nicez: 13 May 15:55:47 EDT
+//! nice: 13 May 15:55:47
+//! month: 2012-05
+//! week: 2012-w19
+//! iso_week: 2012-W19
+//! todz: 15:55:47 EDT
+//! tod: 15:55:47
+//! http: Sun, 13 May 2012 19:55:47 GMT
+//! ctime: Sun May 13 15:55:47 2012
+//!
+//! xtime: 2012-05-13 15:55:47.000000
+//! mtime: 2012-05-13 15:55
+//! time: 2012-05-13 15:55:47
+//! ext_time: Sunday, 13 May 2012 15:55:47
+//! iso_time: 2012-05-13 (May) -W19-7 (Sun) 15:55:47 UTC-4
+//! todz_iso: 15:55:47 UTC-4
+//! mod: 15:55
+//! xtod: 15:55:47.000000
 string simple_macro_format_date(Fins.Template.TemplateData data, mapping|void arguments)
 {
+  string res;
   if(arguments->var)
   {
     object p = arguments->var;
@@ -505,7 +549,51 @@ string simple_macro_format_date(Fins.Template.TemplateData data, mapping|void ar
 
     if(! arguments->format) arguments->format="ext_ymd";
 
-    return p["format_" + arguments->format]();
+    switch(arguments->format)
+    {
+      case "time24":
+      case "time":
+         res = sprintf("%02d:%02d", p->hour_no(), p->minute_no());
+         break;
+      case "time12":
+         int v;
+         res = sprintf("%2d:%02d %s", (v=(p->hour_no()%12))?v:12, p->minute_no(), ((p->hour_no()/12)?"PM":"AM"));
+         break;
+      case "short_month_name":
+         res = p->month_shortname();
+         break;
+      case "month_name":
+         res = p->month_name();
+         break;
+      case "month_day":
+         res = (string)p->month_day();
+         break;
+      case "year":
+         res = (string)p->year_no();
+         break;
+      case "short_date":
+         res = format_short_date(p);
+         break;
+      default:
+        res = p["format_" + arguments->format]();
+    }
 
+    if(arguments->store)
+    {
+      mixed d = data->get_data();
+      d[arguments->store] = res;
+      return "";
+    }
+    else return res;
   }
 }
+
+
+protected string format_short_date(object d)
+{
+write("d: %O\n", d);
+  return d->month_day() + " " + 
+    d->month_shortname() + " " +
+    d->year_no();
+}
+
