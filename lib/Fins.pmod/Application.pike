@@ -575,7 +575,12 @@ string url_for_action(function|object action, array|void args, mapping|void vars
   }
 
   if(arrayp(args))
-    path = combine_path(path, args*"/");
+  {
+    array ap = args;
+    foreach(ap;int i; int j)
+      ap[i] = (string)j;
+    path = combine_path(path, ap*"/");
+  }
 
   if(vars && sizeof(vars))
     path = add_variables_to_path(path, vars);
