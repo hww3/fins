@@ -9,7 +9,7 @@ object __fin_serve;
 
 //! provide any context root (location in the virtual filesystem) for this application.  this setting
 //! is derived from the value of the context_root parameter in the application section of the application config file, and defaults to /.
-string context_root = "";
+string context_root = "/";
 
 //! the request processing queue
 Thread.Queue queue = Thread.Queue();
@@ -492,6 +492,11 @@ private object lookingfor(object o, object in, void|multiset visited)
   }
 
   return 0;
+}
+
+string get_context_root()
+{
+  return context_root;
 }
 
 //! get the path for a given controller object or handler method.

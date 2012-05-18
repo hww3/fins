@@ -58,7 +58,7 @@ mixed `->page()
 //!
 int `->page_no()
 {
-  return current_page;  
+  return current_page+1;  
 }
 
 //!
@@ -67,6 +67,18 @@ int `->num_pages()
   if(_np) return _np;
   else
   return _np = (int)ceil((float)(sizeof(data))/page_size);
+}
+
+//!
+int `->has_next_page()
+{
+  return current_page<(num_pages-1);  
+}
+
+//!
+int `->has_prev_page()
+{
+  return current_page>0;  
 }
 
 //!
@@ -98,12 +110,12 @@ void set_from_request(object id)
 }
 
 
-mapping get_up_args()
+mapping get_next_args()
 {
   return (["_" + key + "_shift": (current_page + 1), "_" + key + "_size": page_size]);
 }
 
-mapping get_down_args()
+mapping get_prev_args()
 {
   return (["_" + key + "_shift": (current_page -1), "_" + key + "_size": page_size]);
 }

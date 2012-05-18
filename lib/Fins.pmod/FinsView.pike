@@ -26,7 +26,7 @@ static mapping simple_macros = ([]);
 static void create(object app)
 {
 	::create(app);
-    
+  
 	load_macros();
 }
 
