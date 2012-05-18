@@ -105,7 +105,10 @@ void set_from_request(object id)
   if(s = id->variables["_" + key + "_size"])
   {
     if(i = (int)s)
-    set_page_size(i);
+    {
+      werror("setting page size " + i + "\n");
+      set_page_size(i);
+    }
   }
 }
 
