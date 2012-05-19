@@ -49,5 +49,5 @@ string simple_macro_page_size_url(Fins.Template.TemplateData data, mapping|void 
 
 string make_url(object r, mapping args)
 {
-  return app->add_variables_to_path(app->get_context_root() + r->not_args, args);
+  return app->add_variables_to_path(app->get_context_root() + r->not_args, r->variables + args);
 }
