@@ -106,7 +106,7 @@ string simple_macro_page_selector(Fins.Template.TemplateData data, mapping|void 
   
   object paginator = args->paginator;
   
-  if(!paginator) return "page_size_url macro: no paginator.";
+  if(!paginator) return "page_selector macro: no paginator.";
   
   int window = 5;
   
@@ -115,7 +115,7 @@ string simple_macro_page_selector(Fins.Template.TemplateData data, mapping|void 
     window = (int)args->window;      
   }
   
-  if(!window) return "page_size_url: invalid window size " + args->window;
+  if(!window) return "page_selector: invalid window size " + args->window;
   
   String.Buffer buf = String.Buffer();
   
@@ -144,19 +144,26 @@ string simple_macro_page_selector(Fins.Template.TemplateData data, mapping|void 
   
   sort(sizes);
   werror("pages: %O\n", sizes);
+  array opt = ({});
+    
   foreach(sizes;; int s)
   {  
      if((paginator->current_page) == s)
      {
        buf += " ";
        buf += (string)(s+1);
+       buf += " ";
      }
      else
      {
-       buf += " <a href=\"";
+       buf += " ";
+       buf += "<a href=\"";
        buf += make_url(r, paginator->get_page_args(s));  
-       buf += ("\">" + (s+1) + "</a>");
+       buf += ("\"> " + (s+1) + " </a>");
+       buf += " ";
+       
      }
+     opt += ({ buf->get() });
   }
-  return buf->get();
+  return opt * " &nbsp; ";
 }
