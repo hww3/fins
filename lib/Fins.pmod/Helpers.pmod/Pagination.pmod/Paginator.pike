@@ -87,6 +87,15 @@ void set_from_request(object id)
   string s;
   int i;
 
+  if(s = id->variables["_" + key + "_size"])
+  {
+    if(i = (int)s)
+    {
+      werror("setting page size " + i + "\n");
+      set_page_size(i);
+    }
+  }
+
   if(s = id->variables["_" + key + "_shift"])
   {
      if(s == "+")
@@ -99,32 +108,29 @@ void set_from_request(object id)
      }
      else
      {
-       set_current_page((int)s);
+       set_current_page((int)s/page_size);
      }
-  }
-  if(s = id->variables["_" + key + "_size"])
-  {
-    if(i = (int)s)
-    {
-      werror("setting page size " + i + "\n");
-      set_page_size(i);
-    }
   }
 }
 
 
+mapping get_page_args(int pn)
+{
+  return (["_" + key + "_shift": page_size*pn, "_" + key + "_size": page_size]);
+}
+
 mapping get_next_args()
 {
-  return (["_" + key + "_shift": (current_page + 1), "_" + key + "_size": page_size]);
+  return (["_" + key + "_shift": page_size*(current_page + 1), "_" + key + "_size": page_size]);
 }
 
 mapping get_prev_args()
 {
-  return (["_" + key + "_shift": (current_page -1), "_" + key + "_size": page_size]);
+  return (["_" + key + "_shift": page_size*(current_page -1), "_" + key + "_size": page_size]);
 }
 
 mapping get_size_args(int len)
 {
-  return (["_" + key + "_shift": (current_page), "_" + key + "_size": len]);
+  return (["_" + key + "_shift": page_size*(current_page), "_" + key + "_size": len]);
 }
 
