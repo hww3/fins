@@ -145,7 +145,13 @@ string simple_macro_page_selector(Fins.Template.TemplateData data, mapping|void 
   sort(sizes);
   werror("pages: %O\n", sizes);
   array opt = ({});
-    
+  string pre = "", post="";
+  
+  if(sizeof(sizes))
+  {
+    if(sizes[0] > 0)
+      pre = " ...";
+  }
   foreach(sizes;; int s)
   {  
      if((paginator->current_page) == s)
@@ -163,7 +169,65 @@ string simple_macro_page_selector(Fins.Template.TemplateData data, mapping|void 
        buf += " ";
        
      }
+     
+     if(sizeof(sizes))
+     {
+       if(sizes[-1] < (paginator->num_pages -1))
+         post = "... ";
+     }
+     
+     
      opt += ({ buf->get() });
   }
-  return opt * " &nbsp; ";
+  return pre + (opt * " &nbsp; ") + post;
+}
+
+//! args: var = dataset to paginate, window = number of page options to show (default = 5)
+string simple_macro_page_filter(Fins.Template.TemplateData data, mapping|void args)
+{
+  object r = data->get_request();
+
+  if(!args) return "";
+  
+  object paginator = args->paginator;
+  
+  if(!paginator) return "page_selector macro: no paginator.";
+  
+  String.Buffer buf = String.Buffer();
+  
+  buf += "<form action=\"";
+  buf += r->not_query;
+  buf += "\">";
+  
+  buf += "Starts wtih: ";
+  
+  foreach(r->variables; string k; string v)
+  {
+    if(k == ("_" + paginator->key + "_filter")) continue;
+    if(k == ("_" + paginator->key + "_filter_field")) continue;
+
+    buf += "<input name=\"";
+    buf += k;
+    buf += "\" type=\"hidden\" value=\"";
+    buf += v;
+    buf += "\">\n";
+  }
+  
+  buf += "<input type=\"string\" name=\"_";
+  buf += paginator->key;
+  buf += "_filter\" value=\"";
+
+  if(r->variables["_" + paginator->key + "_filter"])
+    buf += r->variables["_" + paginator->key + "_filter"];
+  buf += "\">";
+  
+  buf += "<input type=\"hidden\" name=\"_";
+  buf += paginator->key;
+  buf += "_filter_field\" value=\"";
+  buf += args->field;
+  buf += "\">"; 
+  
+  buf += "</form>";
+  
+  return buf->get();
 }
