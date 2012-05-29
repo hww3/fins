@@ -56,8 +56,6 @@ object bp_lock = Thread.Mutex();
 object breakpoint_hilfe;
 object bpbe;
 object bpbet;
-object abe; // the application backend
-protected int _shutdown; // used by abe thread to know when to stop
 
 //! if set to true, controllers will be reloaded on access if they are changed. this setting
 //! is derived from the value of the reload parameter in the controller section of the application config file.
@@ -94,7 +92,8 @@ void stop()
 void shutdown()
 {
   stop();
-  if(abe) call_out(lambda(){_shutdown = 1;}, 0);
+  object h = get_handler_for_thread(); 
+  if(h && h->shutdown_backend) h->shutdown_backend();
   destruct(this);
 }
 
@@ -224,36 +223,6 @@ static void load_view()
   else logger->debug("No view defined!");
 }
 
-mixed call_out(function f, float|int delay, mixed ... args)
-{
-  if(!abe)
-    create_app_backend();
-  return abe->call_out(f, delay, @args);
-}
-
-void create_app_backend()
-{
-  abe = Pike.Backend();
-  create_thread(run_backend_thread);
-}
-
-object get_backend()
-{
-  if(!abe)
-    create_app_backend();
-  return abe;
-}
-
-void run_backend_thread()
-{
-  do
-  {
-//werror("application backend running\n");
-    abe(100.0);
-  }
-  while(!_shutdown);
-}
-
 object create_thread(function f, mixed ... args)
 {
   if(master()->multi_tenant_aware)
@@ -264,11 +233,19 @@ object create_thread(function f, mixed ... args)
   }
 }
 
-object get_master_for_thread()
+object get_backend()
+{
+  if(master()->multi_tenant_aware)
+    return master()->get_handler_for_thread(Thread.this_thread())->get_backend();
+  else
+    return Pike.DefaultBackend;
+}
+
+object get_handler_for_thread()
 {	
   if(master()->multi_tenant_aware)
-    return master()->get_findprog_handler_for_thread();	
-  else return master();
+    return master()->get_handler_for_thread(Thread.this_thread());	
+  return master();
 }
 
 //! returns the current thead's program path

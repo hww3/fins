@@ -261,7 +261,7 @@ if(!app) return -1;
     ports += (<port>);
 
     // TODO: do we need to call this for each application?
-    app->call_out(session_startup, 0, port->get_app());
+    call_out(session_startup, 0, port->get_app());
 
     logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p);
 

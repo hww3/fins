@@ -362,7 +362,9 @@ protected void `->dir_cache=(mixed val)
   protected void create()
   {
     object mm = master();
-        
+  werror("\n*** create!\n");
+    // TODO: need to add call_out()'s friends as well.        
+    add_constant("call_out", this->call_out);
 //    add_constant("fins_add_handler", fins_aware_add_handler);  
 //handlers_for_thread = ([]);
  //   set_weak_flag(handlers_for_thread, Pike.WEAK_INDICES);
@@ -605,6 +607,17 @@ return joinnode(({static_modules}), 0, 0, "predef::");
 
      return node;
    }
+
+  mixed call_out(function f, float|int delay, mixed ... args)
+  {
+werror("Call_out!\n");
+    object t = Thread.this_thread();
+    mixed h = get_handler_for_thread(t);
+    if(!h) 
+      throw(Error.Generic("call_out(): Unable to find handler for thread " + sprintf("%O", t) + "\n"));
+    else
+      return h->call_out(f, delay, @args);
+  }
   
   class MultiTenantCompileContainer
   {
@@ -631,7 +644,11 @@ return joinnode(({static_modules}), 0, 0, "predef::");
     mapping(string:multiset(string))dir_cache=([]);
     mapping resolv_cache=([]);
     object root_module;
-    
+
+    object application;
+    object abe;
+    protected int _shutdown; // used by abe thread to know when to stop    
+
     void add_module_path(string tmp)
     {
 //      werror("adding %O\n", tmp);
@@ -660,6 +677,41 @@ return joinnode(({static_modules}), 0, 0, "predef::");
     {
       return t=='O' && sprintf("MultiTenantCompileContainer(%O)",my_key);
     }
+
+void shutdown_backend()
+{
+  call_out(lambda(){ this->_shutdown = 1;}, 0.0);
+}
+mixed call_out(function f, float|int delay, mixed ... args)
+{
+  if(!abe)
+    create_app_backend();
+  return abe->call_out(f, delay, @args);
+}
+
+void create_app_backend()
+{
+  abe = Pike.Backend();
+  master()->fins_aware_create_thread(run_backend_thread);
+}
+
+object get_backend()
+{
+  if(!abe)
+    create_app_backend();
+  return abe;
+}
+
+void run_backend_thread()
+{
+  do
+  {
+//werror("application backend running\n");
+    abe(100.0);
+  }
+  while(!_shutdown);
+}
+
   } 
 }
 
