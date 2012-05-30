@@ -13,6 +13,8 @@ function(object:void) ready_callback;
 constant default_port = 8080;
 constant my_version = "0.1";
 
+mapping status = ([]);
+
 // we really want the default to be RAM.
 string session_storagetype = "ram";
 //string session_storagetype = "file";
@@ -66,11 +68,16 @@ int run()
   return main(sizeof(tool_args) + 1, ({""}) + tool_args);
 }
 
+void print_status()
+{
+  werror("status: %O\n", status);
+}
+
 int main(int argc, array(string) argv)
 {
   int my_port;
   array(string) config_name = ({});
-
+//  Pike.DefaultBackend->call_out(print_status, 1);
   foreach(Getopt.find_all_options(argv,aggregate(
     ({"port",Getopt.HAS_ARG,({"-p", "--port"}) }),
     ({"config",Getopt.HAS_ARG,({"-c", "--config"}) }),
@@ -133,6 +140,15 @@ int main(int argc, array(string) argv)
   array projects = ({"default"});
   if(argc>=2) projects = argv[1..];
 
+  config_name += allocate(sizeof(projects) - sizeof(config_name));
+
+  foreach(projects;int i;string pn)
+  {
+    if(!config_name[i]) config_name[i] = DEFAULT_CONFIG_NAME;
+    status[pn + "/" + config_name[i]] = "STOPPED";
+  }
+
+
   int x = do_startup(projects, config_name, my_port);
 
   return x;
@@ -178,18 +194,23 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
   logger=master()->resolv("Tools.Logging.get_logger")("finserve");
 
-  config_name += allocate(sizeof(projects) - sizeof(config_name));
-
   if(hilfe_mode && sizeof(projects) > 1)
   {
     werror("hilfe mode is only available when starting 1 application.\n");
     exit(1);
   }
 
-  foreach(projects;int i;string project)
+  if(hilfe_mode)
   {
-    int res = start_app(project, config_name[i]||DEFAULT_CONFIG_NAME, ((int)my_port));
-    if(res == 0) return 0;
+    foreach(projects;int i;string project)
+    {
+      int res = start_app(project, config_name[i], ((int)my_port));
+      if(res == 0) return 0;
+    }
+  }
+  else
+  {
+    call_out(schedule_start_app, 5, projects, config_name, (int)my_port);
   }
 
   return -1;
@@ -207,18 +228,41 @@ void run_hilfe(object app)
   return;
 }
 
+int start_current_position = 0;
+
+void schedule_start_app(array projects, array config_name, int my_port)
+{
+  if(start_current_position < sizeof(projects))
+  {
+    int res = start_app(projects[start_current_position], config_name[start_current_position], my_port);
+    call_out(schedule_start_app, 0.5, projects, config_name, my_port);
+    start_current_position++;
+  }
+}
+
 int start_app(string project, string config_name, int my_port, int|void solo)
 {
   object app;
   object port;
+  string ident = sprintf("%s/%s", project, config_name);
 
   logger->info("FinServe loading application " + project + " using configuration " + config_name);
 
+  status[ident] = "LOADING";
+
   app = load_application(project, config_name);
-if(!app) return -1;
+
+  if(!app)
+  {
+    status[ident] = "FAILED";
+    logger->critical("Application %s failed to load.", ident);
+    return -1;
+  }
   app->__fin_serve = this;
 
-  logger->info("Application %s/%s loaded.", project, config_name);
+  status[ident] = "LOADED";
+
+  logger->info("Application %s loaded.", ident);
 
   if(hilfe_mode)
   {
@@ -251,7 +295,7 @@ if(!app) return -1;
     port->request_program = Fins.HTTPRequest;
 
 #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
-    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + project + "/" + config_name + ")",
+    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
                      "_http._tcp", "", p));
 
     logger->info("Advertising this application via Bonjour.");
@@ -263,7 +307,9 @@ if(!app) return -1;
     // TODO: do we need to call this for each application?
     call_out(session_startup, 0, port->get_app());
 
-    logger->info("Application %s/%s is ready for business on port %d.", app->get_app_name(), app->get_config_name(), p);
+    status[ident] = "STARTED";
+
+    logger->info("Application %s is ready for business on port %d.", ident, p);
 
     // TODO: do we need to call this for each application?
     if(ready_callback)
