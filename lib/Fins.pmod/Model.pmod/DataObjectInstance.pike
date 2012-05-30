@@ -420,6 +420,8 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields)
   object obj = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, master_object->instance_name, ([]), "");
   if(!filter_fields) filter_fields = (<>);
 
+  if(!filter_fields) filter_fields = (<>);
+
   foreach(_indices();; string i)
   {
 	string indval = "";

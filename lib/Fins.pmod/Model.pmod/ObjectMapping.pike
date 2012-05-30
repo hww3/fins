@@ -77,7 +77,7 @@ int(0..1) _is_type(string t)
 void get_contents()
 {
   contents = ([]);
-  werror("%O\n", mkmapping(indices(field), values(field)));
+  //werror("%O\n", mkmapping(indices(field), values(field)));
   foreach(context->old_find(otherobject, ([ field->otherkey :
                                   (int) parentobject->get_id()]));int i; mixed v)
   {

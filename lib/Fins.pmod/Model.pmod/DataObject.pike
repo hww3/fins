@@ -960,7 +960,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
   }     
   else 
   {
-    werror("Error finding data for id %O; Here's the cache: %O\n\n %O\n", id, objs, fields);
+//    werror("Error finding data for id %O; Here's the cache: %O\n\n %O\n", id, objs, fields);
     throw(Error.Generic("get failed on object without a data cache.\n"));
   }
 
