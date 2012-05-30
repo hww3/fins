@@ -929,7 +929,7 @@ array get_event(.Request request)
   {
     return ({__fin_serve->new_session});
   }
-  else if(sizeof(cc->__before_filters) || sizeof(cc->__after_filters) || sizeof(cc->__around_filters))
+  else if(cc && (sizeof(cc->__before_filters) || sizeof(cc->__after_filters) || sizeof(cc->__around_filters)))
   {
      event = FilterRunner(event, cc->__before_filters, cc->__after_filters, cc->__around_filters);
   }
