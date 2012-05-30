@@ -189,6 +189,11 @@ static void create(mixed|void id, object _object_type, .DataModelContext context
     set_new_object(1);
   }
 
+  else if(objectp(id)) // assume it's a XML Node object
+  {
+    set_new_object(1);
+    decode_xml_node(id);
+  }
   else
   {
     master_object->load(context, id, this);
@@ -285,7 +290,7 @@ int set_atomic(mapping values, int|void no_validation, void|.DataModelContext c)
 }
 
 //!
-int set(string name, string value, int|void no_validation, void|.DataModelContext c)
+int set(string name, mixed value, int|void no_validation, void|.DataModelContext c)
 {
    return master_object->set(c||context, name, value, no_validation, this);
 }
@@ -375,11 +380,45 @@ string render_xml(multiset filter_fields)
   return root->render_xml();
 }
 
+void decode_xml_node(Parser.XML.Tree.Node node)
+{
+  if(node->get_full_name() != master_object->instance_name)
+  {
+    throw(Error.Generic("Cannot decode XML Node: element name is incorrect."));
+  }
+  array x = node->get_children();
+
+  foreach(x;; object n)
+  {
+    if(n->get_node_type() != Parser.XML.Tree.XML_ELEMENT) continue;
+    string field = n->get_full_name();
+    mapping attr = n->get_attributes();
+
+   if(attr["key"] && lower_case(attr["key"]) == "true")
+   {
+     // TODO make this not be "primary key as int" specific.
+     if(master_object->primary_key->name != field)
+       throw(Error.Generic("Cannot decode XML Node: declared key field is not our key field.\n"));
+
+      string text = (n->get_children()->get_text())*"";
+      werror("dealing with " + field + "=<" + text + ">\n");
+      set(field, (int)text);
+   }
+   else if(master_object->fields[field]) 
+    {
+      string text = (n->get_children()->get_text())*"";
+      werror("dealing with " + field + "=<" + text + ">\n");
+      set(field, text);
+    }
+  }
+}
+
 //! renders the attributes of the current object as an XML node object. This method does not perform a 
 //! recursive or deep traversion of any attached objects linked from this object
 Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields)
 {
   object obj = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, master_object->instance_name, ([]), "");
+  if(!filter_fields) filter_fields = (<>);
 
   foreach(_indices();; string i)
   {
@@ -423,6 +462,10 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields)
 			obj->add_child(val);
 			continue;
 		}
+                else if(master_object->fields[i]->encode_xml)
+                {
+                  indval = master_object->fields[i]->encode_xml(m, this);
+                }
 	}
 	else if(arrayp(m))
 	{

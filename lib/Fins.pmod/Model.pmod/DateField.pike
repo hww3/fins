@@ -65,6 +65,19 @@ string encode(mixed value, void|.DataObjectInstance i)
   return "'" + value->format_ymd() + "'";
 }
 
+string encode_xml(mixed value, void|.DataObjectInstance i)
+{
+  value = validate(value, i);
+  if(value == .Undefined)
+  {
+    return "NULL";
+  }
+
+  if(stringp(value)) return sprintf("%s", value);
+
+  return value->format_smtp();
+}
+
 string describe(mixed v, void|.DataObjectInstance i)
 {
   v->format_ymd();

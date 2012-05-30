@@ -49,6 +49,3 @@ string describe(mixed v, void|.DataObjectInstance i)
   return v->format_time();
 }
 
-
-
-
