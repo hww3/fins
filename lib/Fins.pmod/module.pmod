@@ -610,7 +610,7 @@ return joinnode(({static_modules}), 0, 0, "predef::");
 
   mixed call_out(function f, float|int delay, mixed ... args)
   {
-werror("Call_out!\n");
+//werror("Call_out!\n");
     object t = Thread.this_thread();
     mixed h = get_handler_for_thread(t);
     if(!h) 
