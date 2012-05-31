@@ -13,7 +13,7 @@ object indent_tree(object parent, void|int indent_text, void|int level)
         {
             subnodes = true;
             parent->add_child_before(Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_TEXT, "", ([]), "\r\n"+"    "*level), child);
-            indent_xml(child, indent_text, level+1);
+            indent_tree(child, indent_text, level+1);
         }
     }
     if (subnodes && level)
