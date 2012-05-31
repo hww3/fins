@@ -279,7 +279,7 @@ int delete(void|int force, void|.DataModelContext c)
 //!
 int save(int|void no_validation, void|.DataModelContext c)
 {
-	werror("%O", c||context);
+	//werror("%O", c||context);
    return master_object->save(c||context, no_validation, this);
 }
 

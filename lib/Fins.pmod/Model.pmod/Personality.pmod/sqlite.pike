@@ -52,7 +52,7 @@ mapping get_field_info(string table, string field, mapping info)
 		case "CURRENT_TIME":
 		case "CURRENT_DATE":
 		case "CURRENT_TIMESTAMP":
-		werror("******\n******\n******\n");
+//		werror("******\n******\n******\n");
 			m->default = Fins.Model.Undefined;
 			m->type_class = Fins.Model.SqliteDateTimeField;
 	}

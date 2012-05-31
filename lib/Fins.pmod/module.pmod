@@ -365,6 +365,11 @@ protected void `->dir_cache=(mixed val)
 //  werror("\n*** create!\n");
     // TODO: need to add call_out()'s friends as well.        
     add_constant("call_out", this->call_out);
+#ifdef TRACE_WERROR
+//  NOTE:
+//  we define an optional werror that prepends the file and line number that the werror originates from.
+    add_constant("werror", this->werror);
+#endif
 //    add_constant("fins_add_handler", fins_aware_add_handler);  
 //handlers_for_thread = ([]);
  //   set_weak_flag(handlers_for_thread, Pike.WEAK_INDICES);
@@ -607,6 +612,12 @@ return joinnode(({static_modules}), 0, 0, "predef::");
 
      return node;
    }
+
+  mixed werror(string c, mixed ... args)
+  {
+    mixed btf = backtrace()[-2];
+    return Stdio.stderr.write(sprintf("%s:%O:: " + c, btf[0], btf[1], @args));
+  }
 
   mixed call_out(function f, float|int delay, mixed ... args)
   {

@@ -19,7 +19,7 @@ string encode(mixed value, void|.DataObjectInstance i)
 
 mixed validate(mixed value, void|.DataObjectInstance i)
 {
-werror("%O\n", i);
+//werror("%O\n", i);
    if(value == .Undefined && !null && default_value == .Undefined && !i->is_new_object())
    {
      throw(Error.Generic("Field " + name + " cannot be null; no default value specified.\n"));
