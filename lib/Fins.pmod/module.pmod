@@ -362,7 +362,7 @@ protected void `->dir_cache=(mixed val)
   protected void create()
   {
     object mm = master();
-  werror("\n*** create!\n");
+//  werror("\n*** create!\n");
     // TODO: need to add call_out()'s friends as well.        
     add_constant("call_out", this->call_out);
 //    add_constant("fins_add_handler", fins_aware_add_handler);  
