@@ -28,6 +28,17 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  added Fins.FinsModel->export_db() that bundles model content into an xml
+       tree for backup and restore.
+-  added define TRACE_WERROR that prepends file and line number on all 
+       calls to werror().
+-  added Tools.XML to hold useful XML functions
+-  FinServe now starts apps in the backend; also keeps track of state of
+       each app in the "status" mapping: STOPPED, LOADING, LOADED, STARTED, 
+       and FAILED.
+-  added a rudimentary pagination framework and macros, for more info, see 
+       Fins.Helpers.Macros.Pagination.
+-  format_date macro has more extensive formatting options.
 -  action_link macro turns _id argument into dom node id.
 -  Arrays may be indexed in Simple views. For example, if view data contains
       an array called foo, we can index element 2 by using <%$foo.2%>
