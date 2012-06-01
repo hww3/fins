@@ -13,16 +13,21 @@ string config_name;
 //! the name of the multi-tenant handler, if present
 string handler_name;
 
-static mapping values;
+protected mapping values;
+
+protected string get_app_name()
+{
+ return ((appdir/"/")-({""}))[-1];
+}
 
 //!
-static void create(string appdir, string|mapping _config_file)
+protected void create(string appdir, string|mapping _config_file)
 {
   app_dir = appdir;
 
   if(appdir)
-    app_name = ((appdir/"/")-({""}))[-1];
-
+    app_name = get_app_name();
+  
 
   // TODO: should we have the following bit of code here?
   // I'm somewhat dubious.
