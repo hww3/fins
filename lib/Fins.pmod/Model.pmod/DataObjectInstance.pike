@@ -401,14 +401,32 @@ void decode_xml_node(Parser.XML.Tree.Node node)
        throw(Error.Generic("Cannot decode XML Node: declared key field is not our key field.\n"));
 
       string text = (n->get_children()->get_text())*"";
-      werror("dealing with " + field + "=<" + text + ">\n");
+//      werror("dealing with " + field + "=<" + text + ">\n");
       set(field, (int)text);
    }
    else if(master_object->fields[field]) 
     {
       string text = (n->get_children()->get_text())*"";
-      werror("dealing with " + field + "=<" + text + ">\n");
-      set(field, text);
+
+      if(attr["reference_type"] && attr["referred_type"])
+      {
+        object obj;
+        array r = context->_find(attr["referred_type"], ([attr["reference_type"]: text]));
+        if(sizeof(r) > 1)
+        {
+          throw(Error.Generic("decode_xml_node(): too many results for single key value\n"));
+        }
+        else if(!sizeof(r))
+        {
+          throw(Error.Generic("decode_xml_node(): no results for single key value, " + attr["referred_type"] + "." + attr["reference_type"] + "=" + text + "\n"));
+        }
+        set(field, obj);
+      }
+      else
+      {
+//      werror("dealing with " + field + "=<" + text + ">\n");
+        set(field, text);
+      }
     }
   }
 }

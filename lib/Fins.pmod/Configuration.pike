@@ -17,7 +17,7 @@ protected mapping values;
 
 protected string get_app_name()
 {
- return ((appdir/"/")-({""}))[-1];
+ return ((app_dir/"/")-({""}))[-1];
 }
 
 //!
