@@ -1,8 +1,14 @@
 //! the full path to the application directory
 string app_dir;
 
-//! name of the application; usually the last element of the full path to the application.
+//! name of the application; traditionally the last element of the full path to the application,
+//!   though this can be overridden; see @[get_app_name()] for details.
 string app_name;
+
+//! the name of this application's root module, which is usually the same as the app_name,
+//! though special precautions are taken to make it possible to change the app's folder name
+//! without upsetting code that depends on this being static (such as the model's definition files).
+string module_root;
 
 //! the path to the configuration file in use, such as /path/to/config/dev.cfg
 string config_file;
@@ -15,6 +21,24 @@ string handler_name;
 
 protected mapping values;
 
+//! calculates the application's internal name, which is used by various Fins subsystems.
+//!
+//! in order of preference:
+//!   - value of "name" setting in the application section of the current configuration file
+//!   - the value of the file config/.fins_app_name
+//!   - the name of the directory containing the fins application (the traditional method)
+protected string get_module_root()
+{
+ string val;
+
+ if(this["application"] && (val = this["application"]["name"]))
+   return val;
+ else if(file_stat((val = combine_path(app_dir, "config/.fins_app_name")))) 
+   return String.trim_all_whites((string)Stdio.read_file(val));
+ else
+   return ((app_dir/"/")-({""}))[-1];
+}
+
 protected string get_app_name()
 {
  return ((app_dir/"/")-({""}))[-1];
@@ -24,10 +48,6 @@ protected string get_app_name()
 protected void create(string appdir, string|mapping _config_file)
 {
   app_dir = appdir;
-
-  if(appdir)
-    app_name = get_app_name();
-  
 
   // TODO: should we have the following bit of code here?
   // I'm somewhat dubious.
@@ -52,6 +72,12 @@ protected void create(string appdir, string|mapping _config_file)
   else if(mappingp(_config_file))
   {
     values = _config_file;
+  }
+
+  if(appdir)
+  {
+    app_name = get_app_name();
+    module_root = get_module_root();
   }
 }
 

@@ -246,7 +246,7 @@ int start_app(string project, string config_name, int my_port, int|void solo)
   object port;
   string ident = sprintf("%s/%s", project, config_name);
 
-  logger->info("FinServe loading application " + project + " using configuration " + config_name);
+  logger->info("FinServe loading application from " + project + " using configuration " + config_name);
 
   status[ident] = "LOADING";
 
@@ -255,7 +255,7 @@ int start_app(string project, string config_name, int my_port, int|void solo)
   if(!app)
   {
     status[ident] = "FAILED";
-    logger->critical("Application %s failed to load.", ident);
+    logger->critical("Application in %s failed to load.", ident);
     return -1;
   }
   app->__fin_serve = this;

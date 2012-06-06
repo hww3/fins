@@ -28,6 +28,7 @@ class=view
 reload=1
 
 [application]
+name=__APPNAME__
 class=application
 ";
 

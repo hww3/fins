@@ -440,7 +440,6 @@ void decode_xml_node(Parser.XML.Tree.Node node)
 
 void decode_ref(object n)
 {
-  object obj;
   string field = n->get_full_name();
   mapping attr = n->get_attributes();
 

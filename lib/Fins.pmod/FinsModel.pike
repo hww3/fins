@@ -74,7 +74,10 @@ object configure_context(mapping config_section, int is_default)
   object defaults = Fins.Helpers.Defaults;
   catch(defaults = (object)"defaults");
 
-  if(is_default) definition_module = (config_section->definition_module || config->app_name);
+  string url = config_section["datasource"];
+  if(!url) throw(Error.Generic("Unable to load model: no datasource defined.\n"));
+
+  if(is_default) definition_module = (config_section->definition_module || config->module_root);
   else definition_module = config_section->definition_module;
 
   if(!definition_module)
@@ -82,15 +85,27 @@ object configure_context(mapping config_section, int is_default)
 	throw(Error.Generic("No model definition module specified. Cannot configure model."));
   }
 
-  if(o = master()->resolv(definition_module + "." + defaults->data_mapping_module_name))
-    repository->set_model_module(o);
-  if(o = master()->resolv(definition_module + "." + defaults->data_instance_module_name))
-    repository->set_object_module(o);
+  object d = get_context(config_section);
+  d->context_id = config_section["id"] || "_default";
 
- string url = config_section["datasource"];
- if(!url) throw(Error.Generic("Unable to load model: no datasource defined.\n"));
- object d = get_context(config_section);
- d->context_id = config_section["id"] || "_default";
+  string mn = definition_module + "." + defaults->data_mapping_module_name;
+  if(o = master()->resolv(mn))
+  {
+    repository->set_model_module(o);
+    log->debug("Model %s using %s for data mapping objects.", d->context_id, mn); 
+  }
+  else
+    log->warn("Unable to find model data mapping definition module %s.", mn); 
+
+  mn = definition_module + "." + defaults->data_instance_module_name;
+  if(o = master()->resolv(mn))
+  {
+    repository->set_object_module(o);
+    log->debug("Model %s using %s for data object instances.", d->context_id, mn); 
+  }
+  else
+    log->warn("Unable to find model data object instance module %s.", mn); 
+
  d->set_url(url);
  d->sql = d->get_connection();
  d->debug = (int)config_section["debug"];
