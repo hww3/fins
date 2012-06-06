@@ -202,12 +202,12 @@ int run()
   cd("../..");
 
   cd ("bin");
-  Stdio.write_file("start.sh", customize(start_contents));
-  Stdio.write_file("fins.sh", customize(fins_contents));
-  Stdio.write_file("hilfe.sh", customize(hilfe_contents));
-  Process.system("chmod a+rx hilfe.sh");
-  Process.system("chmod a+rx start.sh");
-  Process.system("chmod a+rx fins.sh");
+  Stdio.write_file("start", customize(start_contents));
+  Stdio.write_file("fins", customize(fins_contents));
+  Stdio.write_file("hilfe", customize(hilfe_contents));
+  Process.system("chmod a+rx hilfe");
+  Process.system("chmod a+rx start");
+  Process.system("chmod a+rx fins");
   
   return 0;
 }
