@@ -498,6 +498,7 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)abso
 
   foreach(_indices();; string i)
   {
+werror("considering %O\n", i);
 	string indval = "";
 	mapping attrs = ([]);
 	if(filter_fields[i]) continue;
