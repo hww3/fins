@@ -109,23 +109,7 @@ void index(object id, object response, mixed ... args)
 }
 ";
 
-string start_contents =
-#"#!/bin/sh
-
-  PIKE_ARGS=\"\"
-
-  if [ x$FINS_HOME != \"x\" ]; then
-    PIKE_ARGS=\"$PIKE_ARGS -M$FINS_HOME/lib\"
-  else
-    echo \"FINS_HOME is not defined. Define if you have Fins installed outside of your standard Pike module search path.\"
-  fi
-
-  cd `dirname $0`/../..
-  exec pike $PIKE_ARGS -x fins start __APPNAME__ $*
-";
-
-
-string fins_contents =
+string script_base =
 #"#!/bin/sh
 
   PIKE_ARGS=\"\"
@@ -144,6 +128,20 @@ string fins_contents =
   shift 1
 
   cd `dirname $0`/../..
+";
+
+string hilfe_contents = script_base +
+#"
+  exec pike $PIKE_ARGS -x fins start __APPNAME__ --hilfe $*
+";
+
+string start_contents = script_base + 
+#"
+  exec pike $PIKE_ARGS -x fins start __APPNAME__ $*
+";
+
+string fins_contents = script_base + 
+#"
   exec pike $PIKE_ARGS -x fins $ARG0 __APPNAME__ $*
 ";
 
@@ -206,6 +204,8 @@ int run()
   cd ("bin");
   Stdio.write_file("start.sh", customize(start_contents));
   Stdio.write_file("fins.sh", customize(fins_contents));
+  Stdio.write_file("hilfe.sh", customize(hilfe_contents));
+  Process.system("chmod a+rx hilfe.sh");
   Process.system("chmod a+rx start.sh");
   Process.system("chmod a+rx fins.sh");
   
