@@ -4,6 +4,7 @@ constant type = "MetaData";
 
 static mapping metadata = ([]);
 static string _metadata;
+//int is_shadow = 1;
 
 //!  provides a field that stores a mapping of data in another field 
 //!

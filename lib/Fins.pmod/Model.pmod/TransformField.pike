@@ -8,7 +8,7 @@ string transformfield;
 function transformer;
 int is_shadow = 1;
 array args;
-constant type = "Float";
+constant type = "Transform";
 
 void create(string _name, string _transformfield, function _transformer, mixed ... _args)
 { 

@@ -489,7 +489,7 @@ void decode_ref(object n)
 //! @note 
 //!   absolute_mode will render an exact replica on import, however cannot be reliably used
 //!   in a model with pre-existing objects.
-Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)absolute_mode)
+Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)|void absolute_mode)
 {
   object obj = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, master_object->instance_name, ([]), "");
   if(!filter_fields) filter_fields = (<>);
@@ -498,12 +498,10 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)abso
 
   foreach(_indices();; string i)
   {
-werror("considering %O\n", i);
 	string indval = "";
 	mapping attrs = ([]);
 	if(filter_fields[i]) continue;
 
-	if(master_object->fields[i]->is_shadow) continue;	
 	if(master_object->primary_key == master_object->fields[i])
 		attrs["key"] = "true";
 	mixed m = get(i);
@@ -527,7 +525,6 @@ werror("considering %O\n", i);
 
 		else if(Program.implements(object_program(m), master()->resolv("Fins.Model.MultiObjectArray")))
 		{
-werror("have a many-to-many reference: %O.\n", i);
 			attrs["reference_type"] = "many-to-many";
 			object val = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, i, attrs, "");
 
@@ -545,20 +542,25 @@ werror("have a many-to-many reference: %O.\n", i);
                   indval = master_object->fields[i]->encode_xml(m, this);
                 }
 	}
+	else if(master_object->fields[i]->is_shadow) 
+        {
+          continue;		
+        }
 	else if(arrayp(m))
 	{
+          continue;
 	}
 	else if(mappingp(m))
 	{
-		
+          continue;
 	}
 	else if(multisetp(m))
 	{
-		
+          continue;
 	}
 	else
 	{
-	  	indval = (string)m;
+          indval = (string)m;
 	}
 	
 //	attrs->type = master_object->fields[i]->type;
