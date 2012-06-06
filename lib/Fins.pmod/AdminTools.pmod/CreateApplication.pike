@@ -122,11 +122,6 @@ string script_base =
   fi
 
   ARG0=$1
-  if [ x$ARG0 = \"x\" ]; then
-    echo \"$0: no command given.\"
-    exit 1
-  fi
-  shift 1
 
   cd `dirname $0`/../..
 ";
@@ -143,6 +138,12 @@ string start_contents = script_base +
 
 string fins_contents = script_base + 
 #"
+  if [ x$ARG0 = \"x\" ]; then
+    echo \"$0: no command given.\"
+    exit 1
+  fi
+  shift 1
+
   exec pike $PIKE_ARGS -x fins $ARG0 __APPNAME__ $*
 ";
 
