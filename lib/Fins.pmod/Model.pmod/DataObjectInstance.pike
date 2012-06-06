@@ -387,7 +387,7 @@ void decode_xml_node(Parser.XML.Tree.Node node)
     throw(Error.Generic("Cannot decode XML Node: element name is incorrect."));
   }
   array x = node->get_children();
-
+  array refs = ({});
   foreach(x;; object n)
   {
     if(n->get_node_type() != Parser.XML.Tree.XML_ELEMENT) continue;
@@ -406,34 +406,90 @@ void decode_xml_node(Parser.XML.Tree.Node node)
    }
    else if(master_object->fields[field]) 
     {
-      string text = (n->get_children()->get_text())*"";
+      mixed text = (n->get_children()->get_text())*"";
+      if(attr["datatype"])
+      {
+        switch(attr["datatype"])
+        {
+          case "int":
+            text = (int)text;
+            break;
+          case "float":
+            text = (float)text;
+            break;
+        }
+      }
 
       if(attr["reference_type"] && attr["referred_type"])
       {
-        object obj;
-        array r = context->_find(attr["referred_type"], ([attr["reference_type"]: text]));
-        if(sizeof(r) > 1)
-        {
-          throw(Error.Generic("decode_xml_node(): too many results for single key value\n"));
-        }
-        else if(!sizeof(r))
-        {
-          throw(Error.Generic("decode_xml_node(): no results for single key value, " + attr["referred_type"] + "." + attr["reference_type"] + "=" + text + "\n"));
-        }
-        set(field, obj);
+        refs += ({ n });
       }
       else
-      {
+      {  
 //      werror("dealing with " + field + "=<" + text + ">\n");
         set(field, text);
       }
     }
   }
+
+  // finally, let's deal with the refs.
+  foreach(refs;; object n)
+    decode_ref(n);
+
+}
+
+void decode_ref(object n)
+{
+  object obj;
+  string field = n->get_full_name();
+  mapping attr = n->get_attributes();
+
+  mixed text = (n->get_children()->get_text())*"";
+  if(attr["datatype"])
+  {
+    switch(attr["datatype"])
+    {
+      case "int":
+        text = (int)text;
+        break;
+      case "float":
+        text = (float)text;
+        break;
+    }
+  }
+
+  // short circuit self refs
+  if(attr["referred_type"] == master_object->instance_name && this[attr["reference_type"]] == text )
+  {
+    set(field, get_id());
+    return;
+  }
+  array r = context->_find(attr["referred_type"], ([attr["reference_type"]: text]));
+  if(sizeof(r) > 1)
+  {
+    throw(Error.Generic("decode_ref(): too many results for single key value\n"));
+  }
+  else if(!sizeof(r))
+  {
+    throw(Error.Generic("decode_ref(): no results for single key value, " + attr["referred_type"] + "." + attr["reference_type"] + "=" + text + ", mine is \n")); 
+  }
+  set(field, r[0]);
 }
 
 //! renders the attributes of the current object as an XML node object. This method does not perform a 
 //! recursive or deep traversion of any attached objects linked from this object
-Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields)
+//!
+//! @param filter_fields
+//!   a list of fields that should be excluded from the resulting output.
+//!  
+//! @param absolute_mode
+//!   if true, object ids and references will be stored in the output as they are; otherwise
+//!   auto-numbering and references by alternate id and object type will be used
+//!
+//! @note 
+//!   absolute_mode will render an exact replica on import, however cannot be reliably used
+//!   in a model with pre-existing objects.
+Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)absolute_mode)
 {
   object obj = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, master_object->instance_name, ([]), "");
   if(!filter_fields) filter_fields = (<>);
@@ -470,6 +526,7 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields)
 
 		else if(Program.implements(object_program(m), master()->resolv("Fins.Model.MultiObjectArray")))
 		{
+werror("have a many-to-many reference: %O.\n", i);
 			attrs["reference_type"] = "many-to-many";
 			object val = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, i, attrs, "");
 
