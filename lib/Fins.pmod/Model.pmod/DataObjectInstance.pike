@@ -403,7 +403,9 @@ void decode_xml_node(Parser.XML.Tree.Node node, void|int(0..1)save_object)
        throw(Error.Generic("Cannot decode XML Node: declared key field is not our key field.\n"));
 
       string text = (n->get_children()->get_text())*"";
+werror("setting id for %O.%O = %O\n", this, field, text);
 //      werror("dealing with " + field + "=<" + text + ">\n");
+      set_id((int)text);
       set(field, (int)text);
    }
    else if(master_object->fields[field]) 
@@ -468,20 +470,6 @@ void decode_mtm_ref(object n)
   string field = n->get_full_name();
   mapping attr = n->get_attributes();
 
-  mixed text = (n->get_children()->get_text())*"";
-  if(attr["datatype"])
-  {
-    switch(attr["datatype"])
-    {
-      case "int":
-        text = (int)text;
-        break;
-      case "float":
-        text = (float)text;
-        break;
-    }
-  }
-
   if(attr["reference_type"] != "many-to-many") return;
 werror("decoding mtm ref " + field  + "\n");
   foreach(n->get_children();; object node)
@@ -492,6 +480,21 @@ werror("decoding mtm ref " + field  + "\n");
     if(node->get_node_type() != Parser.XML.Tree.XML_ELEMENT) continue;
     else if(node->get_full_name() != "reference") continue;
 werror("have ref item.:%O\n", node->render_xml());
+
+  if(_attr["datatype"])
+  {
+    switch(_attr["datatype"])
+    {
+      case "int":
+        _text = (int)_text;
+        break;
+      case "float":
+        _text = (float)_text;
+        break;
+    }
+  }
+
+
     array r = context->_find(_attr["referred_type"], ([_attr["reference_type"]: _text]));
     if(sizeof(r) > 1)
     {
@@ -505,7 +508,7 @@ werror("boo\n");
     }
     else
     {
-werror("yay!\n");
+werror("yay!: %O, %O, %O\n", field, this[field], r[0]);
       this[field] -= r[0];
       this[field] += r[0];
     }

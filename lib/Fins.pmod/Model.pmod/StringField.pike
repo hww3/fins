@@ -30,7 +30,7 @@ mixed validate(mixed value, void|.DataObjectInstance i)
      return default_value;
    }
  
-   else if(value == .Undefined)
+   else if(value == .Undefined || !value)
    {
      return .Undefined;
    }
@@ -54,7 +54,10 @@ string encode(mixed value, void|.DataObjectInstance i)
 {
   value = validate(value, i);
 //werror("validated value " + value + "\n");
-  if(value == .Undefined)
+  // NOTE
+  // setting a string with a value of zero would never give you the string "0", so we shouldn't
+  // do that here, either.
+  if(value == 0 || value == .Undefined)
     return "NULL";
   else
     return "'" + context->quote(value) + "'";

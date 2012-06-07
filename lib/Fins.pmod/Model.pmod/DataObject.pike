@@ -947,7 +947,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
   else if(i->is_new_object())
   {
 //	 if(context->debug) log->debug("%O(): have field in new object cache.", Tools.Function.this_function());
-    return i->object_data[field];
+    return fields[field]->decode(i->object_data[field], i);
   }
 
   log->debug("%O(): loading data from db.", Tools.Function.this_function());
