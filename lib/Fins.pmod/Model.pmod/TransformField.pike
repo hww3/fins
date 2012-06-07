@@ -7,6 +7,7 @@ string name;
 string transformfield;
 function transformer;
 int is_shadow = 1;
+int is_read_only = 1;
 array args;
 constant type = "Transform";
 

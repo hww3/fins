@@ -260,11 +260,12 @@ void initialize_links(object ctx)
 	  that_name = lower_case(that_name);
 	}
 
-     this_type->add_field(ctx, Model.MultiKeyReference(this_type, Tools.Language.Inflect.pluralize(that_name),
+     this_type->add_field(ctx, Model.MultiKeyReference(this_type, 
+            Tools.Language.Inflect.pluralize(that_name),
             a->join_table,
             lower_case(this_type->instance_name + "_" + this_type->primary_key->field_name),
             lower_case(that_type->instance_name + "_" + that_type->primary_key->field_name),
-             that_type->instance_name, that_type->primary_key->name));
+             that_type->instance_name, that_type->primary_key->name, 0, 1));
 
      that_type->add_field(ctx, Model.MultiKeyReference(that_type, Tools.Language.Inflect.pluralize(this_name),
             a->join_table,
@@ -347,7 +348,7 @@ void initialize_links(object ctx)
             o->tn + "_" + q->tn, 
             lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name), 
             lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name),
-             q->od->instance_name, q->od->primary_key->name));
+             q->od->instance_name, q->od->primary_key->name, 0, 1));
 
           q->od->add_field(ctx, Model.MultiKeyReference(q->od, Tools.Language.Inflect.pluralize(that_name),
             o->tn + "_" + q->tn, 

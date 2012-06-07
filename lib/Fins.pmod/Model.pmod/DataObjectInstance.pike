@@ -380,7 +380,7 @@ string render_xml(multiset filter_fields)
   return root->render_xml();
 }
 
-void decode_xml_node(Parser.XML.Tree.Node node)
+void decode_xml_node(Parser.XML.Tree.Node node, void|int(0..1)save_object)
 {
   if(node->get_full_name() != master_object->instance_name)
   {
@@ -388,6 +388,8 @@ void decode_xml_node(Parser.XML.Tree.Node node)
   }
   array x = node->get_children();
   array refs = ({});
+  array mtm_refs = ({});
+
   foreach(x;; object n)
   {
     if(n->get_node_type() != Parser.XML.Tree.XML_ELEMENT) continue;
@@ -420,7 +422,20 @@ void decode_xml_node(Parser.XML.Tree.Node node)
         }
       }
 
-      if(attr["reference_type"] && attr["referred_type"])
+      // we don't need to include foreign keys, as they're not stored here.
+     // if(Program.inherits(object_program(master_object->fields[field]), Fins.Model.InverseForeignKeyReference)) 
+     //   continue;
+
+      if(attr["reference_type"] && attr["reference_type"] == "many-to-many")
+      {
+        if(master_object->fields[field]->is_owner)
+          mtm_refs += ({ n });
+      }
+      else if(master_object->fields[field]->is_read_only)
+      {
+        continue;
+      }
+      else if(attr["reference_type"])
       {
         refs += ({ n });
       }
@@ -436,6 +451,65 @@ void decode_xml_node(Parser.XML.Tree.Node node)
   foreach(refs;; object n)
     decode_ref(n);
 
+  if(save_object)
+  {
+    this->save();
+  }
+
+  foreach(mtm_refs;; object n)
+  {
+    decode_mtm_ref(n);
+    //if(e) werror("error: %O\n", e);
+  }
+}
+
+void decode_mtm_ref(object n)
+{
+  string field = n->get_full_name();
+  mapping attr = n->get_attributes();
+
+  mixed text = (n->get_children()->get_text())*"";
+  if(attr["datatype"])
+  {
+    switch(attr["datatype"])
+    {
+      case "int":
+        text = (int)text;
+        break;
+      case "float":
+        text = (float)text;
+        break;
+    }
+  }
+
+  if(attr["reference_type"] != "many-to-many") return;
+werror("decoding mtm ref " + field  + "\n");
+  foreach(n->get_children();; object node)
+  {
+    mapping _attr = node->get_attributes();
+    mixed _text = (node->get_children()->get_text())*"";
+
+    if(node->get_node_type() != Parser.XML.Tree.XML_ELEMENT) continue;
+    else if(node->get_full_name() != "reference") continue;
+werror("have ref item.:%O\n", node->render_xml());
+    array r = context->_find(_attr["referred_type"], ([_attr["reference_type"]: _text]));
+    if(sizeof(r) > 1)
+    {
+werror("boo\n");
+      throw(Error.Generic("decode_mtm_ref(" + field + "): too many results for single key value\n"));
+    }
+    else if(!sizeof(r))
+    {
+werror("boo\n");
+      throw(Error.Generic("decode_mtm_ref(" + field + "): no results for single key value, " + _attr["referred_type"] + "." + _attr["reference_type"] + "=" + _text + ", mine is \n")); 
+    }
+    else
+    {
+werror("yay!\n");
+      this[field] -= r[0];
+      this[field] += r[0];
+    }
+  }
 }
 
 void decode_ref(object n)
@@ -463,14 +537,15 @@ void decode_ref(object n)
     set(field, get_id());
     return;
   }
+//werror("attr: %O\n", attr);
   array r = context->_find(attr["referred_type"], ([attr["reference_type"]: text]));
   if(sizeof(r) > 1)
   {
-    throw(Error.Generic("decode_ref(): too many results for single key value\n"));
+    throw(Error.Generic(sprintf("%O decode_ref(" + field + "): too many results for single key value\n", this)));
   }
   else if(!sizeof(r))
   {
-    throw(Error.Generic("decode_ref(): no results for single key value, " + attr["referred_type"] + "." + attr["reference_type"] + "=" + text + ", mine is \n")); 
+    throw(Error.Generic(sprintf("%O decode_ref(" + field + "): no results for single key value, " + attr["referred_type"] + "." + attr["reference_type"] + "=" + text + ", mine is \n", this))); 
   }
   set(field, r[0]);
 }
@@ -529,8 +604,9 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)|voi
 
 			foreach(m;;object f)
 			{
-				object ref = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, "reference", ([ "reference_type": (f->master_object->alternate_key?f->master_object->alternate_key->name:f->master_object->primary_key->name), "referred_type": f->master_object->instance_name]), "");
-				ref->add_child(Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_TEXT, "", ([]), (string)f->get_id()));
+                           string rf = (f->master_object->alternate_key?f->master_object->alternate_key->name:f->master_object->primary_key->name);
+				object ref = Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_ELEMENT, "reference", ([ "reference_type": rf, "referred_type": f->master_object->instance_name]), "");
+				ref->add_child(Parser.XML.Tree.SimpleNode(Parser.XML.Tree.XML_TEXT, "", ([]), (string)f[rf]));
 				val->add_child(ref);
 			}
 			obj->add_child(val);
@@ -559,6 +635,9 @@ Parser.XML.Tree.SimpleNode render_xml_node(multiset filter_fields, int(0..1)|voi
 	}
 	else
 	{
+          if(intp(m)) attrs->datatype="int";
+          else if(floatp(m)) attrs->datatype="float";
+
           indval = (string)m;
 	}
 	

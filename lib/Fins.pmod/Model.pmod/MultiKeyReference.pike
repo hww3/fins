@@ -10,6 +10,7 @@ object parent;
 string otherkey; 
 int null = 0;
 int is_shadow=1;
+int is_owner = 0;
 int unique;
 .Criteria criteria;
 string mappingtable;
@@ -19,7 +20,7 @@ string other_mappingfield;
 object renderer = Fins.Helpers.Renderers.MultiKeyRenderer(); // ScaffoldRenderer
 
 static void create(object p, string _name, string _mappingtable, string _my_mappingfield, 
-	string _other_mappingfield, string _otherobject, string _otherkey, .Criteria|void _criteria)
+	string _other_mappingfield, string _otherobject, string _otherkey, .Criteria|void _criteria, int|void owns_relationship)
 {
   name = _name;
   mappingtable = _mappingtable;
@@ -29,6 +30,8 @@ static void create(object p, string _name, string _mappingtable, string _my_mapp
   otherkey = _otherkey;
   criteria = _criteria;
   parent = p;
+  if(owns_relationship)
+    is_owner = 1;
 }
 
 // value will be null in a foreign key, as we're not in an object where that's a real field. 

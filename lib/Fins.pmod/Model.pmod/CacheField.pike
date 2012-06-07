@@ -6,6 +6,7 @@ mixed default_value;
 string name;
 string cachefield;
 int is_shadow = 1;
+int is_read_only = 1;
 constant type = "Float";
 
 void create(string _name, string _cachefield, object ctx)
