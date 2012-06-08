@@ -9,7 +9,7 @@ void get_contents()
 
 mixed `+(mixed arg)
 {
-werror("`+(%O)\n", arg);
+//werror("`+(%O)\n", arg);
 
 // werror("otherobject: %O\n", otherobject);
 
@@ -27,18 +27,19 @@ werror("`+(%O)\n", arg);
 	 parentobject->master_object->primary_key->encode(parentobject->get_id()) + "," + 
 	 arg->master_object->primary_key->encode(arg->get_id()) + ")");
 
+  /*
   werror("INSERT INTO " + field->mappingtable + 
 	 "(" + field->my_mappingfield + "," + field->other_mappingfield + ") VALUES(" + 
 	 parentobject->master_object->primary_key->encode(parentobject->get_id()) + "," + 
 	 arg->master_object->primary_key->encode(arg->get_id()) + ")");
-
+  */
   changed = 1;
   return this;
 }
 
 mixed `-(mixed arg)
 {
-werror("`-(%O)\n", arg);
+//werror("`-(%O)\n", arg);
   // do we have the right kind of object?
   if(!objectp(arg) || !arg->master_object || arg->master_object != otherobject)
   {
@@ -54,12 +55,13 @@ werror("`-(%O)\n", arg);
     field->other_mappingfield + "=" + 
 	 arg->master_object->primary_key->encode(arg->get_id()));
 
+  /*
   werror("DELETE FROM " + field->mappingtable + 
 	 " WHERE " + field->my_mappingfield + "=" + 
 	 parentobject->master_object->primary_key->encode(parentobject->get_id()) + " AND " + 
     field->other_mappingfield + "=" + 
 	 arg->master_object->primary_key->encode(arg->get_id()));
-
+*/
   changed = 1;
   return this;
 }

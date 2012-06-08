@@ -1122,7 +1122,7 @@ mapping objs, objs_by_alt;
    {
      if(Program.inherits(object_program(r), .InverseForeignKeyReference))
      {
-       werror("%O is a link to this table's primary key\n", n);
+//       werror("%O is a link to this table's primary key\n", n);
        mixed m = get(context, n, i);
        if(m && sizeof(m) && !force) // this should work, because any object should have a size.
        {
@@ -1145,7 +1145,7 @@ mapping objs, objs_by_alt;
 
      else if(Program.inherits(object_program(r), .MultiKeyReference))
      {
-werror("removing relationships: %O=%O\n",n, get(context,n,i));
+//werror("removing relationships: %O=%O\n",n, get(context,n,i));
        foreach(get(context, n, i);; object mem)
          i[n]-=mem;
      }

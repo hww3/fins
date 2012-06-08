@@ -403,7 +403,7 @@ void decode_xml_node(Parser.XML.Tree.Node node, void|int(0..1)save_object)
        throw(Error.Generic("Cannot decode XML Node: declared key field is not our key field.\n"));
 
       string text = (n->get_children()->get_text())*"";
-werror("setting id for %O.%O = %O\n", this, field, text);
+//werror("setting id for %O.%O = %O\n", this, field, text);
 //      werror("dealing with " + field + "=<" + text + ">\n");
       set_id((int)text);
       set(field, (int)text);
@@ -471,7 +471,7 @@ void decode_mtm_ref(object n)
   mapping attr = n->get_attributes();
 
   if(attr["reference_type"] != "many-to-many") return;
-werror("decoding mtm ref " + field  + "\n");
+//werror("decoding mtm ref " + field  + "\n");
   foreach(n->get_children();; object node)
   {
     mapping _attr = node->get_attributes();
@@ -479,7 +479,7 @@ werror("decoding mtm ref " + field  + "\n");
 
     if(node->get_node_type() != Parser.XML.Tree.XML_ELEMENT) continue;
     else if(node->get_full_name() != "reference") continue;
-werror("have ref item.:%O\n", node->render_xml());
+//werror("have ref item.:%O\n", node->render_xml());
 
   if(_attr["datatype"])
   {
@@ -498,17 +498,17 @@ werror("have ref item.:%O\n", node->render_xml());
     array r = context->_find(_attr["referred_type"], ([_attr["reference_type"]: _text]));
     if(sizeof(r) > 1)
     {
-werror("boo\n");
+//werror("boo\n");
       throw(Error.Generic("decode_mtm_ref(" + field + "): too many results for single key value\n"));
     }
     else if(!sizeof(r))
     {
-werror("boo\n");
+//werror("boo\n");
       throw(Error.Generic("decode_mtm_ref(" + field + "): no results for single key value, " + _attr["referred_type"] + "." + _attr["reference_type"] + "=" + _text + ", mine is \n")); 
     }
     else
     {
-werror("yay!: %O, %O, %O\n", field, this[field], r[0]);
+//werror("yay!: %O, %O, %O\n", field, this[field], r[0]);
       this[field] -= r[0];
       this[field] += r[0];
     }
