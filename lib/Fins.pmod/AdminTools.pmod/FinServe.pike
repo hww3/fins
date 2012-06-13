@@ -35,6 +35,7 @@ int _ports_defaulted;
 
 mapping/*(object:Session.SessionManager)*/ managers = ([]);
 mapping(object:Thread.Thread) workers = ([]);
+mapping(string:object|int) urls = ([]);
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 
 #if constant(_Protocols_DNS_SD) &&  constant(Protocols.DNS_SD.Service);
@@ -294,6 +295,13 @@ int start_app(string project, string config_name, int my_port, int|void solo)
     port->set_app(app);
     port->request_program = Fins.HTTPRequest;
 
+    object a = app->get_my_url();
+
+    if(a) 
+    {
+      logger->info("registering %O", lower_case(a->host));
+      urls[lower_case(a->host)] = app;
+    }
 #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
     port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
                      "_http._tcp", "", p));
@@ -435,6 +443,36 @@ void session_startup(object app)
 void handle_request(Protocols.HTTP.Server.Request request)
 {
   Thread.Queue queue;
+//werror("%O\n", mkmapping(indices(request), values(request)));
+  if(request->protocol == "HTTP/1.1" && request->request_headers["host"])
+  {
+    string host = lower_case(request->request_headers["host"]);
+    host = (host/":")[0];
+//    werror("parsing host = %O\n", host);
+
+    object|int app;
+    if(!(app = urls[host]))
+    {
+       foreach(urls; string u; object a)
+       {
+         if(has_suffix(host, "." + u))
+         {
+           app = urls[host] = a;
+           break; 
+         }
+       }      
+    }
+
+    if(!app || app == -1)
+    {
+       urls[host] = -1;
+//       throw(Error.Generic("Unable to find app for host " + host + "\n"));
+    }
+    else
+    {
+      request->fins_app = app;
+    }
+  }
 
 //  werror("APP: %O\n", request->fins_app);
   queue = request->fins_app->queue;
@@ -628,6 +666,7 @@ class fins_app_port
   {
 //    werror("*** setting app: %O\n", application);
     app = application;
+    app->my_port = (int)(port->query_address()/" ")[1];
   }
 
   public object get_app()

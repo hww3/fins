@@ -66,6 +66,7 @@ int controller_autoreload;
 int cache_events;
 
 Standards.URI my_url;
+int my_port;
 
 //! determines the length of time, in hours, responses from a static file controller should indicate the file ought to be cached. 
 //! this setting is derived from the value of the static_expire_period parameter in the application section of the application 
@@ -521,6 +522,12 @@ Standards.URI get_my_url()
   if(config["web"] && (url = config["web"]["url"]))
   {
     my_url = Standards.URI(url);
+    return Standards.URI(my_url);
+  }
+  else if(config["web"] && config["web"]["use_xip_io"])
+  {
+    string my_ip = System.gethostbyname(gethostname())[1][0];
+    my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + my_port + "/");
     return Standards.URI(my_url);
   }
   else return 0;

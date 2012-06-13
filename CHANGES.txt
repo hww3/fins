@@ -28,6 +28,17 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  added use_xip_io option to web section of config file, setting this
+       instead of url in the config section causes get_my_url() to generate
+       an app url in the form of http://app_name-config.my_ip.xip.io:port,
+       which will be used in redirects, absolute urls and by FinServe
+       for ip-less virtual hosting. 
+-  added basic ip-less virtual hosting: in addition to the serving an app 
+       on its specified port number, any port will also serve an app if
+       the host header on a request looks like x or *.x, where x is the
+       value returned by app->get_my_url(). By default, get_my_url() returns
+       either the value of the web->url configuration setting, or the
+       xip.io constructed url if that setting is enabled.
 -  added Fins.FinsModel->export_db() that bundles model content into an xml
        tree for backup and restore.
 -  added define TRACE_WERROR that prepends file and line number on all 
