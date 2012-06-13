@@ -512,7 +512,8 @@ string get_path_for_action(function|object action, int|void nocontextroot)
 }
 
 //! gets the url of the current application (not including the context root). this setting
-//! is derived from the value of the url parameter in the web section of the application config file.
+//! is derived from the value of the url parameter in the web section of the application config file,
+//! or the xip.io url, if the use_xip_io config setting is enabled in the web section of the config file.
 Standards.URI get_my_url()
 {
   string url;
