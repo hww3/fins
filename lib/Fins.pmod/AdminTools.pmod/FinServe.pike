@@ -30,7 +30,7 @@ int session_timeout = 7200;
 //object /*Fins.Application*/ 
 mapping(string:object) apps = ([]);
 
-program server = fins_app_port;
+program server = Fins.Util.AppPort;
 int _ports_defaulted;
 int admin_port;
 
@@ -268,29 +268,13 @@ int start_admin(int my_port)
 
 int start_app(string project, string config_name, int|void solo)
 {
-  object app;
-  object port;
-  string ident = sprintf("%s/%s", project, config_name);
+  object app = Fins.Util.AppRunner(project, config_name);
+  
+  app->load_app();
 
-  logger->info("FinServe loading application from " + project + " using configuration " + config_name);
-
-  status[ident] = "LOADING";
-
-  app = load_application(project, config_name);
-
-  if(!app)
-  {
-    status[ident] = "FAILED";
-    logger->critical("Application in %s failed to load.", ident);
-    return -1;
-  }
   app->__fin_serve = this;
 
   apps[ident] = app;
-
-  status[ident] = "LOADED";
-
-  logger->info("Application %s loaded.", ident);
 
   if(hilfe_mode)
   {
@@ -300,51 +284,22 @@ int start_app(string project, string config_name, int|void solo)
     Pike.DefaultBackend(0.0);
     Pike.DefaultBackend(0.0);
 
-  object _master = master();
+    object _master = master();
 
-  if(_master->multi_tenant_aware)
-  {
-    _master->low_create_thread(run_hilfe, app->config->handler_name, app);
-  }
-  else
-  {
-    Thread.Thread(run_hilfe, app);
-  }
-  return -1;
-  }
-  else
-  {
-    int p;
-    catch(p = (int)app->config["web"]["port"]);
-    // prefer command line specification to config file to default.
-    if(p)
+    if(_master->multi_tenant_aware)
     {
-      port = server(handle_request, p);  
-      port->set_app(app);
-      port->request_program = Fins.HTTPRequest;
-
-#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
-    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
-                     "_http._tcp", "", p));
-
-    logger->info("Advertising this application via Bonjour.");
-#endif
-
-    ports += (<port>);
-    }
-
-    object a;
-    mixed err = catch(a = app->get_my_url());
-
-    if(a) 
-    {
-      logger->info("registering %O", lower_case(a->host));
-      urls[lower_case(a->host)] = app;
+      _master->low_create_thread(run_hilfe, app->config->handler_name, app);
     }
     else
     {
-      logger->exception("Unable to determine application URL. Still starting app but you probably won't be able to access it. Root exception follows.", err);
+      Thread.Thread(run_hilfe, app);
     }
+    return -1;
+  }
+  else
+  {
+    app->register_ports();
+
     workers[app] = start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name);
 
     // TODO: do we need to call this for each application?
@@ -752,39 +707,4 @@ void destroy()
   }
 
   exit(0);
-}
-
-
-class fins_app_port
-{
-  inherit Protocols.HTTP.Server.Port;
-
-  protected object app;
-  // why we need both ifs i don't know
-#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
-  protected Protocols.DNS_SD.Service bonjour;
-
-  public void set_bonjour(object _bonjour)
-  {
-    bonjour = _bonjour;
-  }
-
-  public object get_bonjour()
-  {
-    return bonjour;
-  }
-#endif
-  
-  public void set_app(object application)
-  {
-//    werror("*** setting app: %O\n", application);
-    app = application;
-    app->my_port = (int)(port->query_address()/" ")[1];
-  }
-
-  public object get_app()
-  {
-    return app;
-  }
-  
 }
