@@ -333,14 +333,18 @@ int start_app(string project, string config_name, int|void solo)
     ports += (<port>);
     }
 
-    object a = app->get_my_url();
+    object a;
+    mixed err = catch(a = app->get_my_url());
 
     if(a) 
     {
       logger->info("registering %O", lower_case(a->host));
       urls[lower_case(a->host)] = app;
     }
-
+    else
+    {
+      logger->exception("Unable to determine application URL. Still starting app but you probably won't be able to access it. Root exception follows.", err);
+    }
     workers[app] = start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name);
 
     // TODO: do we need to call this for each application?
@@ -560,7 +564,9 @@ mapping do_admin_request(object request)
     {
       string url;
       if(apps[ident])
-       url = (string)apps[ident]->get_my_url();
+      {
+        catch(url = (string)apps[ident]->get_my_url());
+      }
       response += ("<tr><td>" + ident + "</td><td>" + stat + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
     }
   }

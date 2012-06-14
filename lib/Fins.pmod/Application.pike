@@ -546,7 +546,7 @@ Standards.URI get_my_url()
   }
   else
   {
-    log->warn("Guessing the local url. You should really set it in the configuration file or set use_xip_io configuration setting.");
+    logger->warn("Guessing the local url. You should really set it in the configuration file or set use_xip_io configuration setting.");
     string my_ip = gethostname();
     my_url = Standards.URI("http://" + my_ip + "/");
     return Standards.URI(my_url);
