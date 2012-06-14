@@ -11,7 +11,7 @@ object logger;
 function(object:void) ready_callback;
 
 constant default_port = 8080;
-constant my_version = "0.1";
+constant my_version = "0.2";
 
 mapping status = ([]);
 
@@ -27,16 +27,18 @@ string session_cookie_name = "PSESSIONID";
 int session_timeout = 7200;
 
 //Session.SessionManager session_manager;
-//object /*Fins.Application*/ app;
-//Protocols.HTTP.Server.Port port;
+//object /*Fins.Application*/ 
+mapping(string:object) apps = ([]);
 
 program server = fins_app_port;
 int _ports_defaulted;
+int admin_port;
 
 mapping/*(object:Session.SessionManager)*/ managers = ([]);
-mapping(object:Thread.Thread) workers = ([]);
+mapping(object|string:Thread.Thread) workers = ([]);
 mapping(string:object|int) urls = ([]);
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
+Thread.Queue admin_queue = Thread.Queue();
 
 #if constant(_Protocols_DNS_SD) &&  constant(Protocols.DNS_SD.Service);
 
@@ -76,7 +78,7 @@ void print_status()
 
 int main(int argc, array(string) argv)
 {
-  int my_port;
+  int my_port = default_port;
   array(string) config_name = ({});
 //  Pike.DefaultBackend->call_out(print_status, 1);
   foreach(Getopt.find_all_options(argv,aggregate(
@@ -138,6 +140,7 @@ int main(int argc, array(string) argv)
 	argc = sizeof(argv);
         if(!sizeof(config_name)) config_name = ({"dev"});
 
+  admin_port = my_port;
   array projects = ({"default"});
   if(argc>=2) projects = argv[1..];
 
@@ -205,13 +208,14 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   {
     foreach(projects;int i;string project)
     {
-      int res = start_app(project, config_name[i], ((int)my_port));
+      int res = start_app(project, config_name[i]);
       if(res == 0) return 0;
     }
   }
   else
   {
-    call_out(schedule_start_app, 5, projects, config_name, (int)my_port);
+    if(start_admin(((int)my_port))) return 0;
+    call_out(schedule_start_app, 5, projects, config_name);
   }
 
   return -1;
@@ -231,17 +235,38 @@ void run_hilfe(object app)
 
 int start_current_position = 0;
 
-void schedule_start_app(array projects, array config_name, int my_port)
+void schedule_start_app(array projects, array config_name)
 {
   if(start_current_position < sizeof(projects))
   {
-    int res = start_app(projects[start_current_position], config_name[start_current_position], my_port);
-    call_out(schedule_start_app, 0.5, projects, config_name, my_port);
+    int res = start_app(projects[start_current_position], config_name[start_current_position]);
+    call_out(schedule_start_app, 0.5, projects, config_name);
     start_current_position++;
   }
 }
 
-int start_app(string project, string config_name, int my_port, int|void solo)
+
+int start_admin(int my_port)
+{
+  object port;
+
+  logger->info("FinServe starting admin server on port " + my_port + ".");
+  port = server(admin_handle_request, my_port);  
+  port->request_program = Fins.HTTPRequest;
+
+  ports += (<port>);
+
+#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
+    port->set_bonjour(Protocols.DNS_SD.Service("FinServe Admin",
+                     "_http._tcp", "", my_port));
+
+    logger->info("Advertising main port via Bonjour.");
+#endif
+
+    workers["admin"] = start_admin_worker_thread();
+}
+
+int start_app(string project, string config_name, int|void solo)
 {
   object app;
   object port;
@@ -260,6 +285,8 @@ int start_app(string project, string config_name, int my_port, int|void solo)
     return -1;
   }
   app->__fin_serve = this;
+
+  apps[ident] = app;
 
   status[ident] = "LOADED";
 
@@ -290,10 +317,21 @@ int start_app(string project, string config_name, int my_port, int|void solo)
     int p;
     catch(p = (int)app->config["web"]["port"]);
     // prefer command line specification to config file to default.
-    p = (int)my_port || p || (default_port + (_ports_defaulted++));
-    port = server(handle_request, p);  
-    port->set_app(app);
-    port->request_program = Fins.HTTPRequest;
+    if(p)
+    {
+      port = server(handle_request, p);  
+      port->set_app(app);
+      port->request_program = Fins.HTTPRequest;
+
+#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
+    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
+                     "_http._tcp", "", p));
+
+    logger->info("Advertising this application via Bonjour.");
+#endif
+
+    ports += (<port>);
+    }
 
     object a = app->get_my_url();
 
@@ -302,22 +340,18 @@ int start_app(string project, string config_name, int my_port, int|void solo)
       logger->info("registering %O", lower_case(a->host));
       urls[lower_case(a->host)] = app;
     }
-#if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
-    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
-                     "_http._tcp", "", p));
-
-    logger->info("Advertising this application via Bonjour.");
-#endif
 
     workers[app] = start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name);
-    ports += (<port>);
 
     // TODO: do we need to call this for each application?
-    call_out(session_startup, 0, port->get_app());
+    call_out(session_startup, 0, app);
 
     status[ident] = "STARTED";
 
-    logger->info("Application %s is ready for business on port %d.", ident, p);
+    if(p)
+      logger->info("Application %s is ready for business on port %d.", ident, p);
+    else
+      logger->info("Application %s is ready for business on admin hosting port %d.", ident, admin_port);
 
     // TODO: do we need to call this for each application?
     if(ready_callback)
@@ -356,6 +390,13 @@ Thread.Thread start_worker_thread(object app, string key)
   return t;
 }
 
+Thread.Thread start_admin_worker_thread()
+{
+  Thread.Thread t;
+  t = Thread.Thread(run_admin_worker);
+  return t;
+}
+
 void run_worker(object app)
 {
 
@@ -367,6 +408,24 @@ void run_worker(object app)
   {
 //    werror("loop\n");
     object r = app->queue->read();
+    
+    if(r)
+      thread_handle_request(r);
+//    werror("handled request.\n");
+  } while(keep_running);
+}
+
+void run_admin_worker()
+{
+
+  // TODO we should probably have a little more sophistication built in here; probably
+  // need to consider what happen if we want to shut down, etc.
+  int keep_running = 1;
+  
+  do
+  {
+//    werror("loop\n");
+    object r = admin_queue->read();
     
     if(r)
       thread_handle_request(r);
@@ -443,7 +502,13 @@ void session_startup(object app)
 void handle_request(Protocols.HTTP.Server.Request request)
 {
   Thread.Queue queue;
-//werror("%O\n", mkmapping(indices(request), values(request)));
+
+  queue = request->fins_app->queue;
+  queue->write(request);  
+}
+
+void admin_handle_request(Protocols.HTTP.Server.Request request)
+{
   if(request->protocol == "HTTP/1.1" && request->request_headers["host"])
   {
     string host = lower_case(request->request_headers["host"]);
@@ -466,43 +531,85 @@ void handle_request(Protocols.HTTP.Server.Request request)
     if(!app || app == -1)
     {
        urls[host] = -1;
-//       throw(Error.Generic("Unable to find app for host " + host + "\n"));
     }
     else
     {
       request->fins_app = app;
+      handle_request(request);
+      return;
     }
   }
 
-//  werror("APP: %O\n", request->fins_app);
-  queue = request->fins_app->queue;
-  //thread_handle_request(request);
-//  werror("QUEUE: %O->%O\n", request->fins_app, queue);
-  queue->write(request);  
+
+  // now that we have the pesky ip-less virtual hosting out of the way, let's get down to the business!
+  admin_queue->write(request);
+  
+  return;
+}
+
+mapping do_admin_request(object request)
+{
+  object r = Fins.Response(request);
+  string response = "Welcome to FinServe " + my_version + ".<p>\n";
+  if(sizeof(apps))
+  {
+    response += "Apps currently configured:<p>\n";
+    response += "<table><tr><th>Application/Config</th><th>State</th><th>URL</th></tr>\n";
+
+    foreach(status;string ident; string stat)
+    {
+      string url;
+      if(apps[ident])
+       url = (string)apps[ident]->get_my_url();
+      response += ("<tr><td>" + ident + "</td><td>" + stat + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
+    }
+  }
+  else
+  {
+    response += "No applications configured.\n";
+  }
+  r->set_data(response);
+  return r->get_response();
 }
 
 void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
   mixed r;
-  object session_manager = managers[request->fins_app];
   object app = request->fins_app;
+  object session_manager = managers[app];
+  mixed e;
 
-  // Do we have either the session cookie or the PSESSIONID var?
-  if(request->cookies && request->cookies[session_cookie_name]
-         || request->variables[session_cookie_name] )
+  if(!app) // show the admin page.
   {
-
-    string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
-    object /*Session.Session*/ sess = session_manager->get_session(ssid);
-    request->get_session_by_id = session_manager->get_session;
-    request->misc->_session = sess;
-    request->misc->session_id = sess->id;
-    request->misc->session_variables = sess->data;
+    mapping r = do_admin_request(request);
+    // TODO
+    // we should do access logging, and also deal with errors if they occur.
+    request->response_and_finish(r);  
+    return;
   }
+  else
+  {
+    // Do we have either the session cookie or the PSESSIONID var?
+    if(request->cookies && request->cookies[session_cookie_name]
+         || request->variables[session_cookie_name] )
+    {
+      e = catch 
+      {  
+        string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
+        object /*Session.Session*/ sess = session_manager->get_session(ssid);
+        request->get_session_by_id = session_manager->get_session;
+        request->misc->_session = sess;
+        request->misc->session_id = sess->id;
+        request->misc->session_variables = sess->data;
+      };
+    }
 
-  mixed e = catch {
-    r = app->handle_request(request);
-  };
+    // it all comes down to this... tell the app to handle this request!
+    if(!e)
+      e = catch {
+        r = app->handle_request(request);
+      };
+  }
 
   if(e)
   {

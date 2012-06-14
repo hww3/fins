@@ -528,8 +528,18 @@ Standards.URI get_my_url()
   else if(config["web"] && config["web"]["use_xip_io"])
   {
     string my_ip = System.gethostbyname(gethostname())[1][0];
-    my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + my_port + "/");
+    my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + __fin_serve->admin_port + "/");
     return Standards.URI(my_url);
+  }
+  else if(my_port)
+  {
+    string my_ip = gethostname();
+    return Standards.URI("http://" + my_ip + ":" + my_port + "/");
+  }
+  else if(__fin_serve->admin_port)
+  {
+    string my_ip = gethostname();
+    return Standards.URI("http://" + my_ip + ":" + __fin_serve->admin_port + "/");
   }
   else return 0;
 }
