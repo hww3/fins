@@ -525,23 +525,19 @@ Standards.URI get_my_url()
     my_url = Standards.URI(url);
     return Standards.URI(my_url);
   }
+  else if(my_port)
+  {
+    string my_ip = gethostname();
+    return Standards.URI("http://" + my_ip + ":" + my_port + "/");
+  }
   else if(config["web"] && config["web"]["use_xip_io"])
   {
     string my_ip = System.gethostbyname(gethostname())[1][0];
     my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + __fin_serve->admin_port + "/");
     return Standards.URI(my_url);
   }
-  else if(my_port)
-  {
-    string my_ip = gethostname();
-    return Standards.URI("http://" + my_ip + ":" + my_port + "/");
-  }
-  else if(__fin_serve->admin_port)
-  {
-    string my_ip = gethostname();
-    return Standards.URI("http://" + my_ip + ":" + __fin_serve->admin_port + "/");
-  }
-  else return 0;
+  else
+    throw(Error.Generic("Cannot determine URL of application " + config->app_name + "-" + config->config_name + ". Either specify one in the configuration file or enable use_xip_io.\n"));
 }
 
 //! get a fully formatted path string for an action
