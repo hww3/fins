@@ -536,8 +536,17 @@ Standards.URI get_my_url()
     my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + __fin_serve->admin_port + "/");
     return Standards.URI(my_url);
   }
+  else if(__fin_serve)
+  {
+    throw(Error.Generic("Must be able to determine URL of application " + config->app_name + "-" + config->config_name + " when using FinServe. Either specify one in the configuration file or enable use_xip_io.\n"));
+  }
   else
-    throw(Error.Generic("Cannot determine URL of application " + config->app_name + "-" + config->config_name + ". Either specify one in the configuration file or enable use_xip_io.\n"));
+  {
+    log->warn("Guessing the local url. You should really set it in the configuration file or set use_xip_io configuration setting.");
+    string my_ip = gethostname();
+    my_url = Standards.URI("http://" + my_ip + "/");
+    return Standards.URI(my_url);
+  }
 }
 
 //! get a fully formatted path string for an action
