@@ -67,7 +67,7 @@ protected void `->root_module=(mixed val)
 {
   object t = Thread.this_thread();
   object h;
-if(!created) return; // evil, but necessary.
+if(!created) return 0; // evil, but necessary.
   h = get_handler_for_thread(t);
 //  if(h && val)
 // werror("root module=: %O, %O\n", indices(h->root_module), indices(val));
