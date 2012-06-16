@@ -260,8 +260,8 @@ int start_app(string project, string config_name, int|void solo)
 {
   object runner = Fins.Util.AppRunner(project, config_name);
   
-  runner->load_application();
   runner->set_container(this);
+  runner->load_application();
 
   apps[ident] = runner;
 
@@ -294,7 +294,7 @@ int start_app(string project, string config_name, int|void solo)
     
     runner->set_request_handler(thread_handle_request);
     runner->set_new_session_handler(new_session);
-    runner->start_worker_threads();
+    runner->start();
 
     // start a new thread and run the session manager startup process within it, that's the easiest way to get a application 
     // enviornment synchronously (we could also use call_out, but then we couldn't easily wait for it).
@@ -611,12 +611,8 @@ void destroy()
   if(logger && sizeof(apps)) logger->info("Shutting down Fins applications.");
   if(sizeof(apps)) 
   {
-    object app;
-    foreach(apps;object app;)
-    {
-      destruct(app->get_application());
-      destruct(app);
-    }
+    foreach(apps;;object runner)
+      runner->stop();
   }
 
   exit(0);

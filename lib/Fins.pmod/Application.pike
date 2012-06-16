@@ -84,10 +84,11 @@ string get_app_name()
 }
 
 //! override this in your app to do on-shutdown cleanup.
-void stop()
+static void stop()
 {
 }
 
+//!
 void shutdown()
 {
   stop();

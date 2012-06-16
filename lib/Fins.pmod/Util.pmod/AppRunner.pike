@@ -1,4 +1,5 @@
-string status = STOPPED;
+string status = "STOPPED";
+string status_last_change = Calendar.now();
 
 static object app;
 
@@ -17,6 +18,8 @@ static function do_handle_request;
 static function do_new_session;
 
 static object session_manager;
+
+static int keep_running = 1;
 
 //!
 static void create(string _project, string _config)
@@ -73,6 +76,11 @@ void set_container(object app_container)
   container = container;  
 }
 
+static void set_status(string _status)
+{
+  status = status;
+  status_last_change = Calendar.now();
+}
 static object load_app(string project, string config_name)
 {
   object application;
@@ -99,19 +107,18 @@ void load_application()
   
   logger->info("FinServe loading application from " + project + " using configuration " + config_name);
   
-  status = "LOADING";
-  
+  set_status("LOADING");
   
   application = load_application(project, config_name);
 
   if(!application)
   {
-    ident = "FAILED";
+    set_status("FAILED");
     logger->critical("Application in %s failed to load.", ident);
     throw(Error.Generic("Application failed to load.\n"));
   }
   
-  status = "LOADED";
+  set_status("LOADED");
   set_application(application);
   logger->info("Application %s loaded.", ident);
 }
@@ -149,25 +156,20 @@ void register_ports()
   else
   {
     logger->exception("Unable to determine application URL. Still starting app but you probably won't be able to access it. Root exception follows.", err);
-  }
-  
+  }  
 }
 
 static void run_worker(object app)
 {
-
-  // TODO we should probably have a little more sophistication built in here; probably
-  // need to consider what happen if we want to shut down, etc.
-  int keep_running = 1;
+  keep_running = 1;
   
   do
   {
-//    werror("loop\n");
     object r = app->queue->read();
     
     if(r)
       do_handle_request(r);
-//    werror("handled request.\n");
+
   } while(keep_running);
 }
 
@@ -203,8 +205,7 @@ void start_worker_threads()
 {
   workers+= ({ start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name) });
   
-  status = "STARTED";
-  
+  set_status("STARTED");
 }
 
 static void handle_request(Protocols.HTTP.Server.Request request)
@@ -213,4 +214,23 @@ static void handle_request(Protocols.HTTP.Server.Request request)
     request->fins_app = app;
     
   queue->write(request);  
+}
+
+void start()
+{
+  start_worker_threads();  
+}
+
+void stop()
+{
+  keep_running = 0;
+  set_status("STOPPING");
+
+  foreach(workers;; object worker)
+  {
+    worker->kill();
+  }
+
+  app->shutdown();
+  set_status("STOPPED");
 }
