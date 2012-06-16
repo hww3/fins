@@ -60,11 +60,14 @@ string get_client_addr()
   else return String.trim_whites((f/",")[0]);
 }
 
+
+//! when running within a Fins-specific container like FinServe, the port object contains a reference to the application,
+//! so we link the application to the request here before continuing.
 void attach_fd(Stdio.File _fd, Port server,
 	       function(this_program:void) _request_callback,
 	       void|string already_data)
 {
-  fins_app = server->get_app();
+  fins_app = server->get_application();
   
   ::attach_fd(_fd, server, _request_callback, already_data);
 }

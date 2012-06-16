@@ -17,15 +17,14 @@
   }
 #endif
   
-  public void set_app(object application)
+  public void get_application()
+  {
+    return app;  
+  }
+  
+  public void set_application(object application)
   {
 //    werror("*** setting app: %O\n", application);
     app = application;
     app->my_port = (int)(port->query_address()/" ")[1];
   }
-
-  public object get_app()
-  {
-    return app;
-  }
-  

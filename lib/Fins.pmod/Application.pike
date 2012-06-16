@@ -5,14 +5,12 @@ import Tools.Logging;
 
 Log.Logger logger = get_logger("fins.application");
 
-object __fin_serve;
+//! the AppRunner for the application
+object app_runner;
 
 //! provide any context root (location in the virtual filesystem) for this application.  this setting
 //! is derived from the value of the context_root parameter in the application section of the application config file, and defaults to /.
 string context_root = "/";
-
-//! the request processing queue
-Thread.Queue queue = Thread.Queue();
 
 //! The root Controller object
 .FinsController controller;
@@ -952,9 +950,9 @@ array get_event(.Request request)
       response->redirect(request->not_query + "/");
     };
   }
-  else if(cc->__uses_session && !request->misc->session_variables && __fin_serve)
+  else if(cc->__uses_session && !request->misc->session_variables && app_runner)
   {
-    return ({__fin_serve->new_session});
+    return ({app_runner->new_session()});
   }
   else if(cc && (sizeof(cc->__before_filters) || sizeof(cc->__after_filters) || sizeof(cc->__around_filters)))
   {

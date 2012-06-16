@@ -13,13 +13,8 @@ function(object:void) ready_callback;
 constant default_port = 8080;
 constant my_version = "0.2";
 
-mapping status = ([]);
-
 // we really want the default to be RAM.
 string session_storagetype = "ram";
-//string session_storagetype = "file";
-//string session_storagetype = "sqlite";
-//string session_storagedir = "/tmp/scriptrunner_storage";
 string session_storagedir = 0;
 string logfile = "finserve.log";
 
@@ -34,9 +29,9 @@ program server = Fins.Util.AppPort;
 int _ports_defaulted;
 int admin_port;
 
-mapping/*(object:Session.SessionManager)*/ managers = ([]);
-mapping(object|string:Thread.Thread) workers = ([]);
+// url to runner mapping
 mapping(string:object|int) urls = ([]);
+
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 Thread.Queue admin_queue = Thread.Queue();
 
@@ -63,7 +58,6 @@ int(0..1) started()
 void create(array args)
 {
   tool_args = args;
- // ::create();
 }
 
 int run()
@@ -71,16 +65,11 @@ int run()
   return main(sizeof(tool_args) + 1, ({""}) + tool_args);
 }
 
-void print_status()
-{
-  werror("status: %O\n", status);
-}
-
 int main(int argc, array(string) argv)
 {
   int my_port = default_port;
   array(string) config_name = ({});
-//  Pike.DefaultBackend->call_out(print_status, 1);
+
   foreach(Getopt.find_all_options(argv,aggregate(
     ({"port",Getopt.HAS_ARG,({"-p", "--port"}) }),
     ({"config",Getopt.HAS_ARG,({"-c", "--config"}) }),
@@ -129,8 +118,8 @@ int main(int argc, array(string) argv)
 		  logfile = opt[1];
 		  break;
 		
-                case "help":
-	          print_help();
+    case "help":
+      print_help();
 		  return 0;
 		  break;
 	  }
@@ -149,9 +138,7 @@ int main(int argc, array(string) argv)
   foreach(projects;int i;string pn)
   {
     if(!config_name[i]) config_name[i] = DEFAULT_CONFIG_NAME;
-    status[pn + "/" + config_name[i]] = "STOPPED";
   }
-
 
   int x = do_startup(projects, config_name, my_port);
 
@@ -160,7 +147,6 @@ int main(int argc, array(string) argv)
 
 int do_startup(array(string) projects, array(string) config_name, int my_port)
 {
-
   if(sizeof(projects) > 1 && !master()->multi_tenant_aware)
   {
     werror("multi-tenant mode is only available when running Pike 7.9 or higher.\n");
@@ -219,13 +205,12 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   }
 
   return -1;
-
 }
 
 void run_hilfe(object app)
 {
   write("\nStarting interactive interpreter...\n");
-  add_constant("application", app);
+  add_constant("application", app->get_application());
   object in = Stdio.FILE("stdin");
   object out = Stdio.File("stdout");
   object o = Fins.Helpers.Hilfe.FinsHilfe();
@@ -243,8 +228,13 @@ void schedule_start_app(array projects, array config_name)
     call_out(schedule_start_app, 0.5, projects, config_name);
     start_current_position++;
   }
+  else
+  {
+    if(ready_callback)
+  	  call_out(ready_callback, 0, this);
+    has_started = 1;
+  }
 }
-
 
 int start_admin(int my_port)
 {
@@ -268,13 +258,12 @@ int start_admin(int my_port)
 
 int start_app(string project, string config_name, int|void solo)
 {
-  object app = Fins.Util.AppRunner(project, config_name);
+  object runner = Fins.Util.AppRunner(project, config_name);
   
-  app->load_app();
+  runner->load_application();
+  runner->set_container(this);
 
-  app->__fin_serve = this;
-
-  apps[ident] = app;
+  apps[ident] = runner;
 
   if(hilfe_mode)
   {
@@ -288,65 +277,37 @@ int start_app(string project, string config_name, int|void solo)
 
     if(_master->multi_tenant_aware)
     {
-      _master->low_create_thread(run_hilfe, app->config->handler_name, app);
+      _master->low_create_thread(run_hilfe, runner->get_application()->config->handler_name, runner->get_application());
     }
     else
     {
-      Thread.Thread(run_hilfe, app);
+      Thread.Thread(run_hilfe, runner->get_application());
     }
     return -1;
   }
   else
   {
-    app->register_ports();
+    runner->register_ports();
+    
+    // TODO probably should have a better way to do this.
+    urls[runner->url] = runner;
+    
+    runner->set_request_handler(thread_handle_request);
+    runner->set_new_session_handler(new_session);
+    runner->start_worker_threads();
 
-    workers[app] = start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name);
-
-    // TODO: do we need to call this for each application?
-    call_out(session_startup, 0, app);
-
-    status[ident] = "STARTED";
-
+    // start a new thread and run the session manager startup process within it, that's the easiest way to get a application 
+    // enviornment synchronously (we could also use call_out, but then we couldn't easily wait for it).
+    object session_thread = _master->low_create_thread(session_startup, runner->get_application()->config->handler_name, runner);
+    session_thread->wait();
+    
     if(p)
       logger->info("Application %s is ready for business on port %d.", ident, p);
     else
       logger->info("Application %s is ready for business on admin hosting port %d.", ident, admin_port);
 
-    // TODO: do we need to call this for each application?
-    if(ready_callback)
-	call_out(ready_callback, 0, this);
-
-    has_started = 1;
-
     return -1;
   }
-}
-
-Thread.Thread start_worker_thread(object app, string key)
-{
-  Thread.Thread t;
-  object _master = master();
-
-  if(_master->multi_tenant_aware)
-  {
-    // NOTE should not need to lock here because startup is single-threaded.
-    if(key)
-    {
-      _master->handlers_for_thread[Thread.this_thread()] = key;
-    }
-
-    t = _master->fins_aware_create_thread(run_worker, app);
-
-    if(key)
-    {
-      m_delete(_master->handlers_for_thread, Thread.this_thread());
-    }
-  }
-  else 
-  {
-    t = Thread.Thread(run_worker, app);
-  }
-  return t;
 }
 
 Thread.Thread start_admin_worker_thread()
@@ -356,46 +317,27 @@ Thread.Thread start_admin_worker_thread()
   return t;
 }
 
-void run_worker(object app)
-{
-
-  // TODO we should probably have a little more sophistication built in here; probably
-  // need to consider what happen if we want to shut down, etc.
-  int keep_running = 1;
-  
-  do
-  {
-//    werror("loop\n");
-    object r = app->queue->read();
-    
-    if(r)
-      thread_handle_request(r);
-//    werror("handled request.\n");
-  } while(keep_running);
-}
-
 void run_admin_worker()
 {
-
   // TODO we should probably have a little more sophistication built in here; probably
   // need to consider what happen if we want to shut down, etc.
   int keep_running = 1;
   
   do
   {
-//    werror("loop\n");
     object r = admin_queue->read();
     
     if(r)
       thread_handle_request(r);
-//    werror("handled request.\n");
+
   } while(keep_running);
 }
 
-void session_startup(object app)
+void session_startup(object runner)
 {
   object s;
   object session_manager;
+  object app = runner->get_application();
 
   logger->info("Starting Session Manager for %s/%s.", app->get_app_name(), app->get_config_name());
 
@@ -454,16 +396,7 @@ void session_startup(object app)
   add_constant("Session", master()->resolv("Session.Session"));
   add_constant("session_manager", session_manager);
 
-  managers[app] = session_manager;
-
-}
-
-void handle_request(Protocols.HTTP.Server.Request request)
-{
-  Thread.Queue queue;
-
-  queue = request->fins_app->queue;
-  queue->write(request);  
+  runner->set_session_manager(session_manager);
 }
 
 void admin_handle_request(Protocols.HTTP.Server.Request request)
@@ -475,30 +408,28 @@ void admin_handle_request(Protocols.HTTP.Server.Request request)
 //    werror("parsing host = %O\n", host);
 
     object|int app;
-    if(!(app = urls[host]))
+    if(!(runner = urls[host]))
     {
-       foreach(urls; string u; object a)
+       foreach(urls; string u; object r)
        {
          if(has_suffix(host, "." + u))
          {
-           app = urls[host] = a;
+           runner = urls[host] = r;
            break; 
          }
        }      
     }
 
-    if(!app || app == -1)
+    if(!runner || runner == -1)
     {
        urls[host] = -1;
     }
     else
     {
-      request->fins_app = app;
-      handle_request(request);
+      runner->handle_request(request);
       return;
     }
   }
-
 
   // now that we have the pesky ip-less virtual hosting out of the way, let's get down to the business!
   admin_queue->write(request);
@@ -515,12 +446,12 @@ mapping do_admin_request(object request)
     response += "Apps currently configured:<p>\n";
     response += "<table><tr><th>Application/Config</th><th>State</th><th>URL</th></tr>\n";
 
-    foreach(status;string ident; string stat)
+    foreach(apps;string ident; object app)
     {
       string url;
-      if(apps[ident])
+      if(app)
       {
-        catch(url = (string)apps[ident]->get_my_url());
+        catch(url = (string)app->get_application()->get_my_url());
       }
       response += ("<tr><td>" + ident + "</td><td>" + stat + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
     }
@@ -537,7 +468,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
   mixed r;
   object app = request->fins_app;
-  object session_manager = managers[app];
+  object session_manager = app->app_runner->get_session_manager();
   mixed e;
 
   if(!app) // show the admin page.
@@ -651,28 +582,10 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 
   return 0;
 }
-
-object load_application(string project, string config_name)
-{
-  object application;
-  mixed err = catch(
-
-  application = master()->resolv("Fins.Loader")->load_app(combine_path(getcwd(), project), config_name));
-  if(err || !application)
-  {
-    if(err) logger->exception("An error occurred while loading the application.", err);
-    else logger->critical("An error occurred while loading the application.");
-    return 0;
-//    exit(1);
-  }
-
-  return application;
-
-}
   
 void new_session(object request, object response, mixed ... args)
 {
-  object session_manager = managers[request->fins_app];
+  object session_manager = request->fins_app->app_runner->get_session_manager();
 
   string ssid=session_manager->new_sessionid();
   response->set_cookie(session_cookie_name,
@@ -695,14 +608,14 @@ void new_session(object request, object response, mixed ... args)
 
 void destroy()
 {
-  if(logger && sizeof(ports)) logger->info("Shutting down Fins applications.");
-  if(sizeof(ports)) 
+  if(logger && sizeof(apps)) logger->info("Shutting down Fins applications.");
+  if(sizeof(apps)) 
   {
-    object port;
-    foreach(ports;object port;)
+    object app;
+    foreach(apps;object app;)
     {
-      destruct(port->get_app());
-      destruct(port);
+      destruct(app->get_application());
+      destruct(app);
     }
   }
 
