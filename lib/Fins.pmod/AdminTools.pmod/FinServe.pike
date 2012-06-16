@@ -215,7 +215,7 @@ void run_hilfe(object app)
   object out = Stdio.File("stdout");
   object o = Fins.Helpers.Hilfe.FinsHilfe();
   exit(1);
-  return;
+  return 0;
 }
 
 int start_current_position = 0;
@@ -427,14 +427,14 @@ void admin_handle_request(Protocols.HTTP.Server.Request request)
     else
     {
       runner->handle_request(request);
-      return;
+      return 0;
     }
   }
 
   // now that we have the pesky ip-less virtual hosting out of the way, let's get down to the business!
   admin_queue->write(request);
   
-  return;
+  return 0;
 }
 
 mapping do_admin_request(object request)
@@ -477,7 +477,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     // TODO
     // we should do access logging, and also deal with errors if they occur.
     request->response_and_finish(r);  
-    return;
+    return 0;
   }
   else
   {

@@ -1,10 +1,11 @@
 string status = "STOPPED";
-string status_last_change = Calendar.now();
+object status_last_change = Calendar.now();
 
 static object app;
 
 Thread.Queue queue = Thread.Queue();
 
+program server = Fins.Util.AppPort;
 static array ports = ({});
 multiset urls = (<>);
 static array workers = ({});
@@ -18,19 +19,17 @@ static function do_handle_request;
 static function do_new_session;
 
 static object session_manager;
+static object container;
 
 static int keep_running = 1;
 
 //!
 static void create(string _project, string _config)
 {
-  object app;
-  object port;
-  
   logger=master()->resolv("Tools.Logging.get_logger")("finserve");
   project = _project;
   config = _config;
-  ident = sprintf("%s/%s", project, config_name);
+  ident = sprintf("%s/%s", project, config);
 }
 
 //!
@@ -73,7 +72,7 @@ void set_request_handler(function handler)
 //! associate the application server container (ie FinServe or the like) with the runner.
 void set_container(object app_container)
 {
-  container = container;  
+  container = app_container;  
 }
 
 static void set_status(string _status)
@@ -103,13 +102,13 @@ static object load_app(string project, string config_name)
 void load_application()
 {
   object application;
-  ident = sprintf("%s/%s", project, config_name);
+  ident = sprintf("%s/%s", project, config);
   
-  logger->info("FinServe loading application from " + project + " using configuration " + config_name);
+  logger->info("FinServe loading application from " + project + " using configuration " + config);
   
   set_status("LOADING");
   
-  application = load_application(project, config_name);
+  application = load_app(project, config);
 
   if(!application)
   {
@@ -127,6 +126,8 @@ void load_application()
 void register_ports()
 {
   int p;
+  object port;
+  
   catch(p = (int)app->config["web"]["port"]);
   // prefer command line specification to config file to default.
   if(p)
@@ -203,7 +204,7 @@ static Thread.Thread start_worker_thread(object app, string key)
 //!
 void start_worker_threads()
 {
-  workers+= ({ start_worker_thread(app, combine_path(getcwd(), project) + "#" + config_name) });
+  workers+= ({ start_worker_thread(app, combine_path(getcwd(), project) + "#" + config) });
   
   set_status("STARTED");
 }
