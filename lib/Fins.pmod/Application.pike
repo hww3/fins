@@ -536,10 +536,10 @@ Standards.URI get_my_url()
   else if(config["web"] && config["web"]["use_xip_io"])
   {
     string my_ip = System.gethostbyname(gethostname())[1][0];
-    my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + __fin_serve->admin_port + "/");
+    my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + app_runner->get_container()->admin_port + "/");
     return Standards.URI(my_url);
   }
-  else if(__fin_serve)
+  else if(app_runner->container->is_fins_serve)
   {
     throw(Error.Generic("Must be able to determine URL of application " + config->app_name + "-" + config->config_name + " when using FinServe. Either specify one in the configuration file or enable use_xip_io.\n"));
   }
@@ -953,7 +953,7 @@ array get_event(.Request request)
   }
   else if(cc->__uses_session && !request->misc->session_variables && app_runner)
   {
-    return ({app_runner->new_session()});
+    return ({app_runner->new_session});
   }
   else if(cc && (sizeof(cc->__before_filters) || sizeof(cc->__after_filters) || sizeof(cc->__around_filters)))
   {

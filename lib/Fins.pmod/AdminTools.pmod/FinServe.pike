@@ -7,6 +7,7 @@
 #define DEFAULT_CONFIG_NAME "dev"
 
 object logger;
+constant is_fins_serve = 1;
 
 function(object:void) ready_callback;
 
@@ -34,7 +35,8 @@ mapping(string:object|int) urls = ([]);
 
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 Thread.Queue admin_queue = Thread.Queue();
-
+array workers = ({});
+  
 #if constant(_Protocols_DNS_SD) &&  constant(Protocols.DNS_SD.Service);
 
 #endif
@@ -253,17 +255,18 @@ int start_admin(int my_port)
     logger->info("Advertising main port via Bonjour.");
 #endif
 
-    workers["admin"] = start_admin_worker_thread();
+    workers+=({start_admin_worker_thread()});
 }
 
 int start_app(string project, string config_name, int|void solo)
 {
   object runner = Fins.Util.AppRunner(project, config_name);
+  apps[runner->ident] = runner;
   
   runner->set_container(this);
   runner->load_application();
 
-  apps[ident] = runner;
+  apps[runner->ident] = runner;
 
   if(hilfe_mode)
   {
@@ -290,8 +293,11 @@ int start_app(string project, string config_name, int|void solo)
     runner->register_ports();
     
     // TODO probably should have a better way to do this.
-    urls[runner->url] = runner;
-    
+    foreach(runner->urls;string url;)
+    {
+      urls[url] = runner;
+    }
+      
     runner->set_request_handler(thread_handle_request);
     runner->set_new_session_handler(new_session);
     runner->start();
@@ -301,10 +307,10 @@ int start_app(string project, string config_name, int|void solo)
     object session_thread = _master->low_create_thread(session_startup, runner->get_application()->config->handler_name, runner);
     session_thread->wait();
     
-    if(p)
-      logger->info("Application %s is ready for business on port %d.", ident, p);
+    if(runner->has_ports())
+      logger->info("Application %s is ready for business on %s.", runner->ident, (runner->get_ports()->port->query_address()) * ", ");
     else
-      logger->info("Application %s is ready for business on admin hosting port %d.", ident, admin_port);
+      logger->info("Application %s is ready for business on admin hosting port %d.", runner->ident, admin_port);
 
     return -1;
   }
@@ -328,7 +334,7 @@ void run_admin_worker()
     object r = admin_queue->read();
     
     if(r)
-      thread_handle_request(r);
+      thread_admin_handle_request(r);
 
   } while(keep_running);
 }
@@ -401,13 +407,17 @@ void session_startup(object runner)
 
 void admin_handle_request(Protocols.HTTP.Server.Request request)
 {
+  admin_queue->write(request);  
+}
+
+void thread_admin_handle_request(Protocols.HTTP.Server.Request request)
+{
   if(request->protocol == "HTTP/1.1" && request->request_headers["host"])
   {
     string host = lower_case(request->request_headers["host"]);
     host = (host/":")[0];
-//    werror("parsing host = %O\n", host);
 
-    object|int app;
+    object|int runner;
     if(!(runner = urls[host]))
     {
        foreach(urls; string u; object r)
@@ -432,7 +442,7 @@ void admin_handle_request(Protocols.HTTP.Server.Request request)
   }
 
   // now that we have the pesky ip-less virtual hosting out of the way, let's get down to the business!
-  admin_queue->write(request);
+  thread_handle_request(request);
   
   return 0;
 }
@@ -453,7 +463,7 @@ mapping do_admin_request(object request)
       {
         catch(url = (string)app->get_application()->get_my_url());
       }
-      response += ("<tr><td>" + ident + "</td><td>" + stat + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
+      response += ("<tr><td>" + ident + "</td><td>" + app->status  + " since " + app->status_last_change->format_time() + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
     }
   }
   else
@@ -468,7 +478,6 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
   mixed r;
   object app = request->fins_app;
-  object session_manager = app->app_runner->get_session_manager();
   mixed e;
 
   if(!app) // show the admin page.
@@ -479,30 +488,31 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     request->response_and_finish(r);  
     return 0;
   }
-  else
+  
+  object session_manager = app->app_runner->get_session_manager();
+  // Do we have either the session cookie or the PSESSIONID var?
+  if(request->cookies && request->cookies[session_cookie_name]
+       || request->variables[session_cookie_name] )
   {
-    // Do we have either the session cookie or the PSESSIONID var?
-    if(request->cookies && request->cookies[session_cookie_name]
-         || request->variables[session_cookie_name] )
-    {
-      e = catch 
-      {  
-        string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
-        object /*Session.Session*/ sess = session_manager->get_session(ssid);
-        request->get_session_by_id = session_manager->get_session;
-        request->misc->_session = sess;
-        request->misc->session_id = sess->id;
-        request->misc->session_variables = sess->data;
-      };
-    }
-
-    // it all comes down to this... tell the app to handle this request!
-    if(!e)
-      e = catch {
-        r = app->handle_request(request);
-      };
+    e = catch 
+    {  
+      string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
+      object /*Session.Session*/ sess = session_manager->get_session(ssid);
+      request->get_session_by_id = session_manager->get_session;
+      request->misc->_session = sess;
+      request->misc->session_id = sess->id;
+      request->misc->session_variables = sess->data;
+    };
   }
 
+  // it all comes down to this... tell the app to handle this request!
+  if(!e)
+  {
+    e = catch {
+      r = app->handle_request(request);
+    };  
+  }
+      
   if(e)
   {
     logger->exception("Error occurred while handling request!", e);

@@ -33,6 +33,18 @@ static void create(string _project, string _config)
 }
 
 //!
+int has_ports()
+{
+  return sizeof(ports);
+}
+
+//!
+array get_ports()
+{
+  return ports + ({});
+}
+
+//!
 object get_session_manager()
 {
   return session_manager;
@@ -75,11 +87,22 @@ void set_container(object app_container)
   container = app_container;  
 }
 
+object get_container()
+{
+  return container;
+}
+
+mixed new_session(mixed ... args)
+{
+  return do_new_session(@args);
+}
+
 static void set_status(string _status)
 {
-  status = status;
+  status = _status;
   status_last_change = Calendar.now();
 }
+
 static object load_app(string project, string config_name)
 {
   object application;
@@ -102,7 +125,6 @@ static object load_app(string project, string config_name)
 void load_application()
 {
   object application;
-  ident = sprintf("%s/%s", project, config);
   
   logger->info("FinServe loading application from " + project + " using configuration " + config);
   
@@ -166,7 +188,7 @@ static void run_worker(object app)
   
   do
   {
-    object r = app->queue->read();
+    object r = queue->read();
     
     if(r)
       do_handle_request(r);
@@ -209,11 +231,11 @@ void start_worker_threads()
   set_status("STARTED");
 }
 
-static void handle_request(Protocols.HTTP.Server.Request request)
+void handle_request(Protocols.HTTP.Server.Request request)
 {
   if(!request->fins_app) 
     request->fins_app = app;
-    
+        
   queue->write(request);  
 }
 
