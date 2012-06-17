@@ -157,7 +157,7 @@ void register_ports()
   if(p)
   {
     port = server(handle_request, p);  
-    port->set_app(app);
+    port->set_application(app);
     port->request_program = Fins.HTTPRequest;
 
   #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);

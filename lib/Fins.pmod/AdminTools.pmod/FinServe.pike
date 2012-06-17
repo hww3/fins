@@ -471,7 +471,7 @@ mapping do_admin_request(object request)
   if(sizeof(apps))
   {
     response += "Apps currently configured:<p>\n";
-    response += "<table cellpadding=5><tr><th>Application/Config</th><th>State</th><th>Last State Change</th><th>URL</th></tr>\n";
+    response += "<table cellpadding=5><tr><th>Application/Config</th><th>State</th><th>Last State Change</th><th>URL</th><th>Ports</th></tr>\n";
 
     foreach(apps;string ident; object app)
     {
@@ -480,7 +480,8 @@ mapping do_admin_request(object request)
       {
         catch(url = (string)app->get_application()->get_my_url());
       }
-      response += ("<tr><td>" + ident + "</td><td>" + app->status  + "</td><td>" + app->status_last_change->format_time() + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
+      response += ("<tr><td>" + ident + "</td><td>" + app->status  + "</td><td>" + app->status_last_change->format_time() + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td><td>"
+      + (app->get_ports()->port->query_address() * "<br>") + "</td></tr>\n");
     }
 
     response += "</table>\n";
