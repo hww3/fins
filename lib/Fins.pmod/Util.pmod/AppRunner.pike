@@ -22,7 +22,7 @@ static object session_manager;
 static object container;
 
 static int keep_running = 1;
-
+static int worker_number;
 //!
 static void create(string _project, string _config)
 {
@@ -150,6 +150,8 @@ void register_ports()
   int p;
   object port;
   
+  if(status != "LOADED") throw("Cannot register ports until application is loaded.\n");
+  
   catch(p = (int)app->config["web"]["port"]);
   // prefer command line specification to config file to default.
   if(p)
@@ -200,27 +202,13 @@ static Thread.Thread start_worker_thread(object app, string key)
 {
   Thread.Thread t;
   object _master = master();
-
-  if(_master->multi_tenant_aware)
-  {
-    // NOTE should not need to lock here because startup is single-threaded.
-    if(key)
-    {
+  if(_master->multi_tenant_aware && key)
       _master->handlers_for_thread[Thread.this_thread()] = key;
-    }
 
-    t = _master->fins_aware_create_thread(run_worker, app);
-
-    if(key)
-    {
-      m_delete(_master->handlers_for_thread, Thread.this_thread());
-    }
-  }
-  else 
-  {
-    t = Thread.Thread(run_worker, app);
-  }
-  return t;
+    t = thread_create(run_worker, app);
+    t->set_thread_name("Worker " + worker_number++);
+  if(_master->multi_tenant_aware && key)
+    m_delete(_master->handlers_for_thread, Thread.this_thread());
 }
 
 //!
@@ -241,6 +229,12 @@ void handle_request(Protocols.HTTP.Server.Request request)
 
 void start()
 {
+  if(status != "LOADED")
+  {
+    throw(Error.Generic("Cannot start application until it has been loaded.\n"));
+    
+  }
+  
   start_worker_threads();  
 }
 

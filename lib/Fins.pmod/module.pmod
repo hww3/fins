@@ -48,6 +48,9 @@ class my_master
   mapping(object:string) handlers_for_thread = ([]);//set_weak_flag(([]), Pike.WEAK_INDICES);
   constant fins_master = 1;
   int created = 0;
+
+  function old_thread_create;
+  function old_call_out = predef::call_out;
   
   mixed get_fc()
   {
@@ -364,6 +367,7 @@ protected void `->dir_cache=(mixed val)
     object mm = master();
 //  werror("\n*** create!\n");
     // TODO: need to add call_out()'s friends as well.        
+    //old_call_out = call_out;
     add_constant("call_out", this->call_out);
 #ifdef TRACE_WERROR
 //  NOTE:
@@ -440,6 +444,9 @@ protected void `->dir_cache=(mixed val)
     programs["/master"] = this_program;
     objects[this_program] = o;    
     
+    old_thread_create = predef::thread_create;
+    
+    add_constant("thread_create", fins_aware_create_thread);
     /* make ourselves known */
     add_constant("_master",o);
     /* Move the old efuns to the new object. */
@@ -481,6 +488,7 @@ protected void `->dir_cache=(mixed val)
   object fins_aware_create_thread(function(mixed ... :void) f, mixed ... args)
   {
     string hn;
+//    werror("fins_aware_create_thread\n");
     hn = handlers_for_thread[Thread.this_thread()];
     
     return low_create_thread(f, hn, @args);
@@ -490,6 +498,7 @@ protected void `->dir_cache=(mixed val)
   {
 //werror("low_Create_thread: %O\n", handler);
     object t = Thread.Thread(splice(setup_thread, f), handler, @args);
+    if(t->set_handler) t->set_handler(handler);
     return t;
   }
 
@@ -621,11 +630,13 @@ return joinnode(({static_modules}), 0, 0, "predef::");
 
   mixed call_out(function f, float|int delay, mixed ... args)
   {
-//werror("Call_out!\n");
     object t = Thread.this_thread();
     mixed h = get_handler_for_thread(t);
+ //   werror("Call_out: %O, %O %O!\n", f, h, h->my_key);
     if(!h) 
       throw(Error.Generic("call_out(): Unable to find handler for thread " + sprintf("%O", t) + "\n"));
+    if(h->my_key == DEFAULT_KEY)
+      return old_call_out(f, delay, @args);
     else
       return h->call_out(f, delay, @args);
   }
@@ -702,8 +713,13 @@ mixed call_out(function f, float|int delay, mixed ... args)
 
 void create_app_backend()
 {
+//  werror("create_backend\n");
+//  throw(Error.Generic("backend!\n"));
+//  werror(describe_backtrace(backtrace()));
   abe = Pike.Backend();
-  master()->fins_aware_create_thread(run_backend_thread);
+
+  object t = master()->fins_aware_create_thread(run_backend_thread);
+  t->set_thread_name("App Backend");
 }
 
 object get_backend()

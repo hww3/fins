@@ -199,8 +199,8 @@ static void load_breakpoint()
   if(config["application"] && (int)config["application"]["breakpoint"])
   {
     bpbe = Pike.Backend();
-    bpbet = create_thread(lambda(){ do { catch(bpbe(1000.0)); } while (1); });
-
+    bpbet = Thread.thread_create(lambda(){ do { catch(bpbe(1000.0)); } while (1); });
+    bpbet->set_thread_name("Breakpoint Thread");
     if((int)config["application"]["breakpoint_port"]) breakpoint_port_no = (int)config["application"]["breakpoint_port"];
     logger->info("Starting Breakpoint Server on port %d.", breakpoint_port_no);
     breakpoint_port = Stdio.Port(breakpoint_port_no, handle_breakpoint_client);
@@ -221,16 +221,6 @@ static void load_view()
   if(viewclass)
     view = ((program)viewclass)(this);
   else logger->debug("No view defined!");
-}
-
-object create_thread(function f, mixed ... args)
-{
-  if(master()->multi_tenant_aware)
-    return master()->fins_aware_create_thread(f, @args);
-  else
-  {
-    return Thread.Thread(f, @args);
-  }
 }
 
 object get_backend()

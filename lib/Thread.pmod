@@ -1,13 +1,31 @@
 #pike __REAL_VERSION__
 
 #if constant(thread_create)
-constant Thread=__builtin.thread_id;
+class Thread
+{
+  inherit __builtin.thread_id;
 
-//! This is a clone of the standard Thread module, to which we've added
-//! support for multi-tenant applications. There's very little modification here;
-//! the clone was necessary only because we want the changes to take effect for
-//! other code that may create threads and which use the Thread->`()() hack, (
-//! ie: pretty much all threading code).
+  constant is_fins_thread = 1;
+  string thread_name = "";
+  string handler;
+
+
+  static void create(function f, mixed ... args)
+  {
+//    werror("Thread.Thread->create(%O)\n", f);
+    ::create(f, @args);
+  }
+
+  void set_thread_name(string name)
+  {
+    thread_name = name;
+  }
+  
+  void set_handler(string h)
+  {
+     handler  = h;
+  }
+}
 
 // The reason for this inherit is rather simple.
 // It's now possible to write Thread Thread( ... );
@@ -39,31 +57,15 @@ constant Thread=__builtin.thread_id;
 
 inherit Thread;
 
-function low_create_thread;
-
 // We don't want to create a thread of the module...
 protected void create(mixed ... args)
 {
-  low_create_thread = master()->multi_tenant_create_thread;
-  if(!low_create_thread)
-    low_create_thread = thread_create;
 }
 
-optional Thread `()( mixed f, mixed ... args )
-{
-  return thread_create( f, @args );
-}
-
-static object fins_create_thread(function f, mixed ... args)
-{
-  if(!low_create_thread)
-  {
-    low_create_thread = master()->fins_aware_create_thread;
-    if(!low_create_thread)
-      low_create_thread = predef::thread_create;
-  }
-  return low_create_thread(f, @args);
-}
+//optional Thread `()( mixed f, mixed ... args )
+//{
+//  return thread_create( f, @args );
+//}
 
 optional constant MutexKey=__builtin.mutex_key;
 optional constant Mutex=__builtin.mutex;
@@ -71,7 +73,7 @@ optional constant Condition=__builtin.condition;
 optional constant _Disabled=__builtin.threads_disabled;
 optional constant Local=__builtin.thread_local;
 
-function thread_create = this.fins_create_thread;
+optional constant thread_create = predef::thread_create;
 
 optional constant this_thread = predef::this_thread;
 

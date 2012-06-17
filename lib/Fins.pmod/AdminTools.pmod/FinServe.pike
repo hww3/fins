@@ -203,7 +203,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   else
   {
     if(start_admin(((int)my_port))) return 0;
-    call_out(schedule_start_app, 5, projects, config_name);
+    master()->old_call_out(schedule_start_app, 5, projects, config_name);
   }
 
   return -1;
@@ -227,13 +227,13 @@ void schedule_start_app(array projects, array config_name)
   if(start_current_position < sizeof(projects))
   {
     int res = start_app(projects[start_current_position], config_name[start_current_position]);
-    call_out(schedule_start_app, 0.5, projects, config_name);
+    master()->old_call_out(schedule_start_app, 0.5, projects, config_name);
     start_current_position++;
   }
   else
   {
     if(ready_callback)
-  	  call_out(ready_callback, 0, this);
+  	  master()->old_call_out(ready_callback, 0, this);
     has_started = 1;
   }
 }
@@ -260,13 +260,13 @@ int start_admin(int my_port)
 
 int start_app(string project, string config_name, int|void solo)
 {
-  object runner = Fins.Util.AppRunner(project, config_name);
+  object _master = master();
+  object runner = master()->resolv("Fins.Util.AppRunner")(project, config_name);
   apps[runner->ident] = runner;
   
   runner->set_container(this);
-  runner->load_application();
 
-  apps[runner->ident] = runner;
+  runner->load_application();
 
   if(hilfe_mode)
   {
@@ -276,16 +276,15 @@ int start_app(string project, string config_name, int|void solo)
     Pike.DefaultBackend(0.0);
     Pike.DefaultBackend(0.0);
 
-    object _master = master();
-
-    if(_master->multi_tenant_aware)
+    if(_master->low_create_thread)
     {
-      _master->low_create_thread(run_hilfe, runner->get_application()->config->handler_name, runner->get_application());
+         _master->low_create_thread(run_hilfe, runner->get_application()->config->handler_name, runner->get_application());
     }
     else
     {
       Thread.Thread(run_hilfe, runner->get_application());
     }
+
     return -1;
   }
   else
@@ -304,7 +303,19 @@ int start_app(string project, string config_name, int|void solo)
 
     // start a new thread and run the session manager startup process within it, that's the easiest way to get a application 
     // enviornment synchronously (we could also use call_out, but then we couldn't easily wait for it).
-    object session_thread = _master->low_create_thread(session_startup, runner->get_application()->config->handler_name, runner);
+    object session_thread;
+    
+    if(_master->low_create_thread)
+    {
+      session_thread = _master->low_create_thread(session_startup, runner->get_application()->config->handler_name, runner);
+      session_thread->set_thread_name("Session Startup");
+    }
+    else
+    {
+      session_thread = Thread.Thread(session_startup, runner->get_application()->config->handler_name, runner);
+      session_thread->set_thread_name("Session Startup");
+
+    }
     session_thread->wait();
     
     if(runner->has_ports())
@@ -316,10 +327,13 @@ int start_app(string project, string config_name, int|void solo)
   }
 }
 
+int admin_worker_num;
+
 Thread.Thread start_admin_worker_thread()
 {
   Thread.Thread t;
   t = Thread.Thread(run_admin_worker);
+  t->set_thread_name("Admin Worker " + admin_worker_num++);
   return t;
 }
 
@@ -450,11 +464,14 @@ void thread_admin_handle_request(Protocols.HTTP.Server.Request request)
 mapping do_admin_request(object request)
 {
   object r = Fins.Response(request);
-  string response = "Welcome to FinServe " + my_version + ".<p>\n";
+  string response = "<h1>Welcome to FinServe " + my_version + ".</h1>\n";
+
+  response += "<h2>Applications</h2>\n";
+
   if(sizeof(apps))
   {
     response += "Apps currently configured:<p>\n";
-    response += "<table><tr><th>Application/Config</th><th>State</th><th>URL</th></tr>\n";
+    response += "<table cellpadding=5><tr><th>Application/Config</th><th>State</th><th>Last State Change</th><th>URL</th></tr>\n";
 
     foreach(apps;string ident; object app)
     {
@@ -463,13 +480,32 @@ mapping do_admin_request(object request)
       {
         catch(url = (string)app->get_application()->get_my_url());
       }
-      response += ("<tr><td>" + ident + "</td><td>" + app->status  + " since " + app->status_last_change->format_time() + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
+      response += ("<tr><td>" + ident + "</td><td>" + app->status  + "</td><td>" + app->status_last_change->format_time() + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td></tr>\n");
     }
+
+    response += "</table>\n";
+
   }
   else
   {
     response += "No applications configured.\n";
   }
+  
+  response += "<p>";
+  response += "<h2>Threads</h2>\n";
+  response += "<table cellpadding=5><tr><th>Thread ID</th><th>Status</th><th>Handler</th><th>Name</th><th>Execution Point</th></tr>\n";
+
+  foreach(Thread.all_threads();; object thread)
+  {
+    response += ("<tr><td>" + thread->id_number() +  "</td><td>" 
+      + ([Thread.THREAD_NOT_STARTED: "NOT_STARTED", Thread.THREAD_RUNNING: "RUNNING", Thread.THREAD_EXITED: "EXITED"])[thread->status()] + "</td><td>" 
+      + (thread->handler||"-") + "</td><td>" 
+      + (thread->thread_name || "-") + "</td><td><pre>" 
+      + describe_backtrace(({thread->backtrace()[-1]})) + "</pre></td></tr>\n");
+  }
+  
+  response += "</table>\n";
+
   r->set_data(response);
   return r->get_response();
 }
