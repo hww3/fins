@@ -14,6 +14,7 @@ static object logger;
 string project;
 string config;
 string ident;
+string handler_key;
 
 static function do_handle_request;
 static function do_new_session;
@@ -30,6 +31,7 @@ static void create(string _project, string _config)
   project = _project;
   config = _config;
   ident = sprintf("%s/%s", project, config);
+  handler_key = combine_path(getcwd(), project) + "#" + config;
 }
 
 //!
@@ -124,6 +126,7 @@ static object load_app(string project, string config_name)
 //!
 void load_application()
 {
+  keep_running = 1;
   object application;
   
   logger->info("FinServe loading application from " + project + " using configuration " + config);
@@ -144,6 +147,19 @@ void load_application()
   logger->info("Application %s loaded.", ident);
 }
 
+void unregister_ports()
+{
+  foreach(ports;; object port)
+  {
+    ports -= ({port});
+    destruct(port->get_bonjour());
+    logger->info("Shutting down port " + port->port->query_address());
+    destruct(port);
+  }
+  
+  urls = (<>);
+}
+
 //!
 void register_ports()
 {
@@ -156,6 +172,9 @@ void register_ports()
   // prefer command line specification to config file to default.
   if(p)
   {
+    
+    logger->info("Starting port " + p);
+    
     port = server(handle_request, p);  
     port->set_application(app);
     port->request_program = Fins.HTTPRequest;
@@ -187,15 +206,20 @@ void register_ports()
 static void run_worker(object app)
 {
   keep_running = 1;
-  
-  do
+  mixed err;
+  err = catch 
   {
-    object r = queue->read();
+    do
+    {
+      object r = queue->read();
     
-    if(r)
-      do_handle_request(r);
+      if(r)
+        do_handle_request(r);
 
-  } while(keep_running);
+//werror("run\n");
+    } while(keep_running);
+  };
+  logger->info("Worker Thread %O exiting.", Thread.this_thread());
 }
 
 static Thread.Thread start_worker_thread(object app, string key)
@@ -209,12 +233,14 @@ static Thread.Thread start_worker_thread(object app, string key)
     t->set_thread_name("Worker " + worker_number++);
   if(_master->multi_tenant_aware && key)
     m_delete(_master->handlers_for_thread, Thread.this_thread());
+    
+  return t;
 }
 
 //!
 void start_worker_threads()
 {
-  workers+= ({ start_worker_thread(app, combine_path(getcwd(), project) + "#" + config) });
+  workers+= ({ start_worker_thread(app, handler_key) });
   
   set_status("STARTED");
 }
@@ -231,23 +257,39 @@ void start()
 {
   if(status != "LOADED")
   {
-    throw(Error.Generic("Cannot start application until it has been loaded.\n"));
-    
+    throw(Error.Generic("Cannot start application until it has been loaded.\n"));    
   }
   
+  if(!queue)
+    queue = Thread.Queue();
   start_worker_threads();  
 }
 
 void stop()
 {
+  if(status == "STOPPED")
+  {
+    throw(Error.Generic("Application is already stopped.\n")); 
+  }
+  
   keep_running = 0;
   set_status("STOPPING");
 
   foreach(workers;; object worker)
   {
-    worker->kill();
+    werror("worker: %O\n", worker);
+    queue->write(0);
   }
-
   app->shutdown();
+  queue = Thread.Queue();
+  if(master()->multi_tenant_aware && handler_key)
+  {
+    object handler = master()->handlers[handler_key];
+    werror("handler: %O\n", handler);
+    destruct(handler);
+  }
+  
+  unregister_ports();
+  worker_number = 0;
   set_status("STOPPED");
 }

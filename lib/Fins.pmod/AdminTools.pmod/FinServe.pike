@@ -258,6 +258,40 @@ int start_admin(int my_port)
     workers+=({start_admin_worker_thread()});
 }
 
+void restart_app(object runner)
+{
+  runner->load_application();
+  call_out(reregister_app, 0.1, runner);  
+}
+
+void reregister_app(object runner)
+{
+  if(!runner->get_application())
+  {
+    if(runner->status == "FAILED")
+    {
+      return;
+    }
+    else
+    {
+      call_out(reregister_app, 0.2, runner);  
+    }
+  }
+  runner->register_ports();
+  call_out(restart_workers, 0.1, runner);
+}
+
+void restart_workers(object runner)
+{
+  
+  runner->start();
+  foreach(runner->urls;string url;)
+  {
+    urls[url] = runner;
+  }
+  
+}
+
 int start_app(string project, string config_name, int|void solo)
 {
   object _master = master();
@@ -479,9 +513,44 @@ mapping do_admin_request(object request)
       if(app)
       {
         catch(url = (string)app->get_application()->get_my_url());
+        if(request->variables->stop && request->variables->stop == ident)
+        {
+          foreach(app->urls; string url;)
+          {
+            m_delete(urls, url);
+          }
+          
+          app->stop();
+          object resp = Fins.Response(request);
+          resp->redirect("/");
+          return resp->get_response();
+        }
+        
+        if(request->variables->start && request->variables->start == ident)
+        {
+          call_out(restart_app, 0.0, app);
+          object resp = Fins.Response(request);
+          resp->redirect("/");
+          return resp->get_response();
+        }
       }
-      response += ("<tr><td>" + ident + "</td><td>" + app->status  + "</td><td>" + app->status_last_change->format_time() + "</td><td>" + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td><td>"
-      + (app->get_ports()->port->query_address() * "<br>") + "</td></tr>\n");
+      
+      string func = (app->status == "STARTED"? "stop": (app->status == "STOPPED" ? "start" : 0));
+      
+      response += ("<tr><td>" 
+        + ident + "</td><td>" 
+        + app->status  + "</td><td>" 
+        + app->status_last_change->format_time() + "</td><td>" 
+        + (url?("<a href=\"" + url + "\">" + url + "</a>"):"") + "</td><td>" );
+        
+      string ports = ""; 
+      if(app && sizeof(app->get_ports()))
+        ports = (app->get_ports()->port->query_address() * "<br>");
+      response += (ports + "</td><td>");
+        
+        if(func) response += ("[ <a href=\"?" + func + "=" + ident + "\">" + String.capitalize(func) + "</a> ]\n");
+        
+        response += "</td></tr>\n";
     }
 
     response += "</table>\n";
@@ -519,9 +588,28 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 
   if(!app) // show the admin page.
   {
-    mapping r = do_admin_request(request);
+    mapping r;
+    mixed err;
+
+    err = catch(r = do_admin_request(request));
     // TODO
     // we should do access logging, and also deal with errors if they occur.
+
+    if(err)
+    {
+      logger->exception("Error occurred while handling request!", err);
+      mapping response = ([]);
+      response->error=500;
+      response->type="text/html";
+      response->data = "<h1>An error occurred while processing your request:</h1>\n"
+                       "<pre>" + describe_backtrace(err) + "</pre>";
+      response->request = request;
+//      app->access_logger(response);
+
+      request->response_and_finish(response);
+      return 0;
+    }
+    
     request->response_and_finish(r);  
     return 0;
   }
@@ -549,6 +637,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       r = app->handle_request(request);
     };  
   }
+
       
   if(e)
   {

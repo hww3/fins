@@ -702,7 +702,8 @@ return joinnode(({static_modules}), 0, 0, "predef::");
 
 void shutdown_backend()
 {
-  call_out(lambda(){ this->_shutdown = 1;}, 0.0);
+  if(abe)
+    call_out(lambda(){ _shutdown = 1;}, 0.0);
 }
 mixed call_out(function f, float|int delay, mixed ... args)
 {
@@ -729,15 +730,23 @@ object get_backend()
   return abe;
 }
 
-void run_backend_thread()
+
+static void destroy()
 {
-  do
-  {
-//werror("application backend running\n");
-    abe(100.0);
-  }
-  while(!_shutdown);
+  shutdown_backend();
+  while(abe);  
 }
+
+  void run_backend_thread()
+  {
+    do
+    {
+//werror("application backend running\n");
+      abe(10.0);
+    }
+    while(!_shutdown);
+    abe = 0;
+  }
 
   } 
 }

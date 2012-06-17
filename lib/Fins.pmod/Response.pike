@@ -200,7 +200,8 @@
     if(to[0] == '/')
     {
       object u;
-      u = request->fins_app->get_my_url();
+      
+      catch(u = request->fins_app->get_my_url());
       if(!u)
       {
         u = divine_url(request);
