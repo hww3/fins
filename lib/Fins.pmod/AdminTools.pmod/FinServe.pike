@@ -290,6 +290,10 @@ void restart_workers(object runner)
     urls[url] = runner;
   }
   
+  // let's always make the app available via a xip.io url.
+  // TODO: should this be configurable?
+  urls[lower_case(Fins.Util.get_xip_io_url(runner->get_application())->host)] = runner;
+  
 }
 
 int start_app(string project, string config_name, int|void solo)
@@ -330,6 +334,11 @@ int start_app(string project, string config_name, int|void solo)
     {
       urls[url] = runner;
     }
+    
+    // let's always make the app available via a xip.io url.
+    // TODO: should this be configurable?
+    urls[lower_case(Fins.Util.get_xip_io_url(runner->get_application())->host)] = runner;
+    
       
     runner->set_request_handler(thread_handle_request);
     runner->set_new_session_handler(new_session);
@@ -466,6 +475,8 @@ void thread_admin_handle_request(Protocols.HTTP.Server.Request request)
     host = (host/":")[0];
 
     object|int runner;
+//    werror("url we want: %O\n", host);
+//    werror("urls we know: %O\n", urls);
     if(!(runner = urls[host]))
     {
        foreach(urls; string u; object r)
@@ -519,6 +530,8 @@ mapping do_admin_request(object request)
           {
             m_delete(urls, url);
           }
+          
+          m_delete(urls, lower_case(Fins.Util.get_xip_io_url(app->get_application())->host));
           
           app->stop();
           object resp = Fins.Response(request);

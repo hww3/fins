@@ -86,7 +86,7 @@ void set_request_handler(function handler)
 //! associate the application server container (ie FinServe or the like) with the runner.
 void set_container(object app_container)
 {
-  container = app_container;  
+  container = app_container; 
 }
 
 object get_container()
@@ -173,7 +173,7 @@ void register_ports()
   if(p)
   {
     
-    logger->info("Starting port " + p);
+    logger->info("Starting port %d for %O", p, app);
     
     port = server(handle_request, p);  
     port->set_application(app);

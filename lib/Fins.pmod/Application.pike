@@ -509,28 +509,32 @@ string get_path_for_action(function|object action, int|void nocontextroot)
 //! We should provide a means for non-finserve containers to provide the url.
 Standards.URI get_my_url()
 {
+  
+ // werror("runner: %O, container: %O\n", app_runner, app_runner->get_container());
   string url;
 
   if(my_url) return Standards.URI(my_url);
   
   if(config["web"] && (url = config["web"]["url"]))
   {
+    logger->debug("Using url specified in config file.");
     my_url = Standards.URI(url);
     return Standards.URI(my_url);
   }
   else if(my_port)
   {
+    logger->debug("Using url calculated from port specified in config file.");
     string my_ip = gethostname();
     return Standards.URI("http://" + my_ip + ":" + my_port + "/");
   }
   else if(config["web"] && config["web"]["use_xip_io"])
   {
-    string my_ip = System.gethostbyname(gethostname())[1][0];
-    my_url = Standards.URI("http://" + config->app_name + "-" + config->config_name +"." + my_ip + ".xip.io:" + app_runner->get_container()->admin_port + "/");
-    return Standards.URI(my_url);
+    logger->debug("Using xip.io url.");
+    return Fins.Util.get_xip_io_url(this);
   }
-  else if(app_runner->container->is_fins_serve)
+  else if(app_runner->get_container()->is_fins_serve)
   {
+    logger->debug("Using FinServe but no URL specified.");
     throw(Error.Generic("Must be able to determine URL of application " + config->app_name + "-" + config->config_name + " when using FinServe. Either specify one in the configuration file or enable use_xip_io.\n"));
   }
   else
