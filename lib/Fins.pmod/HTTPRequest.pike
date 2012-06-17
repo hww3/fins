@@ -67,7 +67,28 @@ void attach_fd(Stdio.File _fd, Port server,
 	       function(this_program:void) _request_callback,
 	       void|string already_data)
 {
-  fins_app = server->get_application();
+  if(server)
+  {
+    fins_app = server->get_application();
+  }
+  else 
+  {
+    throw(Error.Generic("No server object present!\n"));
+  }
   
+  if(server->conns)
+    server->conns[this] = 1;
+    
   ::attach_fd(_fd, server, _request_callback, already_data);
+}
+
+protected void close_cb()
+{
+// closed by peer before request read
+   if( my_fd && server_port->conns)
+   {
+     m_delete(server_port->conns, this);
+   }
+
+   ::close_cb();
 }

@@ -154,6 +154,7 @@ void unregister_ports()
     ports -= ({port});
     destruct(port->get_bonjour());
     logger->info("Shutting down port " + port->port->query_address());
+    destruct(port->port);
     destruct(port);
   }
   
@@ -291,5 +292,6 @@ void stop()
   
   unregister_ports();
   worker_number = 0;
+  gc();
   set_status("STOPPED");
 }
