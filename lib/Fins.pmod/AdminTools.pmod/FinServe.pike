@@ -192,9 +192,15 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
     exit(1);
   }
 
+  int i;
+  string project;
+  
+  foreach(projects;i;project)
+    logger->info("Will start application %s with config %s.", project, config_name[i]);
+
   if(hilfe_mode)
   {
-    foreach(projects;int i;string project)
+    foreach(projects; i; project)
     {
       int res = start_app(project, config_name[i]);
       if(res == 0) return 0;
@@ -203,7 +209,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   else
   {
     if(start_admin(((int)my_port))) return 0;
-    master()->old_call_out(schedule_start_app, 5, projects, config_name);
+    master()->old_call_out(schedule_start_app, 1, projects, config_name);
   }
 
   return -1;
@@ -303,6 +309,8 @@ int start_app(string project, string config_name, int|void solo)
   apps[runner->ident] = runner;
   
   runner->set_container(this);
+  runner->set_request_handler(thread_handle_request);
+  runner->set_new_session_handler(new_session);
 
   runner->load_application();
 
@@ -327,23 +335,6 @@ int start_app(string project, string config_name, int|void solo)
   }
   else
   {
-    runner->register_ports();
-    
-    // TODO probably should have a better way to do this.
-    foreach(runner->urls;string url;)
-    {
-      urls[url] = runner;
-    }
-    
-    // let's always make the app available via a xip.io url.
-    // TODO: should this be configurable?
-    urls[lower_case(Fins.Util.get_xip_io_url(runner->get_application())->host)] = runner;
-    
-      
-    runner->set_request_handler(thread_handle_request);
-    runner->set_new_session_handler(new_session);
-    runner->start();
-
     // start a new thread and run the session manager startup process within it, that's the easiest way to get a application 
     // enviornment synchronously (we could also use call_out, but then we couldn't easily wait for it).
     object session_thread;
@@ -357,9 +348,23 @@ int start_app(string project, string config_name, int|void solo)
     {
       session_thread = Thread.Thread(session_startup, runner->get_application()->config->handler_name, runner);
       session_thread->set_thread_name("Session Startup");
-
     }
+    
     session_thread->wait();
+    
+    runner->register_ports();
+    
+    // TODO probably should have a better way to do this.
+    foreach(runner->urls;string url;)
+    {
+      urls[url] = runner;
+    }
+    
+    // let's always make the app available via a xip.io url.
+    // TODO: should this be configurable?
+    urls[lower_case(Fins.Util.get_xip_io_url(runner->get_application())->host)] = runner;
+    
+    runner->start();
     
     if(runner->has_ports())
       logger->info("Application %s is ready for business on %s.", runner->ident, (runner->get_ports()->port->query_address()) * ", ");
@@ -539,16 +544,47 @@ mapping do_admin_request(object request)
           return resp->get_response();
         }
         
-        if(request->variables->start && request->variables->start == ident)
+        else if(request->variables->start && request->variables->start == ident)
         {
           call_out(restart_app, 0.0, app);
           object resp = Fins.Response(request);
           resp->redirect("/");
           return resp->get_response();
         }
+        
+        else if(request->variables->restart && request->variables->restart == ident)
+        {
+          foreach(app->urls; string url;)
+          {
+            m_delete(urls, url);
+          }
+          
+          m_delete(urls, lower_case(Fins.Util.get_xip_io_url(app->get_application())->host));
+          
+          app->stop();
+
+          call_out(restart_app, 0.0, app);
+          object resp = Fins.Response(request);
+          resp->redirect("/");
+          return resp->get_response();
+        }
+        
       }
       
-      string func = (app->status == "STARTED"? "stop": (app->status == "STOPPED" ? "start" : 0));
+      string func;
+      
+      switch(app->status)
+      {
+        case "STARTED":
+          func = "stop";
+          break;
+        case "STOPPED":
+          func = "start";
+          break;
+        case "FAILED":
+          func = "restart";
+          break;
+      } 
       
       response += ("<tr><td>" 
         + ident + "</td><td>" 
@@ -603,8 +639,18 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   {
     mapping r;
     mixed err;
-
-    err = catch(r = do_admin_request(request));
+    mixed addrs;
+    
+    if(1)//request->remoteaddr && (addrs = gethostbyaddr(request->remoteaddr)) && search(addrs, "localhost") != -1)
+      err = catch(r = do_admin_request(request));
+    else
+    {
+      r = ([]);
+      r->error=403;
+      r->type="text/html";
+      r->data = "<h1>Access Denied by IP</h1>\n";
+      r->request = request;
+    }
     // TODO
     // we should do access logging, and also deal with errors if they occur.
 
@@ -627,6 +673,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     return 0;
   }
   
+//  werror("app: %O, app_runner: %O, session_manager: %O\n", app, app->app_runner, app->app_runner->get_session_manager());
   object session_manager = app->app_runner->get_session_manager();
   // Do we have either the session cookie or the PSESSIONID var?
   if(request->cookies && request->cookies[session_cookie_name]
@@ -650,7 +697,6 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       r = app->handle_request(request);
     };  
   }
-
       
   if(e)
   {

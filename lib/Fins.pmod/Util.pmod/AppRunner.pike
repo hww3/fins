@@ -176,7 +176,15 @@ void register_ports()
     
     logger->info("Starting port %d for %O", p, app);
     
-    port = server(handle_request, p);  
+    mixed err;
+    
+    if(err = catch(port = server(handle_request, p)))
+    {
+      set_status("FAILED");
+      logger->exception("Unable to open port " + p + ".", err);
+      throw(err);
+      
+    }  
     port->set_application(app);
     port->request_program = Fins.HTTPRequest;
 
@@ -220,6 +228,8 @@ static void run_worker(object app)
 //werror("run\n");
     } while(keep_running);
   };
+  if(err)
+  logger->exception("Worker Thread " + sprintf("%O", Thread.this_thread()) + " exiting.", err);
   logger->info("Worker Thread %O exiting.", Thread.this_thread());
 }
 

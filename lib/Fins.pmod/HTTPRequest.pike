@@ -26,7 +26,7 @@ void parse_request()
   foreach(variables; string k; string v)
     catch(variables[k] = utf8_to_string(v));
 
-  remoteaddr = ((my_fd->query_address()||"")/":")[0];
+  remoteaddr = ((my_fd->query_address()||"")/" ")[0];
   string n_not_query = Protocols.HTTP.Server.http_decode_string(not_query);
   if(n_not_query != not_query)
   catch{
