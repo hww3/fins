@@ -3,6 +3,7 @@
 //import Fins;
 //import Tools.Logging;
 //inherit Fins.Bootstrap;
+inherit Tools.Application.Backgrounder;
 
 #define DEFAULT_CONFIG_NAME "dev"
 
@@ -36,13 +37,11 @@ mapping(string:object|int) urls = ([]);
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 Thread.Queue admin_queue = Thread.Queue();
 array workers = ({});
-  
-#if constant(_Protocols_DNS_SD) &&  constant(Protocols.DNS_SD.Service);
 
-#endif
 int hilfe_mode = 0;
 int go_background = 0;
 private int has_started = 0;
+
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [-s ram|file|sqlite|--session-manager=ram|file|sqlite [-l "
@@ -155,35 +154,11 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
     exit(1);
   }
 
-#if constant(fork)
-  if(!hilfe_mode && go_background && fork())
+  if(!hilfe_mode && enter_background(go_background, logfile))
   {
-    // first, we attempt to open the log file; if we can't, bail out.
-    object lf;
-    mixed e = catch(lf = Stdio.File(logfile, "crwa"));
-    if(e) 
-    {
-      werror("Unable to open log file: " + Error.mkerror(e)->message());
-      werror("Exiting.\n");
-      exit(1);
-    }
-    write("Entering Daemon mode...\n");
-    write("Directing output to %s.\n", logfile);
     return 0;
   }
-  if(!hilfe_mode && go_background)
-  {
-    // we should be in the forked copy.
-    write("FinServe daemon pid: %d\n", getpid());
-    Stdio.stdin.close();
-    Stdio.stdin.open("/dev/null", "crwa");
-    Stdio.stdout.close();
-    Stdio.stdout.open(logfile, "crwa");
-    Stdio.stderr.close();
-    Stdio.stderr.open(logfile, "crwa");
-  }
-#endif /* fork() */
-
+  
   logger=master()->resolv("Tools.Logging.get_logger")("finserve");
 
   if(hilfe_mode && sizeof(projects) > 1)
@@ -219,6 +194,7 @@ void run_hilfe(object app)
 {
   write("\nStarting interactive interpreter...\n");
   add_constant("application", app->get_application());
+  add_constant("app", app->get_application());
   object in = Stdio.FILE("stdin");
   object out = Stdio.File("stdout");
   object o = Fins.Helpers.Hilfe.FinsHilfe();
