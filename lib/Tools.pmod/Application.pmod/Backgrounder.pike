@@ -3,7 +3,7 @@
 //!
 //! @note 
 //! this class requires @[fork()] to function properly. If @[fork()] is not available,
-//! this class will behave as though it had entered to background, allowing the application
+//! this class will behave as though it had entered the background, allowing the application
 //! to continue running normally without detaching.
 
 private int in_child = 0;

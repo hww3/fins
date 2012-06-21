@@ -201,11 +201,14 @@
     {
       object u;
       
-      catch(u = request->fins_app->get_my_url());
+      if(catch(u = request->fins_app->get_my_url(request->request_headers->host)))
+        werror("an error occurred while getting the application's url."); // this is a poor effort, but it's better than nothing.
+            
       if(!u)
       {
         u = divine_url(request);
       }
+      
       u->path = combine_path(u->path, to);
       if(args && sizeof(args))
         u = Standards.URI(combine_path(u->path, args*"/"), to);

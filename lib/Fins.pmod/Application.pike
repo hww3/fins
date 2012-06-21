@@ -65,6 +65,7 @@ int cache_events;
 
 Standards.URI my_url;
 int my_port;
+string my_ip;
 
 //! determines the length of time, in hours, responses from a static file controller should indicate the file ought to be cached. 
 //! this setting is derived from the value of the static_expire_period parameter in the application section of the application 
@@ -507,30 +508,76 @@ string get_path_for_action(function|object action, int|void nocontextroot)
 //! TODO
 //!
 //! We should provide a means for non-finserve containers to provide the url.
-Standards.URI get_my_url()
+//!
+//! We should keep a list of "preferred urls" that don't require changing when doing redirects.
+//! As it stands now, if you have multiple ports serving the app, as soon as a redirect fires, you'll
+//! get switched from that port to the "main port", which you might not be able to access.
+Standards.URI get_my_url(string|void host_header)
 {
   
  // werror("runner: %O, container: %O\n", app_runner, app_runner->get_container());
   string url;
+  string protocol = "http";
 
   if(my_url) return Standards.URI(my_url);
+  
+  if(my_port == 0)
+  {
+    if(app_runner->has_ports())
+    {
+      array ports = app_runner->get_ports();
+      my_port = (int)(ports[-1]->port->query_address()/" ")[-1];
+      protocol = ports[-1]->protocol;
+      my_ip = (ports[-1]->port->query_address()/" ")[0];
+      if(my_ip == "0.0.0.0") my_ip = gethostname();
+      else
+      {   
+        mixed hn = gethostbyaddr(my_ip);
+        if(hn)
+          my_ip = hn[0];
+      }
+      logger->debug("get_my_url: host=%O, port=%O, protocol=%O\n", my_ip, my_port, protocol);
+    }
+    else
+      my_port = -1;
+  }
   
   if(config["web"] && (url = config["web"]["url"]))
   {
     logger->debug("Using url specified in config file.");
     my_url = Standards.URI(url);
+
+    if(0 && host_header)
+    {
+       my_url->host = host_header;
+    }
+
     return Standards.URI(my_url);
   }
-  else if(my_port)
+  else if(my_port > 0)
   {
     logger->debug("Using url calculated from port specified in config file.");
-    string my_ip = gethostname();
-    return Standards.URI("http://" + my_ip + ":" + my_port + "/");
+    
+    my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
+
+    if(0 && host_header)
+    {
+       my_url->host = host_header;
+    }
+
+    return Standards.URI(my_url);    
   }
   else if(config["web"] && config["web"]["use_xip_io"])
   {
     logger->debug("Using xip.io url.");
-    return Fins.Util.get_xip_io_url(this);
+    my_url = Fins.Util.get_xip_io_url(this);
+    
+    if(0 && host_header)
+    {
+       my_url->host = host_header;
+    }
+    
+    return Standards.URI(my_url);    
   }
   else if(app_runner->get_container()->is_fins_serve)
   {
@@ -541,7 +588,13 @@ Standards.URI get_my_url()
   {
     logger->warn("Guessing the local url. You should really set it in the configuration file or set use_xip_io configuration setting.");
     string my_ip = gethostname();
-    my_url = Standards.URI("http://" + my_ip + "/");
+    my_url = Standards.URI(protocol + "://" + my_ip + "/");
+    
+    if(0 && host_header)
+    {
+       my_url->host = host_header;
+    }
+
     return Standards.URI(my_url);
   }
 }

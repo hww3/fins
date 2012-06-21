@@ -6,6 +6,8 @@ static object app;
 Thread.Queue queue = Thread.Queue();
 
 program server = Fins.Util.AppPort;
+program ssl_server = Fins.Util.SSLAppPort;
+
 static array ports = ({});
 multiset urls = (<>);
 static array workers = ({});
@@ -14,6 +16,8 @@ static object logger;
 string project;
 string config;
 string ident;
+
+//! this is the key used to identify the compilation handler environment used by all threads that have this key
 string handler_key;
 
 static function do_handle_request;
@@ -161,41 +165,101 @@ void unregister_ports()
   urls = (<>);
 }
 
+object register_port(int p, string|void bind, mapping|void args)
+{
+  object port;
+  int use_ssl = 0;
+
+  if(args && args->ssl)
+  {
+    use_ssl = 1;
+  }
+      
+  if(!bind) bind = "*";
+  logger->info("Starting %s port %s:%d for %O", (use_ssl?"https":"http"), bind, p, app);
+
+  mixed err;
+
+  if(use_ssl)
+  {
+    string key;
+    string|array certificate;
+    
+    err = catch(port = ssl_server(handle_request, p, (bind=="*"?0:bind)), key, certificate);
+  }
+  else
+  { 
+    err = catch(port = server(handle_request, p, (bind=="*"?0:bind)));
+  }
+  
+  if(err)
+  {
+    set_status("FAILED");
+    logger->exception("Unable to open port " + bind + ":" + p + ".", err);
+    throw(err);
+
+  }  
+  port->set_application(app);
+  port->request_program = Fins.HTTPRequest;
+
+  #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
+  if(bind == "*")
+  {
+    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
+                     (args->ssl?"_https._tcp":"_http._tcp"), "", p));
+
+    logger->info("Advertising this application via Bonjour.");
+  }
+#endif
+    
+ return port;
+}
+
 //!
 void register_ports()
 {
   int p;
+  string addr;
   object port;
   
   if(status != "LOADED") throw("Cannot register ports until application is loaded.\n");
+    
+  catch(p = (int)app->config["web"]["port"]); 
+  catch(addr = app->config["web"]["bind"]); 
   
-  catch(p = (int)app->config["web"]["port"]);
   // prefer command line specification to config file to default.
   if(p)
   {
-    
-    logger->info("Starting port %d for %O", p, app);
-    
-    mixed err;
-    
-    if(err = catch(port = server(handle_request, p)))
-    {
-      set_status("FAILED");
-      logger->exception("Unable to open port " + p + ".", err);
-      throw(err);
-      
-    }  
-    port->set_application(app);
-    port->request_program = Fins.HTTPRequest;
-
-  #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
-    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
-                       "_http._tcp", "", p));
-
-    logger->info("Advertising this application via Bonjour.");
-  #endif
-
+    port = register_port(p, addr);
     ports += ({port});
+  }
+  
+  // we can register a bunch of ports, too. just have multiple port_xxx sections in the config file.
+  foreach(glob("port_*", app->config->get_sections());; string pd)
+  {
+    string protocol;
+    
+    catch(p = (int)app->config[pd]["port"]); 
+    catch(addr = app->config[pd]["bind"]); 
+    catch(protocol = app->config[pd]["protocol"]); 
+    
+    if(protocol && !(<"http", "ssl", "https">)[protocol])
+    {
+      throw(Error.Generic("Unknown protocol '" + protocol + "' in port definition '" + pd + "'."));
+    }
+    
+    mapping args = ([]);
+    
+    if((<"ssl", "https">)[protocol])
+    {
+      args->ssl = 1;  
+    }
+    
+    if(p)
+    {
+      port = register_port(p, addr, args);
+      ports += ({port});
+    }    
   }
   
   object a;
