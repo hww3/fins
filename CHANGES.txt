@@ -26,8 +26,12 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  added RollingFileAppender and RollingAccessFileAppender to Tools.Logging.
+-  added Tools.String.parse_filesize().
+-  added ability to stop and restart applications from the FinServe
+       administration page.
 -  added administrative information page when fetching the admin port
-		without using one of the ip-less virtual server names.
+       without using one of the ip-less virtual server names.
 -  added use_xip_io option to web section of config file, setting this
        instead of url in the config section causes get_my_url() to generate
        an app url in the form of http://app_name-config.my_ip.xip.io:port,

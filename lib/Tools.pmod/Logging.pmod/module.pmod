@@ -1,3 +1,4 @@
+
 static mapping loggers = ([]);
 
 string config_file_path;

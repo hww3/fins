@@ -1,15 +1,25 @@
+//!
+constant default_format =  "%{hour:02d}:%{min:02d}:%{sec:02d} %{level} - %{name}: %{msg}";
+
+//!
+constant common_log_format = "%{remote_host} - %{user} [%{mday:02d}/%{month}/%{year}:%{hour:02d}:%{min:02d}:%{sec:02d} %{timezone:+05d}] \"%{method} %{request} %{protocol}\" %{code} %{size}";
+
 object output;
-string format = "%{hour:02d}:%{min:02d}:%{sec:02d} %{level} - %{name}: %{msg}";
+
+//! config setting
+string format = default_format;
+
 function format_function;
 
-int enabled = 1;
+//! config setting
+int enable = 1;
 
 static void create(mapping config)
 {
   if(config->format)
     format = config->format;
   if(config->enable)
-    enabled = Tools.Boolean.fromString(config->enable);
+    enable = Tools.Boolean.fromString(config->enable);
 
   format_function = Tools.String.named_sprintf_func(format + "\n");
 }
@@ -33,7 +43,7 @@ protected string make_log_directory(string file)
 
 mixed write(mapping args)
 {
-  if(enabled)
+  if(enable)
     return do_write(do_format(args));
 }
 

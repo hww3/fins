@@ -1,4 +1,5 @@
-//inherit Tools.Logging.Log.Logger;
+//!
+
 inherit .Appender;
 
 //! a config setting.
