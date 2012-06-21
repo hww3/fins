@@ -15,7 +15,10 @@ static void create(mapping config)
 }
 
 //! creates the parent folder for file if it doesn't exist.
-void make_log_directory(string file)
+//!  
+//! @returns
+//!  the name of the directory.
+protected string make_log_directory(string file)
 {
   string dirname = dirname(file);
   Stdio.Stat fss = file_stat(dirname);
@@ -24,12 +27,24 @@ void make_log_directory(string file)
     .module.info("creating directory " + dirname);
     Stdio.mkdirhier(dirname);
   }
+  
+  return dirname;
 }
 
 mixed write(mapping args)
 {
   if(enabled)
-    return output->write(encode_string(format_function(args) ));
+    return do_write(do_format(args));
+}
+
+protected int do_write(string s)
+{
+  return output->write(s);
+}
+
+protected string do_format(mapping args)
+{
+  return encode_string(format_function(args) );
 }
 
 string _sprintf(mixed ... args)
@@ -37,10 +52,9 @@ string _sprintf(mixed ... args)
   return sprintf("appender(%O)", output);
 }
 
-
 // we shouldn't assume the output should be utf8, but it will allow us to avoid
 // errors when trying to write log messages with wide strings.
-string encode_string(string input)
+protected string encode_string(string input)
 {
   return string_to_utf8(input);
 }

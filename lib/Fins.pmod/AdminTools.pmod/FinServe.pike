@@ -193,8 +193,8 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 void run_hilfe(object app)
 {
   write("\nStarting interactive interpreter...\n");
-  add_constant("application", app->get_application());
-  add_constant("app", app->get_application());
+  add_constant("application", app);
+  add_constant("app", app);
   object in = Stdio.FILE("stdin");
   object out = Stdio.File("stdout");
   object o = Fins.Helpers.Hilfe.FinsHilfe();

@@ -1,7 +1,10 @@
 //inherit Tools.Logging.Log.Logger;
 inherit .Appender;
 
-object output;
+//! a config setting.
+string file;
+
+string dirname;
 
 void create(mapping|void config)
 {
@@ -11,8 +14,9 @@ void create(mapping|void config)
   }
   else
   {
-    make_log_directory(config->file);
-    output = Stdio.File(config->file, "cwa");
+    file = config->file;
+    dirname = make_log_directory(file);
+    output = Stdio.File(file, "cwa");
   }
 
   ::create(config);

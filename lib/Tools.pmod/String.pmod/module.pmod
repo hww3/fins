@@ -85,5 +85,76 @@ string generate_password(int length)
 	return P->generate(1, length)[0];
 }
 
+multiset valid_chars = (<'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+  'k', 'l', 'm', 'n', 'o',  'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'>);
+
+//! Parse a string containing a file size descriptor
+//!
+//! @param input
+//!   a string describing a file size, such as: 2mb or 3.2gb, etc. This method understands bytes, 
+//!   kilobytes, megabytes and gigabytes. If no unit is provided, it assumes kilobytes. Common abbreviations 
+//!   are understood, as well.
+//!
+//! @returns
+//!   an integer representing the number of bytes described by the input string.
+int parse_filesize(string input)
+{
+  float mag;
+  int mult = 1;
+  string units;  
+
+  // remove spaces and non-alphanumerics.  
+  input = filter(lower_case(input), lambda(int a){ return valid_chars[a]; });
+  sscanf(input, "%f%s", mag, units);
+  
+  if(mag <=0.0)
+  {
+    throw(Error.Generic("Invalid size specification '" + mag + " " + units + "'."));
+  }
+  
+  if(!units || !sizeof(units)) units = "kb";
+  
+  switch(units)
+  {
+    case "b":
+    case "bytes":
+    case "byte":
+      break;
+
+    case "k":    
+    case "kb":
+    case "kilobytes":
+    case "kilobyte":
+      mult = 1024;
+      break;
+
+    case "m":    
+    case "mb":
+    case "megabytes":
+    case "megabyte":
+      mult = 1024*1024;
+      break;
+
+    case "g":    
+    case "gb":
+    case "gigabytes":
+    case "gigabyte":
+      mult = 1024*1024*1024;
+      break;
+
+    case "t":    
+    case "tb":
+    case "terabytes":
+    case "terabyte":
+      mult = 1024*1024*1024*1024;
+      break;
+      
+    default:
+      throw(Error.Generic("Unknown unit of size '" + units + "'."));
+      break;
+  }
+  
+  return (int)(mag * mult);
+}
 
 inherit .NamedSprintf;

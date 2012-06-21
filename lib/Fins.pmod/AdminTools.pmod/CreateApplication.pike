@@ -66,9 +66,11 @@ class=Tools.Logging.Log.ConsoleAppender
 format=%{mday:02d}/%{mon:02d}/%{year} %{hour:02d}:%{min:02d} - %{name} %{level} - ${app}/${config} - %{msg}
 
 [appender.default_debuglog]
-class=Tools.Logging.Log.FileAppender
+class=Tools.Logging.Log.RollingFileAppender
 file=${appdir}/logs/${config}_debug.log
 format=%{mday:02d}/%{mon:02d}/%{year} %{hour:02d}:%{min:02d} - %{name} %{level} - ${app}/${config} - %{msg}
+max_file_size=1mb
+max_backup=5
 
 [appender.access_log]
 file=${appdir}/logs/${config}_access.log
