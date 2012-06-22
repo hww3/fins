@@ -605,6 +605,33 @@ mapping do_admin_request(object request)
   return r->get_response();
 }
 
+mapping http_string_response(object request, string r, object|void access_logger)
+{
+  return http_code_response(request, 200, r, access_logger);  
+}
+
+mapping http_code_response(object request, int code, string r, object|void access_logger)
+{
+  mapping response = ([]);
+  response->error = code;
+  response->server="FinServe " + my_version;
+  response->type = "text/html";
+  response->data = r;
+  response->request = request;
+  if(access_logger) access_logger(response);
+  return response;  
+}
+
+mapping http_exception_response(object request, mixed err, object|void access_logger)
+{
+  err = Error.mkerror(err);
+  logger->exception("Error occurred while handling request!", err);
+
+  string r = "<h1>An error occurred while processing your request:</h1>\n"
+                   "<pre>" + describe_backtrace(err) + "</pre>";  
+  return http_code_response(request, 500, r, access_logger);
+}
+
 void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
   mixed r;
@@ -621,28 +648,14 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       err = catch(r = do_admin_request(request));
     else
     {
-      r = ([]);
-      r->error=403;
-      r->type="text/html";
-      r->data = "<h1>Access Denied by IP</h1>\n";
-      r->request = request;
+      r = http_code_response(request, 403, "<h1>Access Denied by IP</h1>\n");
     }
     // TODO
     // we should do access logging, and also deal with errors if they occur.
 
     if(err)
     {
-      logger->exception("Error occurred while handling request!", err);
-      mapping response = ([]);
-      response->error=500;
-      response->type="text/html";
-      response->data = "<h1>An error occurred while processing your request:</h1>\n"
-                       "<pre>" + describe_backtrace(err) + "</pre>";
-      response->request = request;
-//      app->access_logger(response);
-
-      request->response_and_finish(response);
-      return 0;
+      r = http_exception_response(request, err);
     }
     
     request->response_and_finish(r);  
@@ -676,16 +689,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       
   if(e)
   {
-    logger->exception("Error occurred while handling request!", e);
-    mapping response = ([]);
-    response->error=500;
-    response->type="text/html";
-    response->data = "<h1>An error occurred while processing your request:</h1>\n"
-                     "<pre>" + describe_backtrace(e) + "</pre>";
-    response->request = request;
-    app->access_logger(response);
-
-    request->response_and_finish(response);
+    request->response_and_finish(http_exception_response(request, e, app->access_logger));
     return 0;
   }
 
@@ -695,36 +699,22 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
       app->access_logger(r);
       if(!r->_is_pipe_response)
       {
-//        werror("respnse_and_finish 2\n");
         request->response_and_finish(r);
       }
     }
     else if(stringp(r))
     {
-      mapping response = ([]);
-      response->server="FinServe " + my_version;
-      response->type = "text/html";
-      response->error = 200;
-      response->data = r;
-      response->request = request;
-      app->access_logger(response);
-//      werror("respnse_and_finish 3\n");
-      request->response_and_finish(response);
+      request->response_and_finish(http_string_response(request, r));
     }
     else
     {
       logger->debug("Got nothing from the application for the request %O, referrer: %O. Probably means the request passed through an index action unhandled.", request, request->referrer);
       if(e) logger->exception("An error occurred while processing the request\n", e);
-      mapping response = ([]);
-      response->server="FinServe " + my_version;
-      response->type = "text/html";
-      response->error = 404;
-      response->data = "<h1>Page not found</h1>"
+
+      r = "<h1>Page not found</h1>"
                        "Fins was unable to find a handler for " + request->not_query + ".";
-      response->request = request;
-      app->access_logger(response);
-//      werror("respnse_and_finish 4\n");
-      request->response_and_finish(response);
+
+      request->response_and_finish(http_code_response(request, 404, r, app->access_logger));
     }
   };
 
@@ -738,17 +728,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
 
   if(e)
   {
-    logger->exception("Internal Server Error!", e);
-    mapping response = ([]);
-    response->error=500;
-    response->type="text/html";
-    response->data = "<h1>Internal Server Error</h1>\n"
-                     "<pre>" + describe_backtrace(e) + "</pre>";
-    response->request = request;
-    app->access_logger(response);
-//    werror("respnse_and_finish 5\n");
-    request->response_and_finish(response);
-    return 0;
+    request->response_and_finish(http_exception_response(request, e, app->access_logger));
   }
 
   return 0;
