@@ -182,10 +182,7 @@ object register_port(int p, string|void bind, mapping|void args)
 
   if(use_ssl)
   {
-    string key;
-    string|array certificate;
-    
-    err = catch(port = ssl_server(handle_request, p, (bind=="*"?0:bind)), key, certificate);
+    err = catch(port = ssl_server(handle_request, p, (bind=="*"?0:bind), args));
   }
   else
   { 
@@ -253,6 +250,8 @@ void register_ports()
     if((<"ssl", "https">)[protocol])
     {
       args->ssl = 1;  
+      args->key = app->config[pd]["key"];
+      args->certificate = app->config[pd]["certificate"];
     }
     
     if(p)
