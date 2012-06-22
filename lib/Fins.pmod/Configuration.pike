@@ -1,3 +1,6 @@
+//! @note
+//! do not set values in this object except through the use of @[set_value()].
+
 //! the full path to the application directory
 string app_dir;
 
@@ -20,6 +23,12 @@ string config_name;
 string handler_name;
 
 protected mapping values;
+protected mapping ovalues; // the unparsed values.
+protected mapping config_variables;
+
+protected mapping _default_config_variables = (["host": gethostname(), 
+				"pid": (string)getpid(), 
+				"user": getpwuid(System.getuid())[0] ]);
 
 //! calculates the application's internal name, which is used by various Fins subsystems.
 //!
@@ -44,7 +53,22 @@ protected string get_app_name()
  return ((app_dir/"/")-({""}))[-1];
 }
 
+mapping insert_config_variables(mapping c)
+{
+  foreach(c; string k; string v)
+  {
+    if(v)
+      c[k] = replace(v, indices(config_variables), predef::values(config_variables));
+  }
+
+  return c;
+}
+
+
 //!
+//!  config variables that may be substituted in the configuration file using the ${varname} syntax
+//! include: appname, appdir, config, host, user, and pid.
+//! 
 protected void create(string appdir, string|mapping _config_file)
 {
   app_dir = appdir;
@@ -55,49 +79,87 @@ protected void create(string appdir, string|mapping _config_file)
   if(m->handlers_for_thread)
     handler_name = m->handlers_for_thread[Thread.this_thread()];
 
-
   if(stringp(_config_file))
   {
     config_file = _config_file;
-	array _cn = (basename(config_file)/".");
-	config_name = _cn[0..sizeof(_cn)-2]*".";
+	  array _cn = (basename(config_file)/".");
+	  config_name = _cn[0..sizeof(_cn)-2]*".";
 
     string fc = Stdio.read_file(config_file);
 
     // the "spec" says that the file is utf-8 encoded.
     fc=utf8_to_string(fc);
 
-    values = Public.Tools.ConfigFiles.Config.read(fc);
+    ovalues = Public.Tools.ConfigFiles.Config.read(fc);
   }
   else if(mappingp(_config_file))
   {
-    values = _config_file;
+    ovalues = _config_file;
   }
 
   if(appdir)
   {
     app_name = get_app_name();
+    _default_config_variables["appname"] = app_name;
+    _default_config_variables["appdir"] = appdir;
+  }
+
+  _default_config_variables["config"] = config_name;
+    
+  values = ([]);
+  set_config_variables(([]));
+  reparse_config_variables();
+
+  // we have to delay this until after we parse the config variables, as it looks in the config.
+  if(appdir)
     module_root = get_module_root();
+}
+
+//!
+array get_sections()
+{
+  return indices(ovalues);
+}
+
+protected void reparse_config_variables(string|void section)
+{
+  array sections;
+  
+  if(section)
+    sections = ({section});
+  else 
+    sections = get_sections();
+    
+  foreach(sections;; string sect)
+  {
+    values[sect] = insert_config_variables(ovalues[sect]);
   }
 }
 
-array get_sections()
+//! sets available configuration substitution variables, in addition to the standard
+//! values of "host", "pid" and "user".
+void set_config_variables(mapping vars)
 {
-  return indices(values);
+  mapping v = _default_config_variables + vars;
+   config_variables =  mkmapping(("${" + indices(v)[*])[*] + "}", predef::values(v)); 
+   
+  reparse_config_variables();
 }
 
 //! sets a value in the configuration
 void set_value(string section, string item, mixed value)
 {
-  if(!values[section])
-    values[section] = ([]);
+  if(!ovalues[section])
+    ovalues[section] = ([]);
 
   if(arrayp(value))
-    values[section][item] = value;
+    ovalues[section][item] = value;
   else
-    values[section][item] = (string)value;
+    ovalues[section][item] = (string)value;
 
-  Public.Tools.ConfigFiles.Config.write_section(config_file, section, values[section]);
+  Public.Tools.ConfigFiles.Config.write_section(config_file, section, ovalues[section]);
+
+  reparse_config_variables(section);
 }
 
 //! returns a string containing the first occurrance of a configuration 

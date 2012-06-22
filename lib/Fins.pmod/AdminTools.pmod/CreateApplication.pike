@@ -18,6 +18,7 @@ string config_contents =
 class=model
 debug=1
 #datasource=mysql://user:pass@host/db
+#datasource=sqlite://${appdir}/config/${appname}.sqlite3
 
 [controller]
 class=controller
