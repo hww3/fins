@@ -1,8 +1,3 @@
-#!/usr/local/bin/pike -Mlib -DLOCALE_DEBUG
-
-//import Fins;
-//import Tools.Logging;
-//inherit Fins.Bootstrap;
 inherit Tools.Application.Backgrounder;
 
 #define DEFAULT_CONFIG_NAME "dev"
@@ -23,13 +18,13 @@ string logfile = "finserve.log";
 string session_cookie_name = "PSESSIONID";
 int session_timeout = 7200;
 
-//Session.SessionManager session_manager;
-//object /*Fins.Application*/ 
 mapping(string:object) apps = ([]);
 
 program server = Fins.Util.AppPort;
 int _ports_defaulted;
 int admin_port;
+
+string scan_loc;
 
 // url to runner mapping
 mapping(string:object|int) urls = ([]);
@@ -42,13 +37,13 @@ int hilfe_mode = 0;
 int go_background = 0;
 private int has_started = 0;
 
+array tool_args;
+
 void print_help()
 {
-	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [-s ram|file|sqlite|--session-manager=ram|file|sqlite [-l "
-		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d] [--logfile|-f logfilename] appname [appname [appname]]\n");
+	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [--session-manager=ram|file|sqlite "
+	  + "[--session-storage-location=storage_path]] [-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [appdir [appdir]]\n");
 }
-
-array tool_args;
 
 int(0..1) started()
 {
@@ -70,15 +65,17 @@ int main(int argc, array(string) argv)
 {
   int my_port = default_port;
   array(string) config_name = ({});
-
+  string scandir;
+  
   foreach(Getopt.find_all_options(argv,aggregate(
     ({"port",Getopt.HAS_ARG,({"-p", "--port"}) }),
     ({"config",Getopt.HAS_ARG,({"-c", "--config"}) }),
-    ({"sessionmgr",Getopt.HAS_ARG,({"-s", "--session-manager"}) }),
-    ({"sessionloc",Getopt.HAS_ARG,({"-l", "--session-storage-location"}) }),
+    ({"sessionmgr",Getopt.HAS_ARG,({"--session-manager"}) }),
+    ({"sessionloc",Getopt.HAS_ARG,({"--session-storage-location"}) }),
+    ({"scandir",Getopt.HAS_ARG,({"--scan"}) }),
 #if constant(fork)
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
-    ({"logfile",Getopt.HAS_ARG,({"-f", "--logfile"}) }),
+    ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
 #endif /* fork() */
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
@@ -91,8 +88,19 @@ int main(int argc, array(string) argv)
 		  break;
 		
 		case "config":
+	    if(scandir)
+	    {
+	      throw(Error.Generic("You cannot use --scan while also specifying application directory.\n"));
+	    }
 		  config_name += ({opt[1]});
 		  break;
+		  
+		case "scandir":
+		  if(sizeof(config_name))
+		  {
+		    throw(Error.Generic("You cannot use --scan while also specifying application directory.\n"));
+		  }
+		  scandir = opt[1];
 
 		case "sessionloc":
 		  session_storagedir = opt[1];
@@ -131,10 +139,25 @@ int main(int argc, array(string) argv)
         if(!sizeof(config_name)) config_name = ({"dev"});
 
   admin_port = my_port;
-  array projects = ({"default"});
-  if(argc>=2) projects = argv[1..];
+  array projects = ({});
+  if(scandir)
+  {
+    mixed fs = file_stat(scandir);
+    if(!fs || !fs->isdir)
+    {
+      throw(Error.Generic("Cannot scan non-exisitent directory '" + scandir + "'\n"));
+    }
+    projects = filter(get_dir(scandir), lambda(string x){return !(x[0] == '.');});
+    foreach(projects; int i; string s)
+    {
+      projects[i] = combine_path(scandir, s);
+    }
+    scan_loc = scandir;
+  }
+  else if(argc>=2) projects = argv[1..];
 
-  config_name += allocate(sizeof(projects) - sizeof(config_name));
+  if((sizeof(projects) - sizeof(config_name))>0)
+    config_name += allocate(sizeof(projects) - sizeof(config_name));
 
   foreach(projects;int i;string pn)
   {

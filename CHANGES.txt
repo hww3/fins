@@ -26,6 +26,7 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added --scan option to load all applications in a given directory.
 -  FinServe supports opening multiple ports per app by adding multiple
    config sections in the form of [port_xxxx].
 -  FinServe supports ports using https, specified using the protocol=https
