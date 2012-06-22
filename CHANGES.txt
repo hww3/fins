@@ -26,6 +26,13 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  FinServe supports opening multiple ports per app by adding multiple
+   config sections in the form of [port_xxxx].
+-  FinServe supports ports using https, specified using the protocol=https
+   config setting on each port. Optional settings are key=/path/to/key
+   and certificate=/path/to/certificate (multiple certificates in a chain
+   may be specified). If no key/cert is specified, a default self signed
+   cert and key will be used.
 -  application config file may include variable substitutions using the
    ${varname} syntax. available variables include appname, appdir, host, 
    config, user, pid.
