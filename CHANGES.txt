@@ -26,6 +26,9 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  application config file may include variable substitutions using the
+   ${varname} syntax. available variables include appname, appdir, host, 
+   config, user, pid.
 -  added RollingFileAppender and RollingAccessFileAppender to Tools.Logging.
 -  added Tools.String.parse_filesize().
 -  added ability to stop and restart applications from the FinServe
