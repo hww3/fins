@@ -2,12 +2,15 @@
 //! detatch from the console and enter the background (such as for daemons).
 //!
 //! @note 
-//! this class requires @[fork()] to function properly. If @[fork()] is not available,
-//! this class will behave as though it had entered the background, allowing the application
-//! to continue running normally without detaching.
+//! This class will use @[fork()] on systems where it is available, however fork-like 
+//! semantics should not be assumed, as other methods are employed when fork() is not
+//! available in order to achieve the goal of detaching from the controlling console.
+//!
+//! In particular, developers should not assume that a child process will be created 
+//! at all, 
 
 private int in_child = 0;
-private object child_pid;
+private int child_pid;
 
 //! 
 //! @param should_we
@@ -21,14 +24,14 @@ private object child_pid;
 //!    or don't need to enter the background.
 //!
 //! @note
-//!   when this function returns true (1), this means we're in the foreground process and should 
-//!   @[exit()] the program as expeditiously as possible.
+//!   when this function returns true (1), this means we're in the foreground process and 
+//!   should @[exit()] the program as expeditiously as possible. Otherwise, the process is 
+//!   in the background and should continue on with normal operations.
 int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
 {
   // no need to attempt to enter the background if we're already there.
   if(in_child) return 0;
-  
-#if constant(fork)
+
   if(!should_we)
     return 0;
 
@@ -47,13 +50,41 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
     werror("Exiting.\n");
     exit(1);
   }
+    
+#if constant(fork)
+  object c = fork();
+  if(!c)
+  {
+    in_child = 1;
+    child_pid = getpid();
+  }
+  else
+  {
+    child_pid = c->pid();
+  }
+#elseif constant(System.FreeConsole)
+
+  child_pid = getpid();
+
+  if(!quiet)
+    werror("Daemon pid: %O\n", child_pid);
+
+  int res;
+  if((res = System.FreeConsole()))
+  {
+    // an error occurred while trying to free the console. why? who knows?
+    throw(Error.Generic(sprintf("An error occurred while trying to release the console, code=%d\n", res)));
+  }
+  else
+  {
+    // we're not really a "child", per se, but we are in the background.
+    in_child = 1;
+  }
+#endif /* constant(fork) */
   
-  child_pid = fork();
-  
-  if(!child_pid)
+  if(in_child)
   {
     // this is the code we run in the child.
-    in_child = 1;
     Stdio.stdin.close();
     Stdio.stdin.open("/dev/null", "crwa");
     Stdio.stdout.close();
@@ -67,10 +98,7 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
     if(!quiet)
       werror("Daemon pid: %O\n", child_pid->pid());
     return 1;
-  }
-  
-#endif /* constant(fork) */
-  return 0;
+  }  
 }
 
 //! returns true if we're actually the child process.
@@ -82,7 +110,12 @@ int in_background()
 //! get the process object for the child process, if any.
 //! 
 //! @returns
-//!   a @[Process.create_process] object representing the backgrounded child.
+//!   the process id of the child process.
+//!
+//! @note
+//!   when running in environments that don't have @[fork], such as Windows, 
+//!   the child process id will be the current process. Therefore, this method 
+//!   should only be used to get the process id for informational purposes.
 object get_child_pid()
 {
   return child_pid;
