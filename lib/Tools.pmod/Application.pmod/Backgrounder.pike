@@ -80,6 +80,8 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
     // we're not really a "child", per se, but we are in the background.
     in_child = 1;
   }
+#else
+  return 0;
 #endif /* constant(fork) */
   
   if(in_child)
