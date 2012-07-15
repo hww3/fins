@@ -26,4 +26,3 @@ string get_home()
   throw("Unable to determin HOME directory.\n");
 }
 
-}
