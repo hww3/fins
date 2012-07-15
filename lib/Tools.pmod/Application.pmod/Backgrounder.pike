@@ -6,8 +6,17 @@
 //! semantics should not be assumed, as other methods are employed when fork() is not
 //! available in order to achieve the goal of detaching from the controlling console.
 //!
-//! In particular, developers should not assume that a child process will be created 
-//! at all, 
+//! Some systems, notably Windows, don't have @[fork()], so we must spawn a new
+//! pike process from the beginning. This class handles this madness automatically,
+//! though class that inherits this must explicitly call @[create()] with the command line
+//! arguments passed to it, so that it knows how to spawn the program correctly.
+//!
+//! in this situation, this class will do some magic to make everything work, however
+//! the spawned background program will run everything up to the point that 
+//! @[enter_background()], so everyhing before @[enter_background()] be kept to an 
+//! absolute minimum, such as parsing command line arguments. There are likely other
+//! "gotchas" as well, so be careful out there!
+
 
 private int in_child = 0;
 private object child_pid;
@@ -19,6 +28,14 @@ class pidlet
   function pid = getpid;
 }
 
+
+//!  @param _args
+//!  The arguments used to run this command line program
+//!  @param _bootargs
+//!  If _args is a subset of the full command line arguments (such as would be received by a 
+//! Tools.Standalone utility), then this parameter should contain the extra arguments that would
+//!  be required to get this program to be run (such as ({"-x", "mytool"})).
+//!
 static void create(array(string) _args, array(string)|void _bootargs)
 {
 //  argv = _args; 
