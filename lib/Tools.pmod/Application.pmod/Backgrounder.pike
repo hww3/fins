@@ -10,7 +10,36 @@
 //! at all, 
 
 private int in_child = 0;
-private int child_pid;
+private object child_pid;
+
+array(string) argv = ({});
+
+static void create(array(string) _args)
+{
+//  argv = _args; 
+  if(search(_args, "--tools-application-backgrounder=go-background") != -1)
+  {
+    string logfile;
+    in_child = 1;
+    child_pid = getpid();
+    
+    foreach(_args;;string clo)
+    {
+      if(has_prefix(clo, "--tools-application-backgrounder"))
+      {
+        string _logfile;
+        sscanf("--tools-application-backgrounder=%s", clo, _logfile);
+        if(_logfile) 
+          logfile = _logfile;
+      }
+      else
+      {
+        argv += ({clo});
+      }
+    }
+    close_stdio(logfile);
+  }
+}
 
 //! 
 //! @param should_we
@@ -60,31 +89,14 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
   }
   else
   {
-    child_pid = c->pid();
+    child_pid = c;
   }
 #elseif constant(System.FreeConsole)
-
-  child_pid = getpid();
-
-  if(!quiet)
-    werror("Daemon pid: %O\n", child_pid);
-
-  int res;
-#if 0
-  if((res = System.FreeConsole()))
+  child_pid = Process.spawn_pike(args + ({"--tools-application-backgrounder=go-background", "--tools-application-backgrounder-logfile=" + logfile}), ([]));
+  if(p->status == 0) // good, we're running
   {
-    // an error occurred while trying to free the console. why? who knows?
-    throw(Error.Generic(sprintf("An error occurred while trying to release the console, code=%d\n", res)));
+    in_child = 0;
   }
-  else
-  {
-    // we're not really a "child", per se, but we are in the background.
-    in_child = 1;
-  }
-#endif
-write("hoiii\n");
-System.FreeConsole();
-    in_child = 1;
 #else
   return 0;
 #endif /* constant(fork) */
@@ -92,12 +104,7 @@ System.FreeConsole();
   if(in_child)
   {
     // this is the code we run in the child.
-    Stdio.stdin.close();
-    Stdio.stdin.open("/dev/null", "crwa");
-    Stdio.stdout.close();
-    Stdio.stdout.open(logfile, "crwa");
-    Stdio.stderr.close();
-    Stdio.stderr.open(logfile, "crwa");    
+    close_stdio(logfile);
     return 0;
   }
   else
@@ -108,6 +115,15 @@ System.FreeConsole();
   }  
 }
 
+protected void close_stdio(string logfile)
+{
+  Stdio.stdin.close();
+  Stdio.stdin.open("/dev/null", "crwa");
+  Stdio.stdout.close();
+  Stdio.stdout.open(logfile, "crwa");
+  Stdio.stderr.close();
+  Stdio.stderr.open(logfile, "crwa");
+}
 //! returns true if we're actually the child process.
 int in_background()
 {
@@ -125,5 +141,5 @@ int in_background()
 //!   should only be used to get the process id for informational purposes.
 int get_child_pid()
 {
-  return child_pid;
+  return child_pid->pid();
 }

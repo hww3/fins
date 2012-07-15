@@ -37,8 +37,6 @@ int hilfe_mode = 0;
 int go_background = 0;
 private int has_started = 0;
 
-array tool_args;
-
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [--session-manager=ram|file|sqlite "
@@ -53,12 +51,12 @@ int(0..1) started()
 
 void create(array args)
 {
-  tool_args = args;
+  ::create(args);
 }
 
 int run()
 {
-  return main(sizeof(tool_args) + 1, ({""}) + tool_args);
+  return main(sizeof(argv) + 1, ({""}) + argv);
 }
 
 int main(int argc, array(string) argv)
@@ -182,7 +180,6 @@ write("buh-bye");
     return 0;
   }
   
-write("whee!\n");
   logger=master()->resolv("Tools.Logging.get_logger")("finserve");
 
   if(hilfe_mode && sizeof(projects) > 1)
