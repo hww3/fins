@@ -73,10 +73,8 @@ int main(int argc, array(string) argv)
     ({"sessionmgr",Getopt.HAS_ARG,({"--session-manager"}) }),
     ({"sessionloc",Getopt.HAS_ARG,({"--session-storage-location"}) }),
     ({"scandir",Getopt.HAS_ARG,({"--scan"}) }),
-#if constant(fork)
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
     ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
-#endif /* fork() */
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
     )),array opt)
