@@ -236,13 +236,21 @@ void schedule_start_app(array projects, array config_name)
   if(start_current_position < sizeof(projects))
   {
     int res = start_app(projects[start_current_position], config_name[start_current_position]);
-    master()->old_call_out(schedule_start_app, 0.5, projects, config_name);
+    if(master()->old_call_out)
+      master()->old_call_out(schedule_start_app, 0.5, projects, config_name);
+    else
+      call_out(schedule_start_app, 0.5, projects, config_name);
     start_current_position++;
   }
   else
   {
     if(ready_callback)
-  	  master()->old_call_out(ready_callback, 0, this);
+    {  
+      if(master()->old_call_out)
+        master()->old_call_out(ready_callback, 0, this);
+      else
+        call_out(ready_callback, 0, this);
+    }
     has_started = 1;
   }
 }
