@@ -581,7 +581,7 @@ Standards.URI get_my_url(string|void host_header)
   }
   else if(app_runner->get_container()->is_fins_serve)
   {
-    if(config->name == "dev")
+    if(config->config_name == "dev")
     {
       logger->debug("Using FinServe but no URL specified. Since config is dev, we'll use xip.io.");
       logger->debug("Using xip.io url.");
