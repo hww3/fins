@@ -118,7 +118,7 @@ int in_background()
 //!   when running in environments that don't have @[fork], such as Windows, 
 //!   the child process id will be the current process. Therefore, this method 
 //!   should only be used to get the process id for informational purposes.
-object get_child_pid()
+int get_child_pid()
 {
   return child_pid;
 }
