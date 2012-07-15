@@ -182,6 +182,7 @@ write("buh-bye");
     return 0;
   }
   
+write("whee!\n");
   logger=master()->resolv("Tools.Logging.get_logger")("finserve");
 
   if(hilfe_mode && sizeof(projects) > 1)
