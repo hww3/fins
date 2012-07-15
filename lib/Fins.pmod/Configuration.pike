@@ -28,7 +28,7 @@ protected mapping config_variables;
 
 protected mapping _default_config_variables = (["host": gethostname(), 
 				"pid": (string)getpid(), 
-				"user": Tools.System.getUser() ]);
+				"user": Tools.System.get_user() ]);
 
 //! calculates the application's internal name, which is used by various Fins subsystems.
 //!

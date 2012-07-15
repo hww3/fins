@@ -77,7 +77,7 @@ object low_load_app(string handler_name, string app_dir, string config_name)
 
  string stub = 
 #"void f(string app_dir, string config_name, string logcfg, string app_name) {
-Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"config\": config_name, \"home\": getenv(\"HOME\") ]));
+Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"config\": config_name, \"home\": Tools.System.get_home() ]));
   if(file_stat(logcfg))
   {
     Tools.Logging.set_config_file(logcfg);

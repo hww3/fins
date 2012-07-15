@@ -12,7 +12,7 @@ int is_configed = 0;
 
 mapping _default_config_variables = (["host": gethostname(), 
 				"pid": (string)getpid(), 
-				"user": Tools.System.getUser() ]);
+				"user": Tools.System.get_user() ]);
 
 mapping _default_logger_config = (["appender": "default", "level": "DEBUG"]);
 
