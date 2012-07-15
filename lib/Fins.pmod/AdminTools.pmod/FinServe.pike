@@ -208,7 +208,10 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   else
   {
     if(start_admin(((int)my_port))) return 0;
-    master()->old_call_out(schedule_start_app, 1, projects, config_name);
+    if(master()->old_call_out)
+      master()->old_call_out(schedule_start_app, 1, projects, config_name);
+    else
+      call_out(schedule_start_app, 1, projects, config_name);
   }
 
   return -1;
