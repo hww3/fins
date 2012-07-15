@@ -303,7 +303,7 @@ static Thread.Thread start_worker_thread(object app, string key)
   if(_master->multi_tenant_aware && key)
       _master->handlers_for_thread[Thread.this_thread()] = key;
 
-  t = thread_create(run_worker, app);
+  t = Thread.Thread(run_worker, app);
 
   t->set_thread_name("Worker " + worker_number++);
 

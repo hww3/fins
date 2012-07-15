@@ -30,8 +30,6 @@ static void create()
       } 
   else
     ; //werror("no master replacement needed!");
-#else
-  write("path: %O\n", master()->pike_module_path);
 #endif
 }
 
