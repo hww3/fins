@@ -178,6 +178,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   // if we need to exit the process in the course of backgrounding, it gets done here.
   if(!hilfe_mode && enter_background(go_background, logfile))
   {
+write("buh-bye");
     return 0;
   }
   

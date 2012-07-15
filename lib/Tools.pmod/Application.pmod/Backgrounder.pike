@@ -70,6 +70,7 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
     werror("Daemon pid: %O\n", child_pid);
 
   int res;
+#if 0
   if((res = System.FreeConsole()))
   {
     // an error occurred while trying to free the console. why? who knows?
@@ -80,6 +81,8 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
     // we're not really a "child", per se, but we are in the background.
     in_child = 1;
   }
+#if 0
+    in_child = 1;
 #else
   return 0;
 #endif /* constant(fork) */
