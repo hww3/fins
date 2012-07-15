@@ -12,12 +12,22 @@ int is_configed = 0;
 
 mapping _default_config_variables = (["host": gethostname(), 
 				"pid": (string)getpid(), 
-				"user": getpwuid(System.getuid())[0] ]);
+				"user": getUser() ]);
 
 mapping _default_logger_config = (["appender": "default", "level": "DEBUG"]);
 
 object default_logger = Tools.Logging.Log.Logger();
 
+string getUser()
+{
+#if constant(System.GetUserName)
+  return System.GetUserName();
+#elseif constant(System.getuid)
+  return getpwuid(System.getuid())[0];
+#else
+  return "UNKNOWN";
+#endif /* System.GetUserName */
+}
 
 //! 
 //!  configuration file is standard ini-style.
