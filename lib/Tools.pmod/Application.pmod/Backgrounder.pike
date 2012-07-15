@@ -98,7 +98,7 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
   }
 #elseif constant(System.FreeConsole)
   child_pid = Process.spawn_pike(argv + ({"--tools-application-backgrounder=go-background", "--tools-application-backgrounder-logfile=" + logfile}), ([]));
-  if(p->status == 0) // good, we're running
+  if(child_pid->status == 0) // good, we're running
   {
     in_child = 0;
   }
