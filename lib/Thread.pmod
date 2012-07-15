@@ -12,7 +12,7 @@ class Thread
 
   static void create(function f, mixed ... args)
   {
-//    werror("Thread.Thread->create(%O)\n", f);
+    werror("Thread.Thread->create(%O)\n", f);
     ::create(f, @args);
   }
 
