@@ -343,6 +343,7 @@ object get_appender(string config)
 
 mapping insert_config_variables(mapping c)
 {
+write("config_variables: %O\n", config_variables);
   foreach(c; string k; string v)
   {
     if(v)
