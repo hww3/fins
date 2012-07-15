@@ -51,7 +51,7 @@ int(0..1) started()
 
 void create(array args)
 {
-  ::create(args);
+  ::create(args, ({"-x", "fins", "start"}));
 }
 
 int run()

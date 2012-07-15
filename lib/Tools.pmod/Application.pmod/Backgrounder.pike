@@ -13,15 +13,18 @@ private int in_child = 0;
 private object child_pid;
 
 array(string) argv = ({});
-
+array(string) bootargs = ({});
 class pidlet
 {
   function pid = getpid;
 }
 
-static void create(array(string) _args)
+static void create(array(string) _args, array(string)|void _bootargs)
 {
 //  argv = _args; 
+  if(_bootargs)
+    bootargs = _bootargs;
+    
   if(search(_args, "--tools-application-backgrounder=go-background") != -1)
   {
     string logfile;
@@ -98,7 +101,7 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
     child_pid = c;
   }
 #elseif constant(System.FreeConsole)
-  child_pid = Process.spawn_pike(argv + ({"--tools-application-backgrounder=go-background", "--tools-application-backgrounder-logfile=" + logfile}), ([]));
+  child_pid = Process.spawn_pike(bootargs + argv + ({"--tools-application-backgrounder=go-background", "--tools-application-backgrounder-logfile=" + logfile}), ([]));
   if(child_pid->status == 0) // good, we're running
   {
     in_child = 0;
