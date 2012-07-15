@@ -581,8 +581,23 @@ Standards.URI get_my_url(string|void host_header)
   }
   else if(app_runner->get_container()->is_fins_serve)
   {
-    logger->debug("Using FinServe but no URL specified.");
-    throw(Error.Generic("Must be able to determine URL of application " + config->app_name + "-" + config->config_name + " when using FinServe. Either specify one in the configuration file or enable use_xip_io.\n"));
+    if(config->name == "dev")
+    {
+      logger->debug("Using FinServe but no URL specified. Since config is dev, we'll use xip.io.");
+      logger->debug("Using xip.io url.");
+      my_url = Fins.Util.get_xip_io_url(this);
+    
+      if(0 && host_header)
+      {
+         my_url->host = host_header;
+      }
+    
+      return Standards.URI(my_url);    
+    }
+    else
+    {
+      throw(Error.Generic("Must be able to determine URL of application " + config->app_name + "-" + config->config_name + " when using FinServe. Either specify one in the configuration file or enable use_xip_io.\n"));
+    }
   }
   else
   {
