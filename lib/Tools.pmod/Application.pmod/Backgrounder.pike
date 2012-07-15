@@ -111,7 +111,7 @@ int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
   if(!c)
   {
     in_child = 1;
-    child_pid = getpid();
+    child_pid = pidlet();
   }
   else
   {
