@@ -44,6 +44,7 @@ static void create(array(string) _args)
     }
     close_stdio(logfile);
   }
+  else argv = _args;
 }
 
 //! 
