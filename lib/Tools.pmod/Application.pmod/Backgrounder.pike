@@ -14,6 +14,11 @@ private object child_pid;
 
 array(string) argv = ({});
 
+class pidlet
+{
+  function pid = getpid;
+}
+
 static void create(array(string) _args)
 {
 //  argv = _args; 
@@ -21,7 +26,7 @@ static void create(array(string) _args)
   {
     string logfile;
     in_child = 1;
-    child_pid = (["pid" : getpid]);
+    child_pid = pidlet();
     
     foreach(_args;;string clo)
     {
