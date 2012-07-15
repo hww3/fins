@@ -10,6 +10,7 @@ import Fins;
 //!   after_filter(Fins.Helpers.Filters.Compress());
 //! }
 
+#if constant(Gz)
 //!
 static Thread.Mutex _mutex = Thread.Mutex();
 
@@ -90,3 +91,11 @@ int filter(object request, object response, mixed ... args)
 
   return 1;
 }
+
+#else
+//!
+int filter(object request, object response, mixed ... args)
+{
+  return 0;
+}
+#endif /* Constant(Gz) */
