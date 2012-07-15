@@ -21,7 +21,7 @@ static void create(array(string) _args)
   {
     string logfile;
     in_child = 1;
-    child_pid = getpid();
+    child_pid = (["pid" : getpid]);
     
     foreach(_args;;string clo)
     {
