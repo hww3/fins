@@ -349,7 +349,7 @@ int start_app(string project, string config_name, int|void solo)
     }
     else
     {
-      session_thread = Thread.Thread(session_startup, runner->get_application()->config->handler_name, runner);
+      session_thread = Thread.Thread(session_startup, runner);
       session_thread->set_thread_name("Session Startup");
     }
     
