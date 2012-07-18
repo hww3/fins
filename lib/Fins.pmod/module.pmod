@@ -110,7 +110,7 @@ protected mixed `->pike_module_path()
   
   h = get_handler_for_thread(t);
   
-  //werror("module path: %O %O\n", h, h->pike_module_path);
+  werror("module path: %O %O\n", h, h->pike_module_path);
   return h->pike_module_path;
 }  
 

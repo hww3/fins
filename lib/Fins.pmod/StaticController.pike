@@ -50,5 +50,5 @@ int allow_directory_listings = 1;
 void index(Request req, Response resp, mixed ... args)
 {
 //	werror("Serving " + Stdio.append_path(static_dir, args*"/") + " from " + getcwd());
-   	low_static_request(req, resp, Stdio.append_path(static_dir, args*"/"), allow_directory_listings);
+   	low_static_request(req, resp, args*"/", static_dir, allow_directory_listings);
 }

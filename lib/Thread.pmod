@@ -13,7 +13,7 @@ class Thread
   static void create(function f, mixed ... args)
   {
 #ifdef THREADS_DEBUG
-    werror("Thread.Thread->create(%O)\n", f);
+    werror("Thread.Thread->create(%O, %O)\n", f, args);
 #endif
     ::create(f, @args);
   }
