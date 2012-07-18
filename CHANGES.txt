@@ -26,6 +26,7 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added basic directory listings to static controllers.
 -  Support for backgrounding FinServe on NT.
 -  Added --scan option to load all applications in a given directory.
 -  FinServe supports opening multiple ports per app by adding multiple
