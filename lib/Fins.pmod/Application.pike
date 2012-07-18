@@ -105,7 +105,7 @@ static void create(.Configuration _config)
 	// the first phase is to set up the various paths, get some configuration values
 	// and set up the l10n system for our app.
   config = _config;
-  static_dir = Stdio.append_path(config->app_dir, "static");
+  static_dir = Stdio.append_path(config->app_dir, "static/");
 //werror(Stdio.append_path(config->app_dir, "translations/%L/%P.xml") + "\n");
    Locale.set_default_project_path(Stdio.append_path(config->app_dir, "translations/%L/%P.xml"));
 
@@ -1044,24 +1044,74 @@ array get_event(.Request request)
 //! handle a request for a static file; used internally by @[handle_http]()
 .Response static_request(.Request request)
 {
-  string fn = Stdio.append_path(static_dir, request->not_query[7..]);
+  string fn = request->not_query[7..];
 
   .Response response = .Response(request);
 
-  low_static_request(request, response, fn, 1);
+  low_static_request(request, response, fn, static_dir, 1);
 
   return response;
 }
 
-.Response low_static_request(.Request request, .Response response, 
-    string fn, int|void allow_directory_listings)
+void generate_directory_listing(string fn, string root, .Request request, .Response response)
 {
+  array x = ({});
+  string filename = Stdio.append_path(root, fn);
+  string listing = "";
+
+  listing += ("<h1>Index of " + request->not_query + "</h1>\n");
+  listing += "<table>";
+  listing += "<tr><th>Filename</th><th>Type</th><th>Created</th><th>Modified</th</tr>";
+
+//  write("fn: %O root: %O filename: %O\n", fn, root, filename);
+  if(filename != root)
+  { 
+    x += ({".."});
+  }
+
+  x += get_dir(filename);
+
+  foreach(x;;string p)
+  {
+    object st = file_stat(Stdio.append_path(filename, p));
+    string lp, pn;
+    string ftype;
+
+    if(st->isdir) 
+    {
+       if(p == "..")
+         pn = "Previous Directory";
+       else
+         pn = p;
+       p = p + "/";
+       ftype = "directory";
+    }
+    else
+    {
+       pn = p;
+       ftype = Protocols.HTTP.Server.filename_to_type(basename(fn));
+    }
+
+    lp = combine_path(request->not_query, p);
+
+    listing += ("<tr><td><a href=\"" + lp + "\">" + pn + "</a></td><td>");
+    listing += (ftype + "</td><td>" + ctime(st->ctime) + "</td><td>" + ctime(st->mtime) + "</td></tr>\n");
+
+  }
+  listing += "</table>";
+  response->set_type("text/html");
+  response->set_data(listing);
+}
+
+.Response low_static_request(.Request request, .Response response, 
+    string filename, string root, int|void allow_directory_listings)
+{
+  string fn = Stdio.append_path(root, filename);
   Stdio.Stat stat = file_stat(fn);
 
   if(stat && stat->isdir && allow_directory_listings)
   {
-    response->set_type("text/html");
-    response->set_data("yeah!");
+    generate_directory_listing(filename, root, request, response);
     return response;
   }
   else if(!stat || stat->isdir)
