@@ -45,9 +45,10 @@ static void create(Fins.Application app, string|void dir)
 	low_static_request = app->low_static_request;
 }
 
+int allow_directory_listings = 1;
 
 void index(Request req, Response resp, mixed ... args)
 {
 //	werror("Serving " + Stdio.append_path(static_dir, args*"/") + " from " + getcwd());
-   	low_static_request(req, resp, Stdio.append_path(static_dir, args*"/"));
+   	low_static_request(req, resp, Stdio.append_path(static_dir, args*"/"), allow_directory_listings);
 }

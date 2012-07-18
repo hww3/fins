@@ -1048,16 +1048,23 @@ array get_event(.Request request)
 
   .Response response = .Response(request);
 
-  low_static_request(request, response, fn);
+  low_static_request(request, response, fn, 1);
 
   return response;
 }
 
 .Response low_static_request(.Request request, .Response response, 
-    string fn)
+    string fn, int|void allow_directory_listings)
 {
   Stdio.Stat stat = file_stat(fn);
-  if(!stat || stat->isdir)
+
+  if(stat && stat->isdir && allow_directory_listings)
+  {
+    response->set_type("text/html");
+    response->set_data("yeah!");
+    return response;
+  }
+  else if(!stat || stat->isdir)
   {
     response->not_found(request->not_query);
     return response;
