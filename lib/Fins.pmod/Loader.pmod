@@ -40,7 +40,7 @@ object load_app(string app_dir, string config_name)
   // handler to re-init itself? seems like a kluge but may have been
   // simpler to accept this ugliness rather than rewriting more of the master.
     master()->handlers_for_thread[Thread.this_thread()] = key;
-    foreach(handler->pike_module_path;;string p)
+    foreach(reverse(handler->pike_module_path);;string p)
       handler->add_module_path(p);
     handler->add_module_path(combine_path(app_dir, "modules")); 
     m_delete(master()->handlers_for_thread, Thread.this_thread());
