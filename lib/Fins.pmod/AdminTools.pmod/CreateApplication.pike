@@ -97,6 +97,13 @@ inherit Fins.Application;
 string controller_contents =
 #"
 inherit Fins.FinsController;
+inherit Fins.RootController;
+
+protected void create(object application)
+{
+  ::create(application);
+}
+
 void index(object id, object response, mixed ... args)
 {
   string req = sprintf(\"%O\", mkmapping(indices(id), values(id)));
