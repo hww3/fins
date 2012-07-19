@@ -1041,6 +1041,8 @@ array get_event(.Request request)
 
 }
 
+
+
 //! handle a request for a static file; used internally by @[handle_http]()
 .Response static_request(.Request request)
 {
@@ -1053,54 +1055,83 @@ array get_event(.Request request)
   return response;
 }
 
+string default_directory_listing = 
+#"<html>
+<head>
+<title>Directory Listing: <%$directory%></title>
+</head>
+<body>
+<h1>Directory listing of <%$directory%></h1>
+<hr/>
+<%if data->parent%>
+<a href=\"<%$parent%>\">Previous Directory</a>
+<%endif%>
+<table>
+<tr>
+<th>Filename</th>
+<th>Size</th>
+<th>Created</th>
+<th>Type</th>
+</tr>
+<%foreach var=\"$entries\" val=\"entry\"%>
+<tr>
+<td><a href=\"<%$entry.link%>\"><%$entry.name%></a></td>
+<td><%friendly_size size=\"$entry.size\"%></td>
+<td><%format_date var=\"$entry.ctime\" format=\"mtime\"%></td>
+<td><%$entry.type%></td>
+</tr>
+<%end%>
+</table>
+<hr/>
+</body>
+</html>
+";
+
 void generate_directory_listing(string fn, string root, .Request request, .Response response)
 {
-  array x = ({});
+  array x;
   string filename = Stdio.append_path(root, fn);
   string listing = "";
 
-  listing += ("<h1>Index of " + request->not_query + "</h1>\n");
-  listing += "<table>";
-  listing += "<tr><th>Filename</th><th>Type</th><th>Created</th><th>Modified</th</tr>";
+  object view = view->get_fallback_string_view("application/directory", default_directory_listing);
 
-//  write("fn: %O root: %O filename: %O\n", fn, root, filename);
+  response->set_view(view);
+
+  view->add("directory", request->not_query);
+
   if(filename != root)
   { 
-    x += ({".."});
+    view->add("parent", "../");
   }
 
-  x += get_dir(filename);
+  x = get_dir(filename);
+  array entries = allocate(sizeof(x));
 
-  foreach(x;;string p)
+  foreach(x;int i;string p)
   {
     object st = file_stat(Stdio.append_path(filename, p));
-    string lp, pn;
-    string ftype;
+
+    mapping entry = ([]);
 
     if(st->isdir) 
     {
-       if(p == "..")
-         pn = "Previous Directory";
-       else
-         pn = p;
-       p = p + "/";
-       ftype = "directory";
+       entry->name = p;
+       entry->link = (p + "/");
+       entry->type = "directory";
     }
     else
     {
-       pn = p;
-       ftype = Protocols.HTTP.Server.filename_to_type(basename(fn));
+       entry->name = p;
+       entry->link =  p;
+       entry->type = Protocols.HTTP.Server.filename_to_type(basename(fn));
     }
 
-    lp = combine_path(request->not_query, p);
-
-    listing += ("<tr><td><a href=\"" + lp + "\">" + pn + "</a></td><td>");
-    listing += (ftype + "</td><td>" + ctime(st->ctime) + "</td><td>" + ctime(st->mtime) + "</td></tr>\n");
-
+    entry->link = combine_path(request->not_query, entry->link);
+    entry += mkmapping(indices(st), values(st));
+    entries[i] = entry;    
   }
-  listing += "</table>";
-  response->set_type("text/html");
-  response->set_data(listing);
+  
+  view->add("entries", entries);
 }
 
 .Response low_static_request(.Request request, .Response response, 

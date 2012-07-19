@@ -215,20 +215,6 @@ object __get_view(mixed path)
   return v;
 }
 
-static object get_view(function f, string x)
-{
-  object v;
-  mixed e = catch(v = view->get_view(app->get_path_for_action(f, 1)));
-  if(e)
-  {
-    Log.debug("load of view from template failed, using default template string.\n");
-    if(!__quiet)
-      Log.exception("Error follows", e);
-    v = view->get_string_view(x);
-  }
-  return v;
-}
-
 void start()
 {
   if(model_component)

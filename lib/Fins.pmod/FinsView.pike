@@ -118,6 +118,23 @@ public Template.View get_string_view(string ts)
   return low_get_view(default_string_template, ts);
 }
 
+//! get a view using the default string template type, with fallback to a string containing
+//! the content of a template. 
+public Template.View get_fallback_string_view(string|function path, string fallback_template_string)
+{
+  object v;
+  mixed e;
+  if(!stringp(path))
+    path = app->get_path_for_action(path);
+  e = catch(v = view->get_view(path));
+  if(e)
+  {
+    Log.debug("load of view from template failed, using default template string.\n");
+    v = get_string_view(fallback_template_string);
+  }
+  return v;
+}
+
 //! get a view using the default template type. 
 //!
 //! @param tn
