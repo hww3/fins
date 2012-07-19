@@ -463,7 +463,12 @@ string simple_macro_describe(Fins.Template.TemplateData data, mapping|void args)
 //! args: var
 string simple_macro_friendly_date(Fins.Template.TemplateData data, mapping|void args)
 {
-  return Tools.String.friendly_date(args->var);
+  mixed p = args->var;
+
+  if(intp(p))
+    p = Calendar.Second(p);
+
+  return Tools.String.friendly_date(p);
 }
 
 
@@ -472,17 +477,27 @@ string simple_macro_friendly_date(Fins.Template.TemplateData data, mapping|void 
 //!
 //! args: var
 string simple_macro_describe_date(Fins.Template.TemplateData data, mapping|void args)
-{
-  return Tools.String.describe_date(args->var);
+{  
+  mixed p = args->var;
+
+  if(intp(p))
+    p = Calendar.Second(p);
+      
+  return Tools.String.describe_date(p);
 }
 
 //! display a calendar object as a date and time in a friendly manner
 //!
 //! args: var
 string simple_macro_describe_datetime(Fins.Template.TemplateData data, mapping|void args)
-{
-  if(args->var && args->var->format_ext_time_short)
-    return args->var->format_ext_time_short();
+{  
+  mixed p = args->var;
+
+  if(intp(p))
+    p = Calendar.Second(p);
+      
+  if(p && p->format_ext_time_short)
+    return p->format_ext_time_short();
   else return "N/A";
 }
 
@@ -494,7 +509,7 @@ string simple_macro_context_root(Fins.Template.TemplateData data, mapping|void a
 }
 
 //! args: var, format
-//! where format is a Calendar object format type; default is ext_ymd.
+//! where var is a calendar object or a unix timestamp. format is a Calendar object format type; default is ext_ymd.
 //!
 //! short_date: 13 Jun 2012
 //! year: 2012
@@ -543,8 +558,11 @@ string simple_macro_format_date(Fins.Template.TemplateData data, mapping|void ar
   string res;
   if(arguments->var)
   {
-    object p = arguments->var;
+    mixed p = arguments->var;
 
+    if(intp(p))
+      p = Calendar.Second(p);
+      
     if(!p) return "";
 
     if(! arguments->format) arguments->format="ext_ymd";
@@ -597,3 +615,17 @@ write("d: %O\n", d);
     d->year_no();
 }
 
+
+//! args: size
+string simple_macro_friendly_size(Fins.Template.TemplateData data, mapping|void args)
+{
+  if(args->size)
+  {
+    int size = (int)args->size;
+    if(size < 1024) return size + " bytes";
+    if(size < 1024*1024) return sprintf("%.1f KB", size/1024.0);
+    if(size < 1024*1024*1024) return sprintf("%.2f MB", size/(1024.0*1024.0));
+    if(size < 1024*1024*1024*1024) return sprintf("%.12f GB", size/(1024.0*1024.0*1024.0));
+  }
+  else return "--";
+}
