@@ -45,6 +45,14 @@ array __around_filters = ({});
 //! defined within the controller class.
 mapping(string:function|string|object) __actions = ([]);
 
+//!
+ void add_action(string action_name, function|string|object action)
+{
+  if(has_value(__actions, action_name))
+    throw(Error.Generic("Action " + action_name + " already defined.\n"));
+  __actions[action_name] = action;
+}
+
 //! loads the controller, providing support for auto-reload of
 //! updated controller classes.
 //!

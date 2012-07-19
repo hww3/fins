@@ -39,10 +39,10 @@ Fins.Helpers.Filters.TemplateParser _templatefilter;
 //!
 object access_logger;
 
-static mapping processors = ([]);
-static mapping controller_path_cache = ([]);
-static mapping action_path_cache = ([]);
-static mapping event_cache = ([]);
+protected mapping processors = ([]);
+protected mapping controller_path_cache = ([]);
+protected mapping action_path_cache = ([]);
+protected mapping event_cache = ([]);
 
 // breakpointing support
 Stdio.Port breakpoint_port;
@@ -70,7 +70,7 @@ string my_ip;
 //! determines the length of time, in hours, responses from a static file controller should indicate the file ought to be cached. 
 //! this setting is derived from the value of the static_expire_period parameter in the application section of the application 
 //! config file and defaults to 240 (10 days).
-static int exp = 24 * 10;
+protected int exp = 24 * 10;
 
 //! 
 string get_config_name()
@@ -85,7 +85,7 @@ string get_app_name()
 }
 
 //! override this in your app to do on-shutdown cleanup.
-static void stop()
+protected void stop()
 {
 }
 
@@ -100,12 +100,12 @@ void shutdown()
 
 //! constructor for the Fins application. It is normally not necessary to override this method,
 //! as @[start]() will be called immediately from this method.
-static void create(.Configuration _config)
+protected void create(.Configuration _config)
 {
 	// the first phase is to set up the various paths, get some configuration values
 	// and set up the l10n system for our app.
   config = _config;
-  static_dir = Stdio.append_path(config->app_dir, "static/");
+
 //werror(Stdio.append_path(config->app_dir, "translations/%L/%P.xml") + "\n");
    Locale.set_default_project_path(Stdio.append_path(config->app_dir, "translations/%L/%P.xml"));
 
@@ -148,7 +148,7 @@ void start()
 //! determines whether there are any processor classes defined in the application's configuration 
 //! file and if present, loads them. this is derived from the class parameter within the processors section 
 //! of the application's configuration file.
-static void load_processors()
+protected void load_processors()
 {
   if(config["processors"] && config["processors"]["class"])
   {
@@ -164,7 +164,7 @@ static void load_processors()
 }
 
 // load a processor class, and place it in the processors mapping.
-static void load_processor(string proc)
+protected void load_processor(string proc)
 {
   object processor;
 
@@ -195,7 +195,7 @@ public object get_processor(string protocol)
   return processors[protocol];
 }
 
-static void load_breakpoint()
+protected void load_breakpoint()
 {
   if(config["application"] && (int)config["application"]["breakpoint"])
   {
@@ -209,14 +209,14 @@ static void load_breakpoint()
   }
 }
 
-static void load_cache()
+protected void load_cache()
 {
   logger->info("Starting Cache.");
 
   cache = .FinsCache();
 }
 
-static void load_view()
+protected void load_view()
 {
   string viewclass = (config["view"] ? config["view"]["class"] :0);
   if(viewclass)
@@ -247,7 +247,7 @@ array get_program_path()
   else return master()->pike_program_path;
 }
 
-static object low_load_controller(string controller_name)
+protected object low_load_controller(string controller_name)
 {
 //	werror("low_load_controller(%O)\n", controller_name);
   program c;
@@ -306,7 +306,7 @@ static object low_load_controller(string controller_name)
 //!  {
 //!    foo = load_controller("foo_controller");
 //!  } 
-static void load_controller()
+protected void load_controller()
 {
   logger->debug("%O->load_controller()", this);
   string conclass = (config["controller"]? config["controller"]["class"] :0);
@@ -325,7 +325,7 @@ static void load_controller()
 }
 
 // instantiates the model class defined in the configuration file
-static void load_model()
+protected void load_model()
 {
   string modclass = (config["model"] ? config["model"]["class"] : 0);
   if(modclass)
@@ -708,12 +708,7 @@ public mixed handle_http(.Request request)
   if(request->not_query == "/favicon.ico")
   {
     request->not_query = "/static/favicon.ico";
-    return static_request(request)->get_response();
-  }
-
-  if(has_prefix(request->not_query, "/static/"))
-  {
-    return static_request(request)->get_response();
+    return handle_http(request)->get_response();
   }
 
   array x = get_event(request);
@@ -1041,157 +1036,6 @@ array get_event(.Request request)
 
 }
 
-
-
-//! handle a request for a static file; used internally by @[handle_http]()
-.Response static_request(.Request request)
-{
-  string fn = request->not_query[7..];
-
-  .Response response = .Response(request);
-
-  low_static_request(request, response, fn, static_dir, 1);
-
-  return response;
-}
-
-string default_directory_listing = 
-#"<html>
-<head>
-<title>Directory Listing: <%$directory%></title>
-</head>
-<body>
-<h1>Directory listing of <%$directory%></h1>
-<hr/>
-<%if data->parent%>
-<a href=\"<%$parent%>\">Previous Directory</a>
-<%endif%>
-<table>
-<tr>
-<th>Filename</th>
-<th>Size</th>
-<th>Created</th>
-<th>Type</th>
-</tr>
-<%foreach var=\"$entries\" val=\"entry\"%>
-<tr>
-<td><a href=\"<%$entry.link%>\"><%$entry.name%></a></td>
-<td><%friendly_size size=\"$entry.size\"%></td>
-<td><%format_date var=\"$entry.ctime\" format=\"mtime\"%></td>
-<td><%$entry.type%></td>
-</tr>
-<%end%>
-</table>
-<hr/>
-</body>
-</html>
-";
-
-void generate_directory_listing(string fn, string root, .Request request, .Response response)
-{
-  array x;
-  string filename = Stdio.append_path(root, fn);
-  string listing = "";
-
-  object view = view->get_fallback_string_view("application/directory", default_directory_listing);
-
-  response->set_view(view);
-
-  view->add("directory", request->not_query);
-
-  if(filename != root)
-  { 
-    view->add("parent", "../");
-  }
-
-  x = get_dir(filename);
-  array entries = allocate(sizeof(x));
-
-  foreach(x;int i;string p)
-  {
-    object st = file_stat(Stdio.append_path(filename, p));
-
-    mapping entry = ([]);
-
-    if(st->isdir) 
-    {
-       entry->name = p;
-       entry->link = (p + "/");
-       entry->type = "directory";
-    }
-    else
-    {
-       entry->name = p;
-       entry->link =  p;
-       entry->type = Protocols.HTTP.Server.filename_to_type(basename(fn));
-    }
-
-    entry->link = combine_path(request->not_query, entry->link);
-    entry += mkmapping(indices(st), values(st));
-    entries[i] = entry;    
-  }
-  
-  view->add("entries", entries);
-}
-
-.Response low_static_request(.Request request, .Response response, 
-    string filename, string root, int|void allow_directory_listings)
-{
-  string fn = Stdio.append_path(root, filename);
-  Stdio.Stat stat = file_stat(fn);
-
-  if(stat && stat->isdir && allow_directory_listings)
-  {
-    generate_directory_listing(filename, root, request, response);
-    return response;
-  }
-  else if(!stat || stat->isdir)
-  {
-    response->not_found(request->not_query);
-    return response;
-  }
-
-  if(request->request_headers["if-modified-since"] && 
-      Protocols.HTTP.Server.http_decode_date(request->request_headers["if-modified-since"]) 
-      >= stat->mtime) 
-  {
-    response->not_modified();
-    return response;
-  }
-
-  response->set_header("Cache-Control", "max-age=" + (3600*exp));
-  response->set_header("Expires", (Calendar.Second() + (3600*exp*2))->format_http());
-  response->set_file(Stdio.File(fn));
-  response->set_type(Protocols.HTTP.Server.filename_to_type(basename(fn)));
-
-  int _handled;
-  string t = response->get_type();
-
-    if (has_suffix(t, "css"))
-    {
-       _templatefilter->filter(request, response);
-    }
-
-  // content compression
-  if (t && _gzfilter) {
-    if (has_prefix(t, "text") || has_suffix(t, "xml")) {
-      _handled = 1;
-      _gzfilter->filter(request, response);
-    }
-    int pos = search(t, "/");
-    if (!_handled && pos != -1) {
-      switch(t[0..pos-1]) {
-	case "text":
-	case "application":
-   	  _gzfilter->filter(request, response);
-        break;
-      }
-    }
-  }
-
-  return response;
-}
-
 //! trigger a breakpoint in execution, if breakpointing is enabled.
 //! @param desc
 //!   description of breakpoint, to be passed to breakpoint client
@@ -1281,7 +1125,7 @@ private class FilterRunner
     else return function_object(event);
   }
 	
-  static void create(mixed _event, array _before_filters, array _after_filters, array _around_filters)
+  protected void create(mixed _event, array _before_filters, array _after_filters, array _around_filters)
   {
     event = _event;
     before_filters = _before_filters;
@@ -1319,13 +1163,13 @@ private class FilterRunner
 		rr();
 	}
 
-  static mixed `()(Fins.Request request, Fins.Response response, mixed ... args)
+  protected mixed `()(Fins.Request request, Fins.Response response, mixed ... args)
   {
     run(request, response, @args);
     return 0;
   }
 
-  static int(0..1) _is_type(string bt)
+  protected int(0..1) _is_type(string bt)
   {
     if(bt=="function")
       return 1;
