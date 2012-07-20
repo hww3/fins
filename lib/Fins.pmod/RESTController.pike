@@ -10,6 +10,8 @@
 //!
 //!  search specifications for GET
 //!
+//!  methods other than GET
+//!
 //!  record set limitations
 
 import Fins;
