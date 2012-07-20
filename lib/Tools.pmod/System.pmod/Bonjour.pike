@@ -7,6 +7,7 @@ int have_command(string command)
   return sizeof(p);    
 }
 
+// TODO also try using dns-sd on windows/osx boxes without the DNS_SD module.
 void register_bonjour()
 {
   db = model;
