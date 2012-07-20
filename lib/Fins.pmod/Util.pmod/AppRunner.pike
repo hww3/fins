@@ -1,3 +1,5 @@
+//! This class serves as to encapsulate the ports, worker thread pool and associated machinery for running a Fins application.
+
 string status = "STOPPED";
 object status_last_change = Calendar.now();
 
@@ -28,6 +30,7 @@ static object container;
 
 static int keep_running = 1;
 static int worker_number;
+
 //!
 static void create(string _project, string _config)
 {

@@ -1,4 +1,4 @@
-constant error_404 =
+constant error_403 =
 #"
 <html>
 <head>

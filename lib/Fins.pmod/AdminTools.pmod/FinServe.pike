@@ -233,6 +233,9 @@ void run_hilfe(object app)
 
 int start_current_position = 0;
 
+// takes arrays containing project names (application directories) and config names
+// it schedules the startup of the next item in its list and then reschedules itself
+// until all the apps in the array have been started.
 void schedule_start_app(array projects, array config_name)
 {
   if(start_current_position < sizeof(projects))
@@ -315,6 +318,8 @@ void restart_workers(object runner)
   
 }
 
+// this method starts the runner, which in turn loads the application, potentially 
+// in an isolated set of threads, if running in multi-tenant mode.
 int start_app(string project, string config_name, int|void solo)
 {
   object _master = master();
@@ -377,6 +382,8 @@ int start_app(string project, string config_name, int|void solo)
     // TODO: should this be configurable?
     urls[lower_case(Fins.Util.get_xip_io_url(runner->get_application())->host)] = runner;
     
+    // TODO: register a bonjour bookmark, if possible.
+    
     runner->start();
     
     if(runner->has_ports())
@@ -398,6 +405,8 @@ Thread.Thread start_admin_worker_thread()
   return t;
 }
 
+// method run by an admin worker thread. 
+// receives requests from the request queue and then processes them.
 void run_admin_worker()
 {
   // TODO we should probably have a little more sophistication built in here; probably
@@ -480,18 +489,25 @@ void session_startup(object runner)
   runner->set_session_manager(session_manager);
 }
 
+
+// called when a request is received on the admin port.
 void admin_handle_request(Protocols.HTTP.Server.Request request)
 {
   admin_queue->write(request);  
 }
 
+// this is the method that actually processes the request. a request gets
+// to this point after being placed in the request queue by the server port handler
+// method and being picked up from the queue by the run_admin_worker method.
 void thread_admin_handle_request(Protocols.HTTP.Server.Request request)
 {
+  // first up, ip-less virtual hosting.
   if(request->protocol == "HTTP/1.1" && request->request_headers["host"])
   {
     string host = lower_case(request->request_headers["host"]);
     host = (host/":")[0];
 
+    // we try to find an application runner that matches the host header provided.
     object|int runner;
 //    werror("url we want: %O\n", host);
 //    werror("urls we know: %O\n", urls);
@@ -509,16 +525,21 @@ void thread_admin_handle_request(Protocols.HTTP.Server.Request request)
 
     if(!runner || runner == -1)
     {
+       // a -1 is used to denote a "definite miss" in order to short circuit the potential
+       // lengthy process of finding out that a given host doesn't have an app registered for it.
+       // in this way, we only have to search the full list once for each given host.
        urls[host] = -1;
     }
     else
     {
+      // if we found a runner, use it to handler the request.
       runner->handle_request(request);
       return 0;
     }
   }
 
   // now that we have the pesky ip-less virtual hosting out of the way, let's get down to the business!
+  // this should run the admin server processor.
   thread_handle_request(request);
   
   return 0;
@@ -669,6 +690,26 @@ mapping http_exception_response(object request, mixed err, object|void access_lo
   return http_code_response(request, 500, r, access_logger);
 }
 
+int allow_admin_request(Protocols.HTTP.Server.Request request)
+{
+  if(request->remoteaddr)
+  {  
+    mixed addrs;
+    addrs = gethostbyaddr(request->remoteaddr);
+    if(search(addrs, "localhost") != -1)
+    {
+      return 1;
+    }
+    
+    logger->info("Admin Access denied for IP address %s.", request->remoteaddr);
+  } 
+  return 0;
+}
+
+// this method is used to handle requests for an application.
+// it is either called directly by the admin port handler method
+// or by an AppRunner, its set_request_handler method called
+// with this function as its argument.
 void thread_handle_request(Protocols.HTTP.Server.Request request)
 {
   mixed r;
@@ -681,7 +722,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
     mixed err;
     mixed addrs;
     
-    if(1)//request->remoteaddr && (addrs = gethostbyaddr(request->remoteaddr)) && search(addrs, "localhost") != -1)
+    if(allow_admin_request(request))//request->remoteaddr && (addrs = gethostbyaddr(request->remoteaddr)) && search(addrs, "localhost") != -1)
       err = catch(r = do_admin_request(request));
     else
     {
