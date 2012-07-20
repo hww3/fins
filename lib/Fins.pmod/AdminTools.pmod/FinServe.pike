@@ -1,6 +1,7 @@
 inherit Tools.Application.Backgrounder;
 
-#define DEFAULT_CONFIG_NAME "dev"
+#define _DEFAULT_CONFIG_NAME "dev"
+string DEFAULT_CONFIG_NAME = _DEFAULT_CONFIG_NAME;
 
 object logger;
 constant is_fins_serve = 1;
@@ -40,7 +41,7 @@ private int has_started = 0;
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [--session-manager=ram|file|sqlite "
-	  + "[--session-storage-location=storage_path]] [-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [appdir [appdir]]\n");
+	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [appdir [appdir]]\n");
 }
 
 int(0..1) started()
@@ -68,6 +69,7 @@ int main(int argc, array(string) argv)
   foreach(Getopt.find_all_options(argv,aggregate(
     ({"port",Getopt.HAS_ARG,({"-p", "--port"}) }),
     ({"config",Getopt.HAS_ARG,({"-c", "--config"}) }),
+    ({"defaultconfig",Getopt.HAS_ARG,({"-C", "--default-config"}) }),
     ({"sessionmgr",Getopt.HAS_ARG,({"--session-manager"}) }),
     ({"sessionloc",Getopt.HAS_ARG,({"--session-storage-location"}) }),
     ({"scandir",Getopt.HAS_ARG,({"--scan"}) }),
@@ -83,6 +85,10 @@ int main(int argc, array(string) argv)
 		  my_port = (int)opt[1];
 		  break;
 		
+		case "defaultconfig":
+      DEFAULT_CONFIG_NAME = opt[1];
+		  break;
+
 		case "config":
 	    if(scandir)
 	    {
