@@ -76,6 +76,7 @@
     return 1;
   }
 
+  //!
   public void set_view(Fins.Template.View v)
   {
     set_template(v->template, v->data);	
@@ -131,13 +132,11 @@
     response->error = 403;
   }
 
-
   //!
   public void not_modified()
   {
     response->error = 304;
   }
-
 
   //!
   public void not_implemented()
