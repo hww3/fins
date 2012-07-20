@@ -165,7 +165,7 @@ protected .Response low_static_request(.Request request, .Response response,
         generate_directory_listing(filename, request, response);
     }
     else // FIXME: should probably be a "not allowed" error.
-      response->not_found(request->not_query);
+      response->access_denied(request->not_query);
     return response;
   }
   else if(!stat)

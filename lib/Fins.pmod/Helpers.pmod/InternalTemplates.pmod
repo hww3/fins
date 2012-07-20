@@ -2,6 +2,19 @@ constant error_404 =
 #"
 <html>
 <head>
+<title>Access Denied</title>
+</head>
+<body>
+<h1>403: Access Denied</h1>
+Access to the file <%$filename%> was denied.
+<p/>&nbsp;<p/>&nbsp;<p/><hr/>
+<i>Fins</i>
+";
+
+constant error_404 =
+#"
+<html>
+<head>
 <title>File Not Found</title>
 </head>
 <body>

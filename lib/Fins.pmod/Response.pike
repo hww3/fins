@@ -122,6 +122,17 @@
   }
 
   //!
+  public void access_denied(string filename)
+  {
+    object e = request->fins_app->view->low_get_view(Fins.Template.Simple, "internal:error_403");
+
+    e->add("filename", filename);
+    set_view(e);
+    response->error = 403;
+  }
+
+
+  //!
   public void not_modified()
   {
     response->error = 304;
