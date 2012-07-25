@@ -26,7 +26,12 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
--  Added basic directory listings to static controllers.
+-  Added -C/--default-config option to FinServe in order to override           
+   default configuration name (normally "dev").                                
+-  Added Response.access_denied().                                             
+-  RootController added that mounts /static/ instead of automatically          
+   short circuiting from handle_request().                                     
+-  Added basic directory listings to StaticController.
 -  Support for backgrounding FinServe on NT.
 -  Added --scan option to load all applications in a given directory.
 -  FinServe supports opening multiple ports per app by adding multiple
