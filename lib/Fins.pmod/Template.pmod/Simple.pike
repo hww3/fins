@@ -124,6 +124,7 @@ program compile_string(string code, string realfile, object|void compilecontext)
   object e = ErrorContainer();
   master()->set_inhibit_compile_errors(e);
 
+object t =  Thread.this_thread();
   mixed err = catch(p = predef::compile_string(psp, realfile));
 
   if(e->has_errors)

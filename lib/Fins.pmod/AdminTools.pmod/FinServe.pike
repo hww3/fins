@@ -340,14 +340,7 @@ int start_app(string project, string config_name, int|void solo)
     Pike.DefaultBackend(0.0);
     Pike.DefaultBackend(0.0);
 
-    if(_master->low_create_thread)
-    {
-         _master->low_create_thread(run_hilfe, runner->get_application()->config->handler_name, runner->get_application());
-    }
-    else
-    {
-      Thread.Thread(run_hilfe, runner->get_application());
-    }
+    Thread.Thread(runner->get_application()->config->handler_name, run_hilfe, runner->get_application());
 
     return -1;
   }
@@ -357,16 +350,8 @@ int start_app(string project, string config_name, int|void solo)
     // enviornment synchronously (we could also use call_out, but then we couldn't easily wait for it).
     object session_thread;
     
-    if(_master->low_create_thread)
-    {
-      session_thread = _master->low_create_thread(session_startup, runner->get_application()->config->handler_name, runner);
+      session_thread = _master->low_create_thread(runner->get_application()->config->handler_name, session_startup, runner);
       session_thread->set_thread_name("Session Startup");
-    }
-    else
-    {
-      session_thread = Thread.Thread(session_startup, runner);
-      session_thread->set_thread_name("Session Startup");
-    }
     
     session_thread->wait();
     

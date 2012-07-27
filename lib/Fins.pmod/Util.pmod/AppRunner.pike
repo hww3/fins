@@ -304,11 +304,14 @@ static Thread.Thread start_worker_thread(object app, string key)
   Thread.Thread t;
   object _master = master();
   if(_master->multi_tenant_aware && key)
+{
+//write("setting handler: %O.\n", key);
+//write("handlers: %O.\n", master()->handlers);
       _master->handlers_for_thread[Thread.this_thread()] = key;
-
+}
   t = Thread.Thread(run_worker, app);
 
-  t->set_thread_name("Worker " + worker_number++);
+  t->set_thread_name("Worker " + worker_number++ + " " + key);
 
   if(_master->multi_tenant_aware && key)
   {

@@ -489,17 +489,18 @@ protected void `->dir_cache=(mixed val)
   {
     string hn;
 //    werror("fins_aware_create_thread\n");
-    hn = handlers_for_thread[Thread.this_thread()];
+//    hn = handlers_for_thread[Thread.this_thread()];
     
     return low_create_thread(f, hn, @args);
   }
 
-  object low_create_thread(function(mixed ... :void) f, string handler, mixed ... args)
+  object low_create_thread(function(mixed ... :void) f, mixed ... args)
   {
 //werror("low_Create_thread: %O\n", handler);
-    object t = Thread.Thread(splice(setup_thread, f), handler, @args);
-    if(t->set_handler) t->set_handler(handler);
-    return t;
+    return Thread.Thread(f, @args);
+//    object t = Thread.Thread(splice(setup_thread, f), handler, @args);
+//    if(t->set_handler) t->set_handler(handler);
+//    return t;
   }
 
   void setup_thread(string hn, mixed ... args)

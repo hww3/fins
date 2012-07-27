@@ -46,7 +46,7 @@ object load_app(string app_dir, string config_name)
     m_delete(master()->handlers_for_thread, Thread.this_thread());
 
     handler->add_program_path(combine_path(app_dir, "classes")); 
-    object thread = Thread.Thread(low_load_app, key, app_dir, config_name);  
+    object thread = Thread.Thread(key, low_load_app, app_dir, config_name);  
 
     return thread->wait();
   }
@@ -54,21 +54,20 @@ object load_app(string app_dir, string config_name)
   {
     add_module_path(combine_path(app_dir, "modules")); 
     add_program_path(combine_path(app_dir, "classes")); 
-    return low_load_app(0, app_dir, config_name);
+    return low_load_app(app_dir, config_name);
   }
 }
 
-object low_load_app(string handler_name, string app_dir, string config_name)
+object low_load_app(string app_dir, string config_name)
 {
   string cn;
   object a;
   string b = "";
   string logcfg = combine_path(app_dir, "config", "log_" + config_name+".cfg");
-
-  if(master()->multi_tenant_aware)
+//  if(master()->multi_tenant_aware)
   {
 //    write("handler_name: %O = %s\n", Thread.this_thread(), handler_name); 
-    master()->handlers_for_thread[Thread.this_thread()] = handler_name;
+ //   master()->handlers_for_thread[Thread.this_thread()] = handler_name;
   }
 
 /*
@@ -102,6 +101,7 @@ mixed err = catch
   p = master()->cast_to_program(cn);
   a = p(config);
 };
+
 
   if(err)
   {

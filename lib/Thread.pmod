@@ -10,12 +10,31 @@ class Thread
   string handler;
 
 
-  static void create(function f, mixed ... args)
+  //!
+  //! @param f
+  //!   if string, this is the handler name and the next arg will be the function to call.
+  static void create(string|function f, mixed ... args)
   {
 #ifdef THREADS_DEBUG
     werror("Thread.Thread->create(%O, %O)\n", f, args);
 #endif
-    ::create(f, @args);
+    string handler;
+    if(stringp(f))
+    {
+      handler = f;
+      [f, args] = Array.shift(args); 
+    }
+
+    if(master()->multi_tenant_aware)
+    {
+      if(!handler)
+        handler = master()->handlers_for_thread[this_thread()];
+      set_handler(handler);
+
+      ::create(splice(setup_thread, f), handler, @args);
+    }
+    else
+      ::create(f, handler, @args);
   }
 
   void set_thread_name(string name)
@@ -27,6 +46,29 @@ class Thread
   {
      handler  = h;
   }
+
+  void setup_thread(string hn, mixed ... args)
+  {
+//werror("adding handler %O for %O\n", hn, Thread.this_thread());
+      master()->handlers_for_thread[this_thread()] = hn;
+  }
+    
+  class splice(function ... funcs)
+  {
+    static mixed `()(mixed ... args) 
+    {
+      mixed r;
+      foreach(funcs;; function f)
+      {
+        mixed a;
+        r = f(@args);
+        if(sizeof(args))
+          [a, args] = Array.shift(args);
+      }
+      return r;
+    }
+  }
+
 }
 
 // The reason for this inherit is rather simple.
