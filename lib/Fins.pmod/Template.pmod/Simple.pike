@@ -503,7 +503,7 @@ class PikeBlock
        string rx = "";
        function f = context->view->get_simple_macro(cmd);
        if(!f)
-         throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid macro command at line %d.\n", (int)start)));
+         throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid macro command %O at line %d.\n", cmd, (int)start)));
 
 //werror("adding macro " + cmd + "\n");
        macros_used[cmd] ++;
