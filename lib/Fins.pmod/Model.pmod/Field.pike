@@ -3,6 +3,7 @@ string field_name;
 object context; // DataModelContext
 constant type = "";
 int is_shadow = 0;
+program ic; // InCriteria
 
 object renderer;// = Fins.Helpers.Renderers.Renderer(); // ScaffoldRenderer
 
@@ -44,8 +45,10 @@ static void create()
 
 string make_qualifier(mixed v)
 {
+  if(!ic)
+    ic = master()->resolv("Fins.Model.InCriteria");
   if(arrayp(v))
-    return .InCriteria(v)->get(field_name);
+    return ic(v)->get(field_name);
   else
     return field_name + "=" + encode(v);
 }

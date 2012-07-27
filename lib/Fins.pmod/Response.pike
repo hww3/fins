@@ -135,6 +135,10 @@
   //!
   public void not_modified()
   {
+    m_delete(response, "type");
+    m_delete(response, "_type");
+    m_delete(response["extra_heads"], "content-type");
+    m_delete(response["extra_heads"], "_content-type");
     response->error = 304;
   }
 

@@ -187,25 +187,25 @@ protected .Response low_static_request(.Request request, .Response response,
   response->set_header("Cache-Control", "max-age=" + (3600*static_expiry_period));
   response->set_header("Expires", (Calendar.Second() + (7200*static_expiry_period))->format_http());
   response->set_file(filesystem->open(filename, "r"));
-  response->set_type(Protocols.HTTP.Server.filename_to_type(basename(filename)));
 
+  string type = Protocols.HTTP.Server.filename_to_type(basename(filename));
+  response->set_type(type);
   int _handled;
-  string t = response->get_type();
 
-    if (has_suffix(t, "css"))
-    {
-       app->_templatefilter->filter(request, response);
-    }
+  if (has_suffix(type, "css"))
+  {
+    app->_templatefilter->filter(request, response);
+  }
 
   // content compression
-  if (t && app->_gzfilter) {
-    if (has_prefix(t, "text") || has_suffix(t, "xml")) {
+  if (type && app->_gzfilter) {
+    if (has_prefix(type, "text") || has_suffix(type, "xml")) {
       _handled = 1;
       app->_gzfilter->filter(request, response);
     }
-    int pos = search(t, "/");
+    int pos = search(type, "/");
     if (!_handled && pos != -1) {
-      switch(t[0..pos-1]) {
+      switch(type[0..pos-1]) {
 	case "text":
 	case "application":
    	  app->_gzfilter->filter(request, response);

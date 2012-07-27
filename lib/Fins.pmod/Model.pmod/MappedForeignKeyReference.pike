@@ -16,8 +16,6 @@
 //!
 //! someuser["preferences"]["default_folder"]
 
-
-//inherit .InverseForeignKeyReference;
 inherit .Relationship;
 
 constant type="Indexed Foreign Key";
@@ -52,7 +50,6 @@ string encode(.DataObjectInstance value, void|.DataObjectInstance i)
 {
   return "";
 }
-
 
 mixed validate(mixed value, void|.DataObjectInstance i)
 {
