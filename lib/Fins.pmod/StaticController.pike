@@ -21,6 +21,9 @@ inherit Fins.FinsController;
 //!
 protected int allow_directory_listings = 0;
 
+//! in hours
+protected int static_expiry_period = 12;
+
 //!
 protected string static_dir;
 
@@ -121,7 +124,7 @@ protected void generate_directory_listing(string filename, .Request request, .Re
   {
     mapping entry = ([]);
 
-    if(st->isdir) 
+    if(st->isdir()) 
     {
        entry->name = st->name;
        entry->link = (st->name + "/");
@@ -149,9 +152,8 @@ protected void generate_directory_listing(string filename, .Request request, .Re
 protected .Response low_static_request(.Request request, .Response response, 
     string filename)
 {
-  Stdio.Stat stat = filesystem->stat(filename);
-
-  if(stat && stat->isdir)
+  Filesystem.Stat stat = filesystem->stat(filename);
+  if(stat && stat->isdir())
   {
     if(allow_directory_listings)
     {
@@ -182,8 +184,8 @@ protected .Response low_static_request(.Request request, .Response response,
     return response;
   }
 
-  response->set_header("Cache-Control", "max-age=" + (3600*exp));
-  response->set_header("Expires", (Calendar.Second() + (3600*exp*2))->format_http());
+  response->set_header("Cache-Control", "max-age=" + (3600*static_expiry_period));
+  response->set_header("Expires", (Calendar.Second() + (7200*static_expiry_period))->format_http());
   response->set_file(filesystem->open(filename, "r"));
   response->set_type(Protocols.HTTP.Server.filename_to_type(basename(filename)));
 
