@@ -1,7 +1,4 @@
 object logger = Tools.Logging.get_logger("finserve");
-//! @param app_dir
-//!   the full path to the application directory.
-
 
 static void create()
 {  
@@ -13,6 +10,8 @@ protected function genlogger(object al)
   return lambda(mapping m){al->do_msg(10,"%O", m);};
 }
 
+//! @param app_dir
+//!   the full path to the application directory.
 object load_app(string app_dir, string config_name)
 {
   object handler;

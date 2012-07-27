@@ -11,8 +11,9 @@
 //! which could be used to find all "preference" objects owned by that user.
 //! 
 //! This type of reference adds a twist to this idea: if the "preference" object had some field that identified the 
-//! particular preference for this user, perhaps "preference_name", we could use this (@[MappedForeignKeyReference]) relationship type to 
-//! organize the user's preferences in a mapping by name, saving us from having to perform an additional find operation:
+//! particular preference for this user, perhaps "preference_name", we could use this (@[MappedForeignKeyReference]) 
+//! relationship type to organize the user's preferences in a mapping by name, saving us from having to perform an 
+//! additional find operation:
 //!
 //! someuser["preferences"]["default_folder"]
 

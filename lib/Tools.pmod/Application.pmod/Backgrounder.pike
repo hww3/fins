@@ -150,6 +150,7 @@ protected void close_stdio(string logfile)
   Stdio.stderr.close();
   Stdio.stderr.open(logfile, "crwa");
 }
+
 //! returns true if we're actually the child process.
 int in_background()
 {
@@ -169,3 +170,4 @@ int get_child_pid()
 {
   return child_pid->pid();
 }
+

@@ -231,3 +231,4 @@ string simple_macro_page_filter(Fins.Template.TemplateData data, mapping|void ar
   
   return buf->get();
 }
+

@@ -629,3 +629,4 @@ string simple_macro_friendly_size(Fins.Template.TemplateData data, mapping|void 
   }
   else return "--";
 }
+

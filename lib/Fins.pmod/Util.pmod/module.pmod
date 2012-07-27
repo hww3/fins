@@ -36,3 +36,4 @@ object get_xip_io_url(object app)
   string my_ip = System.gethostbyname(gethostname())[1][0];
   return Standards.URI("http://" + app->config->app_name + "-" + app->config->config_name +"." + my_ip + ".xip.io:" + app->app_runner->get_container()->admin_port + "/");
 }
+

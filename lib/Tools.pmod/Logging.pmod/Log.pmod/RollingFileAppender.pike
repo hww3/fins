@@ -106,3 +106,4 @@ protected void calc_current_backup()
   current_backup = 0;
   return 0;
 }
+
