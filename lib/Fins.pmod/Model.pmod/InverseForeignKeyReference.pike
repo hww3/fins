@@ -22,6 +22,7 @@ int null = 0;
 int is_shadow=1;
 int unique;
 .Criteria criteria;
+.Criteria sort;
 
 //! "unique" implies that this is a one-to-one relationship.
 static void create(string _name, string _otherobject, string _otherkey, .Criteria|void _criteria, int|void _unique)

@@ -215,7 +215,8 @@ void initialize_links(object ctx)
 	  my_name = lower_case(my_name);
 	}
 
-    a->obj->add_field(ctx, Model.InverseForeignKeyReference(my_name, /*Tools.Language.Inflect.singularize*/(a->other_type), other_field));
+    a->obj->add_field(ctx, Model.InverseForeignKeyReference(my_name, 
+                        /*Tools.Language.Inflect.singularize*/(a->other_type),  other_field, a->criteria));
 
     remove_field_from_possibles(ctx, other_field, a->other_type);
   }

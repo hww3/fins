@@ -90,7 +90,7 @@ void get_contents()
 
 //  werror("%O\n", mkmapping(indices(field), values(field)));
   contents = context->old_find(otherobject, ([ field->otherkey :
-                                  (int) parentobject->get_id()]));
+                                  (int) parentobject->get_id()]), field->criteria);
 
   changed = 0;
 }

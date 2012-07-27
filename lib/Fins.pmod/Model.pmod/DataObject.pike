@@ -402,9 +402,9 @@ void belongs_to(.DataModelContext context, string other_type, string|void my_nam
 //!   the name of the field in the other datatype (not a database field name) that
 //!   represents the link to this data type. If you used @[belongs_to] and specified an alternate
 //!   value for the my_name attribute, you'll need to provide that value to this parameter as well.
-void has_many(.DataModelContext context, string other_type, string|void my_name, string|void other_field)
+void has_many(.DataModelContext context, string other_type, string|void my_name, string|void other_field, .Criteria|void criteria)
 {
-  context->builder->has_many += ({ (["my_name": my_name, "other_type": other_type, "other_field": other_field, "obj": this]) });  
+  context->builder->has_many += ({ (["my_name": my_name, "other_type": other_type, "other_field": other_field, "obj": this, "criteria": criteria]) });  
 }
 
 //! define a one to many relationship in which the local object is referred to
