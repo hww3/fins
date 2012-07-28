@@ -705,7 +705,6 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   {
     mapping r;
     mixed err;
-    mixed addrs;
     
     if(allow_admin_request(request))//request->remoteaddr && (addrs = gethostbyaddr(request->remoteaddr)) && search(addrs, "localhost") != -1)
       err = catch(r = do_admin_request(request));
