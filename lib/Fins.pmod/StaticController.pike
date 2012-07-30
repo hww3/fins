@@ -101,7 +101,7 @@ protected string default_directory_listing =
 </html>
 ";
 
-protected void generate_directory_listing(string filename, .Request request, .Response response)
+protected void generate_directory_listing(string filename, .Request request, .Response response, Filesystem.Base fs)
 {
   array x;
   string listing = "";
@@ -117,7 +117,7 @@ protected void generate_directory_listing(string filename, .Request request, .Re
     view->add("parent", "../");
   }
 
-  x = filesystem->get_stats(filename);
+  x = fs->get_stats(filename);
   array entries = allocate(sizeof(x));
 
   foreach(x;int i;object st)
@@ -150,9 +150,11 @@ protected void generate_directory_listing(string filename, .Request request, .Re
 //!  for instance to fetch /etc/hosts from a static directory of /etc, 
 //! filename would be /hosts.
 protected .Response low_static_request(.Request request, .Response response, 
-    string filename)
+    string filename, void|Filesystem.Base fs)
 {
-  Filesystem.Stat stat = filesystem->stat(filename);
+  if(!fs) fs = filesystem;
+
+  Filesystem.Stat stat = fs->stat(filename);
   if(stat && stat->isdir())
   {
     if(allow_directory_listings)
@@ -164,7 +166,7 @@ protected .Response low_static_request(.Request request, .Response response,
         return response;
       }
       else
-        generate_directory_listing(filename, request, response);
+        generate_directory_listing(filename, request, response, fs);
     }
     else // FIXME: should probably be a "not allowed" error.
       response->access_denied(request->not_query);
@@ -186,7 +188,7 @@ protected .Response low_static_request(.Request request, .Response response,
 
   response->set_header("Cache-Control", "max-age=" + (3600*static_expiry_period));
   response->set_header("Expires", (Calendar.Second() + (7200*static_expiry_period))->format_http());
-  response->set_file(filesystem->open(filename, "r"));
+  response->set_file(fs->open(filename, "r"));
 
   string type = Protocols.HTTP.Server.filename_to_type(basename(filename));
   response->set_type(type);
