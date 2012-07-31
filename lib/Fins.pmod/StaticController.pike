@@ -51,7 +51,8 @@ protected void create(Fins.Application app, string|void dir, int|void _allow_dir
 	  static_dir = dir;
 	}
 	
-	allow_directory_listings = _allow_directory_listings;
+        if(_allow_directory_listings != UNDEFINED)
+  	  allow_directory_listings = _allow_directory_listings;
 	filesystem = create_filesystem();
 }
 
