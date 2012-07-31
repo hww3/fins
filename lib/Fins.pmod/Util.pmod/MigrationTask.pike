@@ -29,15 +29,18 @@ void write(mixed ... args)
 void run(int|void direction)
 {
   function m;
+  string dir;
   
   if(direction == UP)
   {
     m = up;
+    dir = "migrated";
     announce("migrating");
   }
   else
   {
     m = down;
+    dir = "reverted";
     announce("reverting");
   }
   
@@ -46,7 +49,7 @@ void run(int|void direction)
   ntime = gethrtime() - ntime;
   
   float t = ntime / 1000000.0;  
-  announce("migrated in %0.2f seconds, %0.2f cpu", t, g);
+  announce(dir + " in %0.2f sec, %0.2f cpu", t, g);
 }
 
 void up()
@@ -59,12 +62,11 @@ void down()
   
 }
 
-
 void announce(string message, mixed ... args)
 {
   int l;
   string m = "== " + id + " " + name + ": " + message;
   m = sprintf(m, @args);
-  l = max(0, 75 - sizeof(m));
-  Stdio.write(m + " " + ("="*l));
+  l = max(0, 79 - sizeof(m));
+  Stdio.stdout.write(m + " " + ("="*l) + "\n");
 }
