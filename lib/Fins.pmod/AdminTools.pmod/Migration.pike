@@ -37,6 +37,9 @@ int run()
     case "create":
       return do_create(@args);
       break;
+      case "run":
+        return do_run(@args);
+        break;
     default:
       Log.error("Unknown command %O.", command);
       exit(1);
@@ -45,6 +48,10 @@ int run()
   return 0;
 }
 
+int do_run(string migration)
+{
+  
+}
 
 int do_create(string migration)
 {
