@@ -14,23 +14,31 @@ string make_class(string text, object id)
   return
   #"inherit Fins.Util.MigrationTask;
   
-  constant id = \"" + make_id(id) + 
+constant id = \"" + make_id(id) + 
   
   #"\";
-  constant name=\"" + make_descriptor(text) + 
+constant name=\"" + make_descriptor(text) + 
   #"\";
-  ";
-  
+
+void up()
+{
   
 }
 
-string new_migration(string text, object|void id)
+void down()
+{
+  
+}
+";  
+}
+
+string new_migration(string text, object|void id, string dir)
 {
   if(!id) id = Calendar.now();
   string c = make_class(text, id);
   string fn = make_id(id) + "_" + make_descriptor(text) + ".pike";
   
-  Stdio.write_file(fn, c);
+  Stdio.write_file(Stdio.append_path(dir || getcwd(), fn), c);
   
   return fn;
 }

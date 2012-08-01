@@ -26,6 +26,10 @@ int main(int argc, array argv)
        meth = Fins.AdminTools.FinServe;       
        break;
 
+     case "migration":
+       meth = Fins.AdminTools.Migration;       
+       break;
+
      case "extract_locale":
        meth = Fins.AdminTools.LocaleExtractor;       
        break;
@@ -36,7 +40,7 @@ int main(int argc, array argv)
 
      default:
        werror("unknown command \"%s\".\n", command);
-       werror("valid commands include: create, install, start, model, extract_locale\n");
+       werror("valid commands include: create, install, start, model, migration, extract_locale\n");
        return 1;
        break;
    }
