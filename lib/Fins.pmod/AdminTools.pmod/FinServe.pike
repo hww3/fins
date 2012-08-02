@@ -21,6 +21,7 @@ int session_timeout = 7200;
 
 mapping(string:object) apps = ([]);
 
+array local_networks = ({});
 program server = Fins.Util.AppPort;
 int _ports_defaulted;
 int admin_port;
@@ -41,7 +42,7 @@ private int has_started = 0;
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [--session-manager=ram|file|sqlite "
-	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [appdir [appdir]]\n");
+	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [--local-network=CIDR] [appdir [appdir]]\n");
 }
 
 int(0..1) started()
@@ -74,6 +75,7 @@ int main(int argc, array(string) argv)
     ({"sessionloc",Getopt.HAS_ARG,({"--session-storage-location"}) }),
     ({"scandir",Getopt.HAS_ARG,({"--scan"}) }),
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
+    ({"local-network",Getopt.HAS_ARG,({"--local-network"}) }),
     ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
@@ -84,6 +86,14 @@ int main(int argc, array(string) argv)
 		case "port":
 		  my_port = (int)opt[1];
 		  break;
+
+  		case "local-network":
+#if constant (IP.v4)
+  		  local_networks += ({ IP.v4.Prefix(opt[1]) });
+#else
+    throw(Error.Generic("Local network specification requires IP.v4 module.\n"));
+#endif
+  		  break;
 		
 		case "defaultconfig":
       DEFAULT_CONFIG_NAME = opt[1];
@@ -276,6 +286,11 @@ int start_admin(int my_port)
 
     logger->info("Advertising main port via Bonjour.");
 #endif
+
+    foreach(local_networks;; object prefix)
+    {
+      logger->info("Allowing admin requests from %s/%d", (string)prefix->network(), prefix->length());
+    }
 
     workers+=({start_admin_worker_thread()});
 }
@@ -692,6 +707,20 @@ int allow_admin_request(Protocols.HTTP.Server.Request request)
     if(search(addrs||({}), "localhost") != -1)
     {
       return 1;
+    }
+    
+    // TODO lots of room for optimization here.
+    if(sizeof(local_networks))
+    {
+      foreach(local_networks;; object prefix)
+      {
+#if constant (IP.v4)
+        if(prefix->contains(IP.v4.Address(request->remoteaddr)))
+          return 1;
+#else
+          return 0;
+#endif
+      }
     }
     
     logger->info("Admin Access denied for IP address %s.", request->remoteaddr);

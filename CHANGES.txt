@@ -26,6 +26,10 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added pike -x fins start --local-network=CIDR to specify network
+     address ranges considered local for access to admin pages (in
+     addition to localhost). Requires IP.v4 module.
+-  Added pike -x fins migration infrastructure (WIP)
 -  Added -C/--default-config option to FinServe in order to override           
    default configuration name (normally "dev").                                
 -  Added Response.access_denied().                                             
