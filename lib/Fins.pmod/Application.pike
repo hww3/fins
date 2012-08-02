@@ -708,7 +708,7 @@ public mixed handle_http(.Request request)
   {
     request->not_query = "/static/favicon.ico";
     mixed r = handle_http(request);
-    return (r?r->get_response():0);
+    return r;
   }
 
   array x = get_event(request);

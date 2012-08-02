@@ -687,8 +687,9 @@ int allow_admin_request(Protocols.HTTP.Server.Request request)
   if(request->remoteaddr)
   {  
     mixed addrs;
+    write("remoteaddr: %O\n", request->remoteaddr);
     addrs = gethostbyaddr(request->remoteaddr);
-    if(search(addrs, "localhost") != -1)
+    if(search(addrs||({}), "localhost") != -1)
     {
       return 1;
     }
