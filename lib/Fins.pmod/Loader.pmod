@@ -44,6 +44,10 @@ object load_app(string app_dir, string config_name)
     master()->handlers_for_thread[Thread.this_thread()] = key;
     foreach(reverse(handler->pike_module_path);;string p)
       handler->add_module_path(p);
+    string mp = combine_path(app_dir, "modules");
+    object st = file_stat(mp);
+    if(!st || !st->isdir)
+      throw(Error.Generic("cannont add non-existent directory " + mp + " to module path.\n"));
     handler->add_module_path(combine_path(app_dir, "modules")); 
     m_delete(master()->handlers_for_thread, Thread.this_thread());
 
