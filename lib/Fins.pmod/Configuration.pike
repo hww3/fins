@@ -72,7 +72,6 @@ mapping insert_config_variables(mapping c)
 protected void create(string appdir, string|mapping _config_file)
 {
   app_dir = appdir;
-
   // TODO: should we have the following bit of code here?
   // I'm somewhat dubious.
   object m = master();
@@ -210,7 +209,7 @@ array get_value_array(string section, string item)
 //! easy accessor for an entire configuration section
 mixed `[](string arg)
 {
-//        werror("GOT %O\n", arg);
+ //      werror("GOT %O\n", arg);
   return values[arg];
 
 }

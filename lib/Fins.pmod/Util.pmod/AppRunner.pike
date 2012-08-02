@@ -126,6 +126,7 @@ static object load_app(string project, string config_name)
 //    exit(1);
   }
 
+  application->start();  
   return application;
 
 }

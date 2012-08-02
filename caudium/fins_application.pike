@@ -170,6 +170,9 @@ void low_load_app()
     werror(describe_backtrace(e));
     return;
   }
+  
+  a->start();
+  
   application = a;
 
   if(running_isolated)

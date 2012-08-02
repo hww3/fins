@@ -323,7 +323,14 @@ void restart_workers(object runner)
 int start_app(string project, string config_name, int|void solo)
 {
   object _master = master();
-  object runner = master()->resolv("Fins.Util.AppRunner")(project, config_name);
+  object runner;
+
+  if(project[0]!='/')
+  {
+    project = Stdio.append_path(getcwd(), project);
+  }
+  
+  runner = master()->resolv("Fins.Util.AppRunner")(project, config_name);
   apps[runner->ident] = runner;
   
   runner->set_container(this);

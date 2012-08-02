@@ -136,7 +136,6 @@ protected void create(.Configuration _config)
 
   _templatefilter = Fins.Helpers.Filters.TemplateParser();
 
-  start();
 }
 
 //! this method will be called after the cache, model, view and 
