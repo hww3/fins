@@ -96,7 +96,7 @@ void load_application()
     exit(1);
   }
 
-  application->start();
+  application->do_start();
 
   app = application;
   app->__fin_serve = this;

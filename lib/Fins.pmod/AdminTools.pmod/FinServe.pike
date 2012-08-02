@@ -298,6 +298,7 @@ int start_admin(int my_port)
 void restart_app(object runner)
 {
   runner->load_application();
+  runner->start_application();
   call_out(reregister_app, 0.1, runner);  
 }
 
@@ -353,7 +354,7 @@ int start_app(string project, string config_name, int|void solo)
   runner->set_new_session_handler(new_session);
 
   runner->load_application();
-
+  runner->start_application();
   if(hilfe_mode)
   {
     // apps typically have deferred startup for things like controllers

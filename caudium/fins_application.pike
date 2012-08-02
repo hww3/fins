@@ -31,6 +31,7 @@ import Tools.Logging;
 Fins.Application load_application(string finsdir, string project, string config_name){  \n
 Fins.Application application;  application = Fins.Loader.load_app(combine_path(finsdir, project), config_name);
   // Log.loglevel = Log.INFO|Log.WARN|Log.ERROR|Log.CRITICAL;
+appplication->do_start();
  return application;}
 ";
 

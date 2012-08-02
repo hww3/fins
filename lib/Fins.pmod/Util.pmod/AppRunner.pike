@@ -126,9 +126,14 @@ static object load_app(string project, string config_name)
 //    exit(1);
   }
 
-  application->start();  
   return application;
 
+}
+
+//! 
+void start_application()
+{
+  get_application()->do_start();
 }
 
 //!
@@ -152,6 +157,7 @@ void load_application()
   
   set_status("LOADED");
   set_application(application);
+//write("key: %O\n", get_application()->app_runner->handler_key);
   logger->info("Application %s loaded.", ident);
 }
 

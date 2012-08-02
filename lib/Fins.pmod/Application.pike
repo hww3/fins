@@ -140,8 +140,35 @@ protected void create(.Configuration _config)
 
 //! this method will be called after the cache, model, view and 
 //! controller have been loaded. this is the recommended extension point for application startup.
+//!
+//! @note
+//! don't call this function yourself, it should always be called via @[do_start()], which 
+//! performs housekeeping functions related to multi-tenancy. 
 void start()
 {
+}
+
+//int started = 0;
+void do_start()
+{
+//  if(started) return;
+//  started = 1;
+  Thread.Thread t = Thread.this_thread();
+  string key = (app_runner||([]))->handler_key;
+// TODO 
+// should we really get the handler key for the app from the runner?
+// that seems odd, really.
+//write("*** current handler: %O key: %O\n", t->handler, key);
+// return;
+  if(key && t->handler != key)
+  {
+//    throw(Error.Generic("do_start() called from outside the application!\n"));
+    t = Thread.Thread(key, start);
+//    write("***\n***\n***\n***key: %O, handler: %O\n", t->handler, master()->get_handler_for_thread(t));
+    t->wait();
+  }
+  else
+    start();
 }
 
 //! determines whether there are any processor classes defined in the application's configuration 
