@@ -22,7 +22,7 @@ mixed `+(mixed arg)
   // ok, we have the right kind of object, now we need to get the id.
   int id = parentobject->get_id();  
 
-  arg->context->sql->query("INSERT INTO " + field->mappingtable + 
+  arg->context->execute("INSERT INTO " + field->mappingtable + 
 	 "(" + field->my_mappingfield + "," + field->other_mappingfield + ") VALUES(" + 
 	 parentobject->master_object->primary_key->encode(parentobject->get_id()) + "," + 
 	 arg->master_object->primary_key->encode(arg->get_id()) + ")");
@@ -49,7 +49,7 @@ mixed `-(mixed arg)
   // ok, we have the right kind of object, now we need to get the id.
   int id = parentobject->get_id();  
 
-  arg->context->sql->query("DELETE FROM " + field->mappingtable + 
+  arg->context->execute("DELETE FROM " + field->mappingtable + 
 	 " WHERE " + field->my_mappingfield + "=" + 
 	 parentobject->master_object->primary_key->encode(parentobject->get_id()) + " AND " + 
     field->other_mappingfield + "=" + 

@@ -107,7 +107,6 @@ object configure_context(mapping config_section, int is_default)
     log->warn("Unable to find model data object instance module %s.", mn); 
 
  d->set_url(url);
- d->sql = d->get_connection();
  d->debug = (int)config_section["debug"];
  d->repository = repository;
  d->cache = cache;

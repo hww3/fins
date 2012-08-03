@@ -24,9 +24,8 @@ object initialize()
 
   object get_connection()
   {
-    return master()->resolv("Sql.Sql")(context->db_url);
+    return master()->resolv("Sql.Sql")(context->sql_url);
   }
-}
 
 string get_serial_insert_value()
 {

@@ -701,7 +701,7 @@ array find(.DataModelContext context, mapping qualifiers, .Criteria|void criteri
 
   querylog->debug("%O: %O", Tools.Function.this_function(), query);
   
-  array qr = context->sql->query(query);
+  array qr = context->execute(query);
 
 
   mapping objs, objs_by_alt;
@@ -780,7 +780,7 @@ else
 
      querylog->debug("%O: %O", Tools.Function.this_function(), query);
 
-     array result = context->sql->query(query);
+     array result = context->execute(query);
 
      if(!sizeof(result) )
      {
@@ -839,7 +839,7 @@ else
     querylog->debug("%O: %O", Tools.Function.this_function(), query);
 
 
-     array result = context->sql->query(query);
+     array result = context->execute(query);
 
      if(!sizeof(result) )
      {
@@ -970,7 +970,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
 
    querylog->debug("%O(): %O", Tools.Function.this_function(), query);
 
-   mixed result = context->sql->query(query);
+   mixed result = context->execute(query);
 
    if(sizeof(result) != 1)
    {
@@ -1083,7 +1083,7 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
      i->set_saved(1);
 
      querylog->debug("%O: %O", Tools.Function.this_function(), update_query);
-     context->sql->query(update_query);
+     context->execute(update_query);
      load(context, i->get_id(), i, 1);   
    }
    
@@ -1156,7 +1156,7 @@ mapping objs, objs_by_alt;
    string delete_query = sprintf(single_delete_query, table_name, primary_key->name, key_value);
 
    querylog->debug("%O: %O", Tools.Function.this_function(), delete_query);
-   context->sql->query(delete_query);
+   context->execute(delete_query);
 
 
 if(context->in_xa)
@@ -1365,7 +1365,7 @@ static int commit_changes(.DataModelContext context, multiset fields_set, mappin
          query = sprintf(multi_update_query, table_name, set_clause, primary_key->field_name, primary_key->encode(update_id, i));
 	 querylog->debug("%O: %O", Tools.Function.this_function(), query);
       }
-      context->sql->query(query);
+      context->execute(query);
 }
 
 int save(.DataModelContext context, int|void no_validation, .DataObjectInstance i)

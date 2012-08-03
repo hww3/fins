@@ -18,7 +18,7 @@ string get_limit_clause(int limit, int|void start)
 
 object get_connection()
 {
-  return master()->resolv("Sql.Sql")(context->db_url, 0, 0, 0, (["reconnect": 1]));
+  return master()->resolv("Sql.Sql")(context->sql_url, 0, 0, 0, (["reconnect": 1]));
 }
 
 void initialize_connection(object s)

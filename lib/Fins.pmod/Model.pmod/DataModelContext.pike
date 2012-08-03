@@ -71,8 +71,6 @@ string type()
 
 program get_personality()
 {
-  if(!sql) throw(Error.Generic("No SQL connection defined.\n"));
-
   return .Personality[lower_case(type())];
 }
 
@@ -82,7 +80,7 @@ int initialize()
   if(!p) throw(Error.Generic("Unknown database type. No personality.\n"));
 
   personality = p(this);
-  sql = p->initialize();
+  sql = personality->initialize();
   find = .find_provider(this);
 }
 
@@ -104,7 +102,7 @@ array execute(mixed ... args)
       {
         throw(Error.Generic("Transaction aborted due to database reconnect.\n"));
       }
-      x = sql->query(@args)
+      x = sql->query(@args);
     }
   }
   
