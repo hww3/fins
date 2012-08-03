@@ -5,6 +5,10 @@ constant __version = "0.9.5";
 #define FINS_MULTI_TENANT 1
 #endif
 
+#ifdef SINGLE_TENANT
+#undef FINS_MULTI_TENANT
+#endif
+
 //!
 string version()
 {
