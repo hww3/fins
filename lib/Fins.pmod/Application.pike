@@ -55,6 +55,9 @@ object breakpoint_hilfe;
 object bpbe;
 object bpbet;
 
+static int started = 0;
+static int starting = 0;
+
 //! if set to true, controllers will be reloaded on access if they are changed. this setting
 //! is derived from the value of the reload parameter in the controller section of the application config file.
 int controller_autoreload;
@@ -148,27 +151,35 @@ void start()
 {
 }
 
-//int started = 0;
-void do_start()
+mixed do_method(string method, mixed ... args)
 {
-//  if(started) return;
-//  started = 1;
+  function m;
+  mixed rv;
+
+  if(!(m = this[method]))
+  {
+    throw(Error.Generic("Method " + method + " not available.\n"));
+  }
+
   Thread.Thread t = Thread.this_thread();
   string key = (app_runner||([]))->handler_key;
 // TODO 
 // should we really get the handler key for the app from the runner?
 // that seems odd, really.
-//write("*** current handler: %O key: %O\n", t->handler, key);
-// return;
   if(key && t->handler != key)
   {
-//    throw(Error.Generic("do_start() called from outside the application!\n"));
-    t = Thread.Thread(key, start);
-//    write("***\n***\n***\n***key: %O, handler: %O\n", t->handler, master()->get_handler_for_thread(t));
-    t->wait();
+    t = Thread.Thread(key, m, @args);
+    rv = t->wait();
   }
   else
-    start();
+    return m(@args);
+}
+
+void do_start()
+{
+//  if(started) return;
+  do_method("start");
+  started = 1;
 }
 
 //! determines whether there are any processor classes defined in the application's configuration 
@@ -706,6 +717,9 @@ public mixed handle_request(.Request request)
 
   request->fins_app = this;
   request->controller_path="";
+
+  if(!started) return (["error": 500, "type": "text/html", 
+           "data": "<h1>500 Application not started</h1>", "request": request]);
 
   //  logger->info("SESSION INFO: %O", request->misc->session_variables);
 
