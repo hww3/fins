@@ -35,7 +35,7 @@ class Thread
       ::create(splice(setup_thread, f), handler, @args);
     }
     else
-      ::create(f, handler, @args);
+      ::create(f, @args);
   }
 
   void set_thread_name(string name)
