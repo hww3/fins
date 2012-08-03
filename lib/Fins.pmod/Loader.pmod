@@ -1,5 +1,12 @@
 object logger = Tools.Logging.get_logger("finserve");
 
+int multi_tenant = 1;
+
+void set_multi_tenant(int x)
+{
+  multi_tenant = x;
+}
+
 static void create()
 {  
 //  werror("loader loaded.\n"); 
@@ -25,7 +32,7 @@ object load_app(string app_dir, string config_name)
 
   object _master = master();
    
-  if(_master->multi_tenant_aware)
+  if(multi_tenant && _master->multi_tenant_aware)
   {
     key = app_dir + "#" + config_name;
     handler = master()->new_handler(key);
@@ -58,6 +65,7 @@ object load_app(string app_dir, string config_name)
   }
   else // not running multi-tenant mode.
   {
+write("app_dir: %O\n", app_dir);
     add_module_path(combine_path(app_dir, "modules")); 
     add_program_path(combine_path(app_dir, "classes")); 
     return low_load_app(app_dir, config_name);
@@ -89,7 +97,6 @@ Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"c
   }
  }
 ";
-
 
  logger->info("Loading app configuration from " + app_dir + ".");
   Fins.Configuration config = load_configuration(app_dir, config_name);
