@@ -372,8 +372,10 @@ int start_app(string project, string config_name, int|void solo)
     // start a new thread and run the session manager startup process within it, that's the easiest way to get a application 
     // enviornment synchronously (we could also use call_out, but then we couldn't easily wait for it).
     object session_thread;
-    
-      session_thread = _master->low_create_thread(runner->get_application()->config->handler_name, session_startup, runner);
+    if(runner->get_application()->config->handler_name)
+      session_thread = Thread.Thread(runner->get_application()->config->handler_name, session_startup, runner);
+    else
+      session_thread = Thread.Thread(session_startup, runner);
       session_thread->set_thread_name("Session Startup");
     
     session_thread->wait();
