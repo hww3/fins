@@ -71,7 +71,9 @@ int run()
 
   project = combine_path(getcwd(), project);
 
-  app = Fins.Loader()->load_app(project, config_name);  
+  Fins.Loader.set_multi_tenant(0);
+
+  app = Fins.Loader.load_app(project, config_name);  
 
   Log.debug("Application loaded.");
 
