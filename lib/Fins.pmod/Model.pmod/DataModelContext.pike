@@ -1,6 +1,8 @@
 //!
 int debug = 0;
 
+object log = Tools.Logging.get_logger("fins.model.datamodelcontext");
+
 mapping builder = ([ "possible_links" : ({}), "belongs_to" : ({}), "has_many": ({}), "has_many_many": ({}), "has_many_index": ({}) ]);
 
 //! contains the finder object. see also @[Fins.Model.find_provider]
@@ -97,6 +99,7 @@ array execute(mixed ... args)
       throw(err);
     else
     {      
+      log->info("Re-initializing context due to reconnect.");
       sql = personality->initialize();
       if(in_xa)
       {
