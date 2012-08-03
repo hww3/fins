@@ -63,8 +63,10 @@ string type()
 {
   string t;
   catch(t = model->config["model"]["personality"]);
-  if(t) return t;
-  else return (sprintf("%O", object_program(sql->master_sql))/".")[-1];
+  if(t) 
+    return t;
+  else 
+    return lower_case(Standards.URI(model->config["model"]["datasource"])->scheme);
 }
 
 program get_personality()
@@ -79,10 +81,34 @@ int initialize()
   program p = get_personality();
   if(!p) throw(Error.Generic("Unknown database type. No personality.\n"));
 
-  personality = p(sql, this);
-
-  personality->initialize();
+  personality = p(this);
+  sql = p->initialize();
   find = .find_provider(this);
+}
+
+array execute(mixed ... args)
+{
+  mixed x;
+  mixed err;
+  err = catch(x = sql->query(@args));
+  
+  if(err)
+  {
+    int r = sql->ping();
+    if(r != 1)
+      throw(err);
+    else
+    {      
+      sql = personality->initialize();
+      if(in_xa)
+      {
+        throw(Error.Generic("Transaction aborted due to database reconnect.\n"));
+      }
+      x = sql->query(@args)
+    }
+  }
+  
+	return x;
 }
 
 //! copy this DataModelContext object and opens a new sql connection.
@@ -96,7 +122,6 @@ object clone()
 	
 	// don't need to call the setter here, right?
 	d->sql_url = sql_url;
-	d->sql = d->get_connection();
 	d->initialize();
 	d->debug = debug;
 	return d;
@@ -105,11 +130,6 @@ object clone()
 void set_url(string url)
 {
 	sql_url = url;
-}
-
-object get_connection()
-{
-	return master()->resolv("Sql.Sql")(sql_url);
 }
 
 //!

@@ -1,5 +1,4 @@
 object log = Tools.Logging.get_logger("fins.model.personality");
-object sql;
 object context;
 
 int use_datadir;
@@ -7,15 +6,26 @@ string datadir;
 
 mapping get_field_info(string table, string field, mapping|void info);
 
-static void create(object s, object c)
+static void create(object c)
 {
-  sql = s;
   context = c;
 }
 
-int initialize()
+object initialize()
 {
-  return 1;
+    object s = get_connection();
+    initialize_connection(s);
+    return s;
+  }
+
+  void initialize_connection(object s)
+  {  
+  }
+
+  object get_connection()
+  {
+    return master()->resolv("Sql.Sql")(context->db_url);
+  }
 }
 
 string get_serial_insert_value()
@@ -25,7 +35,7 @@ string get_serial_insert_value()
 
 array(mapping) list_fields(string table)
 {
-   array x = sql->list_fields(table);
+   array x = context->sql->list_fields(table);
    return map(x, map_field, table);
 }
 

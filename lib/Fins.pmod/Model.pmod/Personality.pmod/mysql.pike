@@ -3,7 +3,7 @@ inherit .Personality;
 
 string quote_binary(string s)
 {
-  return sql->quote(s);
+  return context->sql->quote(s);
 }
 
 string unquote_binary(string s)
@@ -16,11 +16,22 @@ string get_limit_clause(int limit, int|void start)
   return "LIMIT " + (start?(((start-1)||"0") + ", "):"") + limit;
 }
 
+object get_connection()
+{
+  return master()->resolv("Sql.Sql")(context->db_url, 0, 0, 0, (["reconnect": 1]));
+}
+
+void initialize_connection(object s)
+{
+  s->query("SET NAMES utf8");
+  return;
+}
+
 mapping get_field_info(string table, string field)
 {  
   mapping m = ([]);
 
-  array r = sql->query("SHOW FIELDS FROM " + table + " LIKE '" + field + "'"); 
+  array r = context->execute("SHOW FIELDS FROM " + table + " LIKE '" + field + "'"); 
   if(!sizeof(r)) throw(Error.Generic("Field " + field + " does not exist in " + table + ".\n"));
 
   if(has_prefix(r[0]->Type, "timestamp")) m->type = "timestamp";
@@ -40,15 +51,15 @@ int(0..1) transaction_supported()
 
 void begin_transaction()
 {
-  context->sql->query("START TRANSACTION");
+  context->execute("START TRANSACTION");
 }
 
 void rollback_transaction()
 {
-  context->sql->query("ROLLBACK");
+  context->execute("ROLLBACK");
 }
 
 void commit_transaction()
 {
-  context->sql->query("COMMIT");
+  context->execute("COMMIT");
 }

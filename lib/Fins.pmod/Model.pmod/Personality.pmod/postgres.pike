@@ -13,7 +13,7 @@ string get_last_insert_id(object field, object i)
 	f = field->field_name;
 	
 
-	array a = sql->query("select currval('" + t + "_" + f + "_seq')");
+	array a = context->execute("select currval('" + t + "_" + f + "_seq')");
 
    return a[0]["currval"];
 }
@@ -32,15 +32,15 @@ int(0..1) transaction_supported()
 
 void begin_transaction()
 {
-  context->sql->query("START TRANSACTION");
+  context->execute("START TRANSACTION");
 }
 
 void rollback_transaction()
 {
-  context->sql->query("ROLLBACK");
+  context->execute("ROLLBACK");
 }
 
 void commit_transaction()
 {
-  context->sql->query("COMMIT");
+  context->execute("COMMIT");
 }

@@ -5,14 +5,14 @@ string datadir;
 
 mapping indexes = ([]);
 
-int initialize()
+int initialize_connection(object s)
 {
 
 #if constant(Sql.Provider.SQLite)
 error("SQL.Provider.SQLite is not supported.\n");
 #endif
 
-  sql->query("PRAGMA full_column_names=1");
+  s->query("PRAGMA full_column_names=1");
 
   if((int)(context->model->config["model"]["datadir"]))
   {
@@ -63,13 +63,13 @@ mapping get_field_info(string table, string field, mapping info)
 
 void load_indexes(string table)
 {
-  array x = sql->query("PRAGMA index_list(" + table + ")");
+  array x = context->execute("PRAGMA index_list(" + table + ")");
 
   if(!indexes[table]) indexes[table] = ([]);
 
   if(x) foreach(x;; mapping m)
   {
-    array ii = sql->query("PRAGMA index_info(" + m->name + ")");
+    array ii = context->execute("PRAGMA index_info(" + m->name + ")");
     foreach(ii;; mapping ir)
     {
       indexes[table][m->name] = ir + (["unique": m->unique]);
@@ -84,15 +84,15 @@ int(0..1) transaction_supported()
 
 void begin_transaction()
 {
-  context->sql->query("BEGIN TRANSACTION");
+  context->execute("BEGIN TRANSACTION");
 }
 
 void rollback_transaction()
 {
-  context->sql->query("ROLLBACK");
+  context->execute("ROLLBACK");
 }
 
 void commit_transaction()
 {
-  context->sql->query("COMMIT");
+  context->execute("COMMIT");
 }
