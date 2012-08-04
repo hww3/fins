@@ -569,6 +569,7 @@ protected void `->dir_cache=(mixed val)
         //werror("we're an old master!\n");
         d = master();
         h->root_module = d->get_root_module();
+        h->fc = d->fc;
       }
       else
       {
