@@ -67,6 +67,8 @@ object configure_context(mapping config_section, int is_default)
   object repository;
   string definition_module;
 
+werror("config: %O\n", config_section);
+
   repository = get_repository(config_section);
 
   object o;
@@ -82,7 +84,7 @@ object configure_context(mapping config_section, int is_default)
 
   if(!definition_module)
   {
-	throw(Error.Generic("No model definition module specified. Cannot configure model."));
+    throw(Error.Generic("No model definition module specified. Cannot configure model."));
   }
 
   object d = get_context(config_section);
