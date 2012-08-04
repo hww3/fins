@@ -55,9 +55,10 @@ protected string get_app_name()
 
 mapping insert_config_variables(mapping c)
 {
+  werror("config variables: %O\n", config_variables);
   foreach(c; string k; string v)
   {
-    if(v)
+    if(v && stringp(v))
       c[k] = replace(v, indices(config_variables), predef::values(config_variables));
   }
 
@@ -103,7 +104,10 @@ protected void create(string appdir, string|mapping _config_file)
     _default_config_variables["appdir"] = appdir;
   }
 
-  _default_config_variables["config"] = config_name;
+  if(config_name)
+    _default_config_variables["config"] = config_name;
+  else
+    _default_config_variables["config"] = "default";
     
   values = ([]);
   set_config_variables(([]));
