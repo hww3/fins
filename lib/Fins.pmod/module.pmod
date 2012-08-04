@@ -492,44 +492,17 @@ protected void `->dir_cache=(mixed val)
   object fins_aware_create_thread(function(mixed ... :void) f, mixed ... args)
   {
     string hn;
-//    werror("fins_aware_create_thread\n");
-//    hn = handlers_for_thread[Thread.this_thread()];
     
     return low_create_thread(f, hn, @args);
   }
 
   object low_create_thread(function(mixed ... :void) f, mixed ... args)
   {
-//werror("low_Create_thread: %O\n", handler);
     return Thread.Thread(f, @args);
-//    object t = Thread.Thread(splice(setup_thread, f), handler, @args);
-//    if(t->set_handler) t->set_handler(handler);
-//    return t;
-  }
-
-  void setup_thread(string hn, mixed ... args)
-  {   
-//werror("adding handler %O for %O\n", hn, Thread.this_thread());
-      handlers_for_thread[Thread.this_thread()] = hn;
-  }
-
-  class splice(function ... funcs)
-  {
-    static void `()(mixed ... args)
-    {
-      foreach(funcs;; function f)
-      {
-        mixed a;
-        f(@args);
-        if(sizeof(args))
-          [a, args] = Array.shift(args);
-      }
-    }
   }
 
   object get_handler_for_thread(object thread)
   {
-//werror("get_handler_for_thread(%O)\n", thread);
     string hn;
     if(!handlers || !sizeof(handlers)) // we might get here via __INIT, which means none of the object-global variables are initialized.
     { 
@@ -538,17 +511,12 @@ protected void `->dir_cache=(mixed val)
       if(!handlers_for_thread) handlers_for_thread = ([]); //set_weak_flag(([]), Pike.WEAK_INDICES);
       handlers[DEFAULT_KEY] = new_handler(DEFAULT_KEY);
     }
-//write("handlers: %O %O\n", handlers_for_thread, Thread.this_thread());
     hn = handlers_for_thread[thread];
-//write("handler sought: %O from %O\n", hn, (handlers));
     if(hn) {
-      //werror("have a handler identified\n");
       return handlers[hn];
     }
     else
     {
-      //werror("using default handler: %O.\n", handlers);
-
      return handlers[DEFAULT_KEY];
    }
   }
@@ -703,7 +671,7 @@ return joinnode(({static_modules}), 0, 0, "predef::");
     
     string _sprintf(int t)
     {
-      return t=='O' && sprintf("MultiTenantCompileContainer(%O)",my_key);
+      return t=='O' && sprintf("MultiTenantCompileContainer(%O)",my_key); 
     }
 
 void shutdown_backend()
@@ -720,9 +688,6 @@ mixed call_out(function f, float|int delay, mixed ... args)
 
 void create_app_backend()
 {
-//  werror("create_backend\n");
-//  throw(Error.Generic("backend!\n"));
-//  werror(describe_backtrace(backtrace()));
   abe = Pike.Backend();
 
   object t = master()->fins_aware_create_thread(run_backend_thread);
@@ -747,7 +712,6 @@ static void destroy()
   {
     do
     {
-//werror("application backend running\n");
       abe(10.0);
     }
     while(!_shutdown);
