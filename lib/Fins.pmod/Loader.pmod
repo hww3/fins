@@ -1,4 +1,4 @@
-object logger = Tools.Logging.get_logger("finserve");
+object logger = Tools.Logging.get_logger("fins.loader");
 
 int multi_tenant = 1;
 
@@ -31,13 +31,11 @@ object load_app(string app_dir, string config_name)
     throw(Error.Generic("Application directory " + app_dir + " does not exist.\n"));
 
   object _master = master();
-   
+
   if(multi_tenant && _master->multi_tenant_aware)
   {
     key = app_dir + "#" + config_name;
     handler = master()->new_handler(key);
-   // werror("have handler.\n");
-    //werror("adding %O\n", combine_path(app_dir, "modules"));
 
   // add_module_path calls root_module->add_path(), which consults fc.
   // therefore, unless we want to share a module directory with the default 
@@ -65,7 +63,6 @@ object load_app(string app_dir, string config_name)
   }
   else // not running multi-tenant mode.
   {
-write("app_dir: %O\n", app_dir);
     add_module_path(combine_path(app_dir, "modules")); 
     add_program_path(combine_path(app_dir, "classes")); 
     return low_load_app(app_dir, config_name);
