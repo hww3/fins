@@ -95,7 +95,7 @@ protected void stop()
 //!
 void shutdown()
 {
-  stop();
+  do_stop();
   object h = get_handler_for_thread(); 
   if(h && h->shutdown_backend) h->shutdown_backend();
   destruct(this);
@@ -177,9 +177,16 @@ mixed do_method(string method, mixed ... args)
 
 void do_start()
 {
-//  if(started) return;
+  if(started) return;
   do_method("start");
   started = 1;
+}
+
+void do_stop()
+{
+  if(!started) return;
+  do_method("stop");
+  started = 0;
 }
 
 //! determines whether there are any processor classes defined in the application's configuration 
