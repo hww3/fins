@@ -29,9 +29,7 @@ class Thread
     {
       if(!handler)
         handler = master()->handlers_for_thread[this_thread()];
-//write("setting_handler: %O.\n", handler);
       set_handler(handler);
-//write("set handler. starting thread.\n");
       ::create(splice(setup_thread, f), handler, @args);
     }
     else
