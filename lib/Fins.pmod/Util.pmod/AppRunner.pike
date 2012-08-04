@@ -309,21 +309,10 @@ static void run_worker(object app)
 static Thread.Thread start_worker_thread(object app, string key)
 {
   Thread.Thread t;
-  object _master = master();
-  if(_master->multi_tenant_aware && key)
-{
-//write("setting handler: %O.\n", key);
-//write("handlers: %O.\n", master()->handlers);
-      _master->handlers_for_thread[Thread.this_thread()] = key;
-}
-  t = Thread.Thread(run_worker, app);
-
+  
+  t = Thread.Thread(key, run_worker, app);
   t->set_thread_name("Worker " + worker_number++ + " " + key);
-
-  if(_master->multi_tenant_aware && key)
-  {
-    m_delete(_master->handlers_for_thread, Thread.this_thread());
-  }    
+  
   return t;
 }
 
@@ -367,7 +356,7 @@ void stop()
 
   foreach(workers;; object worker)
   {
-    werror("worker: %O\n", worker);
+//    werror("worker: %O\n", worker);
     queue->write(0);
   }
   app->shutdown();
@@ -375,7 +364,7 @@ void stop()
   if(master()->multi_tenant_aware && handler_key)
   {
     object handler = master()->handlers[handler_key];
-    werror("handler: %O\n", handler);
+//    werror("handler: %O\n", handler);
     destruct(handler);
   }
   
