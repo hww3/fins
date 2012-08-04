@@ -281,9 +281,12 @@ void validate_on_update(mapping changes, Fins.Errors.Validation errors, .DataObj
 void validate_on_create(mapping changes, Fins.Errors.Validation errors, .DataObjectInstance i);
 
 static void reflect_definition(.DataModelContext context)
-{
-  string instance =
-             (replace(master()->describe_program(object_program(this)), ".", "/")/"/")[-1];
+{  
+  string instance = master()->describe_program(object_program(this));
+  instance = (instance / "/")[-1];
+  instance = (instance / ".")[0];
+
+  instance = basename(instance);
 
   if(!get_table_name() || !sizeof(get_table_name()))
   {

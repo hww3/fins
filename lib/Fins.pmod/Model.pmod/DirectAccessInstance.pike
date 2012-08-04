@@ -14,5 +14,9 @@ static void create(int|Parser.XML.Tree.Node|void identifier, void|.DataModelCont
   if(!c)
 	  c = Fins.Model.get_context(context_name);
   object o = c->repository->get_object(type_name);
+  if(!o)
+  {
+    throw(Error.Generic("Model configuration error: object type " + type_name + " does not have a data mapping.\n"));
+  }
   ::create(identifier, o, c);
 }
