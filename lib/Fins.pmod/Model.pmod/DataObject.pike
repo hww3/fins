@@ -86,7 +86,10 @@ string insert_query = "INSERT INTO %s %s VALUES %s";
 
 int autosave = 1;
 
+//!  May be left blank if auto-configuring.
 string instance_name = "";
+
+//!  May be left blank if auto-configuring.
 string table_name = "";
 
 //! used by @[Fins.ScaffoldController] to determine the order fields are displayed in generated forms.

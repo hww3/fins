@@ -2,10 +2,10 @@ inherit .DataObjectInstance;
 
 //! provides direct data object instance access
 
-//!
+//! This is the name of the class that contains the data mapping definition for this type. For example, User or Comment.
 string type_name = "unknown";
 
-//!
+//! This is the id of the model this type is associated with; the default model id is "_default".
 string context_name = "_default";
 
 //!
