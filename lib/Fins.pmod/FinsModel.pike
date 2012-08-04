@@ -1,8 +1,6 @@
 import Fins;
 inherit FinsBase;
 
-int lower_case_link_names = 0;
-
 object log = Tools.Logging.get_logger("model");
 
 static void create(Fins.Application a)
@@ -57,20 +55,10 @@ object get_context(mapping config_section)
 	return master()->resolv("Fins.Model.DataModelContext")();
 }
 
-object get_repository(mapping config_section)
-{
-	return Fins.Model.Repository();
-}
-
 object configure_context(mapping config_section, int is_default)
 {
-  object repository;
+  Fins.Model.Repository repository;
   string definition_module;
-
-werror("config: %O\n", config_section);
-
-  repository = get_repository(config_section);
-
   object o;
 
   object defaults = Fins.Helpers.Defaults;
@@ -90,6 +78,7 @@ werror("config: %O\n", config_section);
   object d = get_context(config_section);
   d->context_id = config_section["id"] || "_default";
 
+  repository = d->get_repository();
   string mn = definition_module + "." + defaults->data_mapping_module_name;
   if(o = master()->resolv(mn))
   {
@@ -118,257 +107,6 @@ werror("config: %O\n", config_section);
 
  repository->set_default_context(d);
 
- register_types(d);
- initialize_links(d);
- rebuild_fields(d);
+ d->register_types();
   return d;
-}
-
-void rebuild_fields(object ctx)
-{
-   foreach(ctx->repository->object_definitions;; object d)
-   {
-	   d->gen_fields(ctx);
-	   d->_set_renderers();
-   }
-}
-
-//!
-void register_types(object ctx)
-{
-  if(!ctx->repository->get_object_module())
-  {
-    log->warn("Using automatic model registration, but no datatype_definition_module set. Skipping.");
-    return 0;
-  }
-  object im = ctx->repository->get_object_module();
-  object mm = ctx->repository->get_model_module();
-
-   log->debug("Data mapping module: %O", mm);
-  foreach(mkmapping(indices(mm), values(mm));string n; program c)
-  {
-    object d = c(ctx);
-    program di;
-    if(im && im[n])
-    {
-	  di = im[n];
-          if(di && !di->type_name) {/*werror("%O\n", di);di->type_name = n;*/}
-    }
-    else
-    {
-		throw(Fins.Errors.ModelError("No Data Instance class defined for data type " + n + " in model id " + ctx->context_id + "."));
-    }
-    log->info("Registering data type %s", d->instance_name);
-    ctx->repository->add_object_type(d, di);
-  }
-}
-
-
-protected void remove_field_from_possibles(object ctx, string field_name, string instance_name)
-{
-  foreach(ctx->builder->possible_links; int i; mapping pl)
-  {
-    if(pl && pl->obj && pl->obj->instance_name == instance_name && pl->field->name == field_name)
-      ctx->builder->possible_links[i] = 0;
-  }
-}
-
-// there be monsters here...
-void initialize_links(object ctx)
-{
-  if(!ctx->repository->object_definitions || 
-     !sizeof(ctx->repository->object_definitions)) return 0;
-
-  foreach(ctx->builder->belongs_to;; mapping a)
-  {
-    log->debug("processing belongs_to: %O", a);
-    if(!ctx->repository->get_object(a->other_type))
-    {
-		log->error("error processing %O->belongs_to because the type %O does not exist.", a->obj, a->other_type);
-	}
-    if(!a->my_name) a->my_name = a->other_type;
-    if(!a->my_field) a->my_field = lower_case(a->other_type + "_" + 			
-		ctx->repository->get_object(a->other_type)->primary_key->field_name);    
-	
-	string my_name = a->my_name;
-	string my_field = a->my_field;
-	
-	if(lower_case_link_names)
-	{
-	  my_name = lower_case(my_name);
-	}
-	
-    a->obj->add_field(ctx, Model.KeyReference(my_name, my_field, a->other_type, 0, a->nullable ));
-//    a->obj->remove_field(my_field);
-    remove_field_from_possibles(ctx, my_field, a->obj->instance_name);
-  }
-
-  foreach(ctx->builder->has_many;; mapping a)
-  {
-    if(!a->my_name) a->my_name = Tools.Language.Inflect.pluralize(a->other_type);
-    if(!a->other_field) a->other_field = ctx->repository->get_object(a->other_type)->primary_key->name	;    
-
-	string my_name = a->my_name;
-	string other_field = a->other_field;
-
-	if(lower_case_link_names)
-	{
-	  my_name = lower_case(my_name);
-	}
-
-    a->obj->add_field(ctx, Model.InverseForeignKeyReference(my_name, 
-                        /*Tools.Language.Inflect.singularize*/(a->other_type),  other_field, a->criteria));
-
-    remove_field_from_possibles(ctx, other_field, a->other_type);
-  }
-
-  foreach(ctx->builder->has_many_index;; mapping a)
-  {
-    if(!a->my_name) a->my_name = Tools.Language.Inflect.pluralize(a->other_type);
-
-//    werror("we'll call the field " + a->my_name + "\n");
-    if(!a->other_field) a->other_field = ctx->repository->get_object(a->other_type)->primary_key->name	;    
-
-	string my_name = a->my_name;
-	string other_field = a->other_field;
-    string index_field = a->index_field;
-
-	if(lower_case_link_names)
-	{
-	  my_name = lower_case(my_name);
-	}
-
-    a->obj->add_field(ctx, Model.MappedForeignKeyReference(my_name, /*Tools.Language.Inflect.singularize*/(a->other_type), other_field, index_field));
-
-    remove_field_from_possibles(ctx, other_field, a->other_type);
-  }
-
-  foreach(ctx->builder->has_many_many;; mapping a)
-  {
-     object this_type;
-     object that_type;
-
-     this_type = ctx->repository->object_definitions[a->this_type->instance_name];
-     that_type = ctx->repository->object_definitions[a->that_type];
-
-     log->debug("*** have a Many-to-Many relationship in %s between %O and %O", a->join_table, this_type, that_type);
-
-	string this_name = a->this_name;
-	string that_name = a->that_name;
-
-	if(lower_case_link_names)
-	{
-	  this_name = lower_case(this_name);
-	  that_name = lower_case(that_name);
-	}
-
-     this_type->add_field(ctx, Model.MultiKeyReference(this_type, 
-            Tools.Language.Inflect.pluralize(that_name),
-            a->join_table,
-            lower_case(this_type->instance_name + "_" + this_type->primary_key->field_name),
-            lower_case(that_type->instance_name + "_" + that_type->primary_key->field_name),
-             that_type->instance_name, that_type->primary_key->name, 0, 1));
-
-     that_type->add_field(ctx, Model.MultiKeyReference(that_type, Tools.Language.Inflect.pluralize(this_name),
-            a->join_table,
-            lower_case(that_type->instance_name + "_" + that_type->primary_key->field_name),
-            lower_case(this_type->instance_name + "_" + this_type->primary_key->field_name),
-             this_type->instance_name, this_type->primary_key->name));
-  }
-
-  foreach(ctx->builder->possible_links;; mapping pl)
-  {
-	if(!pl) continue;
-    log->debug("investigating possible link field %s in %s.", pl->field->name, pl->obj->instance_name);
-    string pln = lower_case(pl->field->name);
-
-    foreach(ctx->repository->object_definitions; string on; object od)
-    {
-      string mln = Tools.Language.Inflect.singularize(od->table_name) + "_" + od->primary_key->field_name;
-      log->debug("  - considering %s as a possible field linkage.", mln);
-      if(pln == lower_case(mln))
-      {
-		log->debug("adding reference for %s in %s id=%O", od->instance_name, pl->obj->instance_name, pl->obj->primary_key->name);
-
-		string this_name = od->instance_name;
-		string that_name = pl->obj->instance_name;
-
-		if(lower_case_link_names)
-		{
-		  this_name = lower_case(this_name);
-		  that_name = lower_case(that_name);
-		}
-
-        pl->obj->add_field(ctx, Model.KeyReference(this_name, pl->field->name, od->instance_name, 0, !(pl->field->not_null)));
-        od->add_field(ctx, Model.InverseForeignKeyReference(Tools.Language.Inflect.pluralize(that_name), pl->obj->instance_name, this_name));
-        ctx->builder->possible_links -= ({pl});
-      }
-    }
-  }
-
-  array table_components = ({});
-
-  foreach(ctx->repository->object_definitions; string on; object od)
-  {
-    table_components += ({ (["tn": lower_case(Tools.Language.Inflect.pluralize(on)), "od": od ]) });  
-  }
-    
-  // Now, we check for link-tables, that is, tables which represent a many-to-many relationship
-  // between two datatypes using a table that contains tuples of the two id fields.
-  //
-  // We do this automatically by searching for any combination of tablea_tableb in the database which 
-  // conforms to the practice of having the fields representing the two linked tables called typeA_id 
-  // and typeB_id where typeA and typeB are singular forms of the table name.
-  // 
-  //  for example a table used to link user and group would be called users_groups and have fields called
-  //  user_id and group_id.
-  multiset available_tables = (multiset)ctx->sql->list_tables();
-    
-  foreach(table_components;; mapping o)
-  {
-    log->debug("looking for multi link reference for %s.", o->tn);
-
-    foreach(table_components;; mapping q)
-    {
-      if(q->tn == o->tn) continue;  // skip self-self relationships :)
-    log->debug(" - checking %s->%s.", q->tn, o->tn + "_" + q->tn);
-
-      if(available_tables[o->tn + "_" + q->tn])
-      {
-        log->debug("  - have a mlr on %s", o->tn + "_" + q->tn);
-
-		string this_name = q->od->instance_name;
-		string that_name = o->od->instance_name;
-
-		if(lower_case_link_names)
-		{
-		  this_name = lower_case(this_name);
-		  that_name = lower_case(that_name);
-		}
-
-          o->od->add_field(ctx, Model.MultiKeyReference(o->od, Tools.Language.Inflect.pluralize(this_name),
-            o->tn + "_" + q->tn, 
-            lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name), 
-            lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name),
-             q->od->instance_name, q->od->primary_key->name, 0, 1));
-
-          q->od->add_field(ctx, Model.MultiKeyReference(q->od, Tools.Language.Inflect.pluralize(that_name),
-            o->tn + "_" + q->tn, 
-            lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name), 
-            lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name),
-             o->od->instance_name, o->od->primary_key->name));
-      }
-    }
-  }
-
-  log->debug("possible links left over: %O", ctx->builder->possible_links);
-  foreach(ctx->builder->possible_links;; mapping pl)
-  {
-    if(pl)
-      pl->obj->do_add_field(ctx, pl->field);
-  }
-  
-  ctx->builder->belongs_to = ({});
-  ctx->builder->has_many = ({});
-  ctx->builder->has_many_many = ({});
 }
