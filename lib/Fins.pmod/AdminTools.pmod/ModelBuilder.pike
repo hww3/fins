@@ -6,7 +6,7 @@ string project;
 string config_name = "dev";
 array commands;
 int overwrite = 0;
-string model_id = "_default";
+string model_id = Fins.Model.DEFAULT_MODEL;
 object context;
 
 // obj->is_resolv_joinnode

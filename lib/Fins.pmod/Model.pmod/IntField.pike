@@ -5,7 +5,7 @@ int null;
 mixed default_value;
 string name;
 
-object renderer = Fins.Helpers.Renderers.IntRenderer(); // ScaffoldRenderer
+object renderer = master()->resolv("Fins.Helpers.Renderers.IntRenderer")(); // ScaffoldRenderer
 
 constant type = "Integer";
 

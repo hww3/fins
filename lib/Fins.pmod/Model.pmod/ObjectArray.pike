@@ -1,11 +1,11 @@
-.Field field;
+object/*.Field*/ field;
 object otherobject;
 object parentobject;
 array contents;
 int changed;
-.DataModelContext context;
+object /*.DataModelContext*/ context;
 
-static void create(.Field f, object parent, void|.DataModelContext c)
+static void create(object/*.Field*/ f, object parent, void|object/*.DataModelContext*/ c)
 {
 //  Tools.Logging.Log.debug("%O(%O, %O, %O)", Tools.Function.this_function(), f, parent, c);
   field = f; 
@@ -127,7 +127,7 @@ mixed get_atomic(int(0..1)|void norecurse, mixed ... args)
   return v;
 }
 
-.DataObjectInstance get_element(int e)
+object/*.DataObjectInstance*/ get_element(int e)
 {
   if(changed)
     get_contents();

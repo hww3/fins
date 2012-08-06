@@ -5,11 +5,11 @@ inherit .DataObjectInstance;
 //! This is the name of the class that contains the data mapping definition for this type. For example, User or Comment.
 string type_name = "unknown";
 
-//! This is the id of the model this type is associated with; the default model id is "_default".
-string context_name = "_default";
+//! This is the id of the model this type is associated with; the default model id is @[Fins.Model.DEFAULT_MODEL]"_default".
+string context_name = Fins.Model.DEFAULT_MODEL;
 
 //!
-static void create(int|Parser.XML.Tree.Node|void identifier, void|.DataModelContext c)
+static void create(int|Parser.XML.Tree.Node|void identifier, void|object/*.DataModelContext*/ c)
 {
   if(!c)
 	  c = Fins.Model.get_context(context_name);

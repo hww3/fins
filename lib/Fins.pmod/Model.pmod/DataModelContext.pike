@@ -5,8 +5,13 @@ object log = Tools.Logging.get_logger("fins.model.datamodelcontext");
 
 mapping builder = ([ "possible_links" : ({}), "belongs_to" : ({}), "has_many": ({}), "has_many_many": ({}), "has_many_index": ({}) ]);
 
+mapping model_config;
+
 //! contains the finder object. see also @[Fins.Model.find_provider]
 object find;
+
+//!
+object config;
 
 //!
 object repository;
@@ -28,6 +33,7 @@ mapping xa_storage = ([]);
 
 //!
 Sql.Sql sql;
+
 string sql_url;
 
 string context_id;
@@ -37,6 +43,33 @@ int in_xa = 0;
 int lower_case_link_names = 0;
 
 int id = random(time());
+
+int is_default;
+
+protected void create(mapping|object config_section, string|void id)
+{
+  if(objectp(config_section))
+  {
+    did_clone(config_section);
+  }
+//  werror("config: %O\n", config_section);
+  
+  model_config = config_section;
+  context_id = id || config_section["id"] || Fins.Model.DEFAULT_MODEL;
+
+  if(!context_id)
+    Tools.throw(Error.Generic, "model config section does not contain an id field.");
+
+  string url = config_section["datasource"];
+  if(!url) throw(Error.Generic("Unable to load model: no datasource defined.\n"));
+
+  set_url(url);
+
+  is_default = (context_id == Fins.Model.DEFAULT_MODEL);
+
+  debug = (int)config_section["debug"];
+        
+}
 
 string _sprintf(mixed ... args)
 {
@@ -66,11 +99,11 @@ string unquote_binary(string s)
 string type()
 {
   string t;
-  catch(t = model->config["model"]["personality"]);
+  catch(t = model_config["personality"]);
   if(t) 
     return t;
   else 
-    return lower_case(Standards.URI(model->config["model"]["datasource"])->scheme);
+    return lower_case(Standards.URI(model_config["datasource"])->scheme);
 }
 
 program get_personality()
@@ -80,34 +113,52 @@ program get_personality()
 
 object get_repository()
 {
-	return Fins.Model.Repository();
-}
-
-/*
-int setup()
-{
-  Fins.Model.Repository repository;
+  object repo = master()->resolv("Fins.Model.Repository")();
   string definition_module;
   object o;
-  mapping config_section;
 
+  // get the object that contains the list of default names to use for finding model objects.
   object defaults = Fins.Helpers.Defaults;
   catch(defaults = (object)"defaults");
 
-  string url = config_section["datasource"];
-  if(!url) throw(Error.Generic("Unable to load model: no datasource defined.\n"));
-
-  if(is_default) definition_module = (config_section->definition_module || config->module_root);
-  else definition_module = config_section->definition_module;
+  // The default definition container module is either defined in the model config section,
+  // or it's the name of the app, as calculated by the Configuration object.
+  if(is_default) 
+  {
+    definition_module = (model_config->definition_module || (config?config->module_root:0));
+  }
+  else 
+  {
+    definition_module = model_config->definition_module;
+  }
 
   if(!definition_module)
   {
-    throw(Error.Generic("No model definition module specified. Cannot configure model."));
+    Tools.throw(Error.Generic, "No model definition module specified. Cannot configure model.");
   }
-  
-  return 0;
+
+  string mn = definition_module + "." + defaults->data_mapping_module_name;
+  if(o = master()->resolv(mn))
+  {
+    repo->set_model_module(o);
+    log->debug("Model %s using %s for data mapping objects.", context_id, mn); 
+  }
+  else
+    log->warn("Unable to find model data mapping definition module %s.", mn); 
+
+  mn = definition_module + "." + defaults->data_instance_module_name;
+  if(o = master()->resolv(mn))
+  {
+    repo->set_object_module(o);
+    log->debug("Model %s using %s for data object instances.", context_id, mn); 
+  }
+  else
+    log->warn("Unable to find model data object instance module %s.", mn); 
+
+  repo->set_default_context(this);
+
+  return repo;
 }
-*/
 
 int initialize()
 {
@@ -148,17 +199,25 @@ array execute(mixed ... args)
 //! copy this DataModelContext object and opens a new sql connection.
 object clone()
 {
-	object d = object_program(this)();
-	d->repository = repository;
-	d->cache = cache;
-	d->app = app;
-	d->model = model;
+	object d = object_program(this)(this);
+	return d;
+}
+
+void did_clone(object c)
+{
+	repository = c->repository;
+	cache = c->cache;
+	config = c->config;
+	app = c->app;
+	model = c->model;
+	debug = c->debug;
+	model_config = c->model_config;
+	context_id = c->context_id;
+	is_default = c->is_default;
+	sql_url = c->sql_url;
 	
 	// don't need to call the setter here, right?
-	d->sql_url = sql_url;
-	d->initialize();
-	d->debug = debug;
-	return d;
+  initialize();
 }
 
 void set_url(string url)
@@ -214,11 +273,11 @@ int in_transaction()
 
 //! not recommended for current use
 //! @deprecated
-function(string|program|object,mapping,void|.Criteria:array) _find = old_find;
+function(string|program|object,mapping,void|object/*.Criteria*/:array) _find = old_find;
 
 //! not recommended for current use
 //! @deprecated
-array old_find(string|program|object ot, mapping qualifiers, void|.Criteria criteria)
+array old_find(string|program|object ot, mapping qualifiers, void|object/*.Criteria*/ criteria)
 {
    object o;
    if(!objectp(ot))
@@ -269,7 +328,7 @@ array find_by_query(string|program|object ot, string query)
 
 //! not recommended for current use
 //! @deprecated
-.DataObjectInstance find_by_alternate(string|program|object ot, mixed id)
+object /*.DataObjectInstance*/ find_by_alternate(string|program|object ot, mixed id)
 {
    object o;
    if(!objectp(ot))
@@ -285,7 +344,7 @@ array find_by_query(string|program|object ot, string query)
 
 //! not recommended for current use
 //! @deprecated
-.DataObjectInstance new(string|program|object ot)
+object /*.DataObjectInstance*/ new(string|program|object ot)
 {
    object o;
    if(!objectp(ot))
@@ -308,6 +367,10 @@ void rebuild_fields()
 //!
 void register_types()
 {
+  
+  repository = get_repository();
+
+
   if(!repository->get_object_module())
   {
     log->warn("Using automatic model registration, but no datatype_definition_module set. Skipping.");

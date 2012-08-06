@@ -1,7 +1,7 @@
 inherit .Renderer;
 
 
-string get_editor_string(mixed|void value, Fins.Model.Field field, void|Fins.Model.DataObjectInstance i)
+string get_editor_string(mixed|void value, object/*Fins.Model.Field*/ field, void|object/*Fins.Model.DataObjectInstance*/ i)
 {
   string desc = "";
   object obj;
@@ -57,7 +57,7 @@ werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
   return desc;
 }
   
-optional mixed from_form(mapping value, Fins.Model.Field field, void|Fins.Model.DataObjectInstance i)
+optional mixed from_form(mapping value, object/*Fins.Model.Field*/ field, void|object /*Fins.Model.DataObjectInstance*/ i)
 { 
   return field->context->find(field->otherobject, value->id);
 }

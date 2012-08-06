@@ -14,11 +14,11 @@ program unit_program = Calendar.Second;
 function unit_parse = Calendar.ISO.dwim_time;
 string output_unit_format = "%Y-%M-%D %h:%m:%s";
 
-object renderer = Fins.Helpers.Renderers.DateTimeRenderer(); // ScaffoldRenderer
+object renderer = master()->resolv("Fins.Helpers.Renderers.DateTimeRenderer")(); // ScaffoldRenderer
 
 function encode_get = _encode_get;
 
-string _encode_get(mixed value, void|.DataObjectInstance i)
+string _encode_get(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   value = validate_get(value);
 
@@ -31,7 +31,7 @@ string _encode_get(mixed value, void|.DataObjectInstance i)
   return "'" + value->format_time() + "'";
 }
 
-string encode(mixed value, void|.DataObjectInstance i)
+string encode(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   value = validate(value, i);
 
@@ -44,7 +44,7 @@ string encode(mixed value, void|.DataObjectInstance i)
   return "'" + value->format_time() + "'";
 }
 
-string describe(mixed v, void|.DataObjectInstance i)
+string describe(mixed v, void|object/*.DataObjectInstance*/ i)
 {
   return v->format_time();
 }

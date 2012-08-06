@@ -40,12 +40,14 @@ protected string get_module_root()
 {
  string val;
 
+//write("get_module_root()\n");
+
  if(this["application"] && (val = this["application"]["name"]))
    return val;
  else if(file_stat((val = combine_path(app_dir, "config/.fins_app_name")))) 
    return String.trim_all_whites((string)Stdio.read_file(val));
  else
-   return ((app_dir/"/")-({""}))[-1];
+   return get_app_name();
 }
 
 protected string get_app_name()
@@ -55,7 +57,7 @@ protected string get_app_name()
 
 mapping insert_config_variables(mapping c)
 {
-  werror("config variables: %O\n", config_variables);
+//  werror("config variables: %O\n", config_variables);
   foreach(c; string k; string v)
   {
     if(v && stringp(v))
@@ -116,6 +118,7 @@ protected void create(string appdir, string|mapping _config_file)
   // we have to delay this until after we parse the config variables, as it looks in the config.
   if(appdir)
     module_root = get_module_root();
+//    write("module_root: %O\n", module_root);
 }
 
 //!

@@ -7,7 +7,7 @@ string name;
 
 constant type = "Float";
 
-object renderer = Fins.Helpers.Renderers.FloatRenderer(); // ScaffoldRenderer
+object renderer = master()->resolv("Fins.Helpers.Renderers.FloatRenderer")(); // ScaffoldRenderer
 
 void create(string _name, int _len, int(0..1) _null, float|void _default)
 {

@@ -14,6 +14,9 @@ constant SORT_DESCENDING = 1;
 //!
 constant SORT_ASCENDING = 0;
 
+//! 
+constant DEFAULT_MODEL = "_default";
+
 protected mapping contexts = ([]);
 
 private object default_finder;
@@ -36,7 +39,8 @@ mixed `->find()
 //!  an error if the requested model is not defined.
 object get_default_context()
 {
-  if(contexts["_default"]) return contexts["_default"];
+  object c;
+  if((c = contexts[Fins.Model.DEFAULT_MODEL])) return c;
   else throw(Error.Generic("No default model context defined (yet).\n"));
 }
 

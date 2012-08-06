@@ -13,9 +13,9 @@ program unit_program = Calendar.Second;
 function unit_parse = Calendar.ISO.dwim_time;
 string output_unit_format = "%h:%m:%s";
 
-object renderer = Fins.Helpers.Renderers.TimeRenderer(); // ScaffoldRenderer
+object renderer = master()->resolv("Fins.Helpers.Renderers.TimeRenderer")(); // ScaffoldRenderer
 
-string encode(mixed value, void|.DataObjectInstance i)
+string encode(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   value = validate(value);
 

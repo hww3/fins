@@ -23,19 +23,19 @@ static void create(string _name, int(0..1) _null)
 
 }
 
-string encode(mixed value, void|.DataObjectInstance i)
+string encode(mixed value, void|object/*.DataObjectInstance*/ i)
 {
     return "NULL";
 }
 
 
-mixed validate(mixed value, void|.DataObjectInstance i)
+mixed validate(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   throw(Error.Generic("TimeStamp fields cannot be set.\n"));
 }
 
 
-object decode(string value, void|.DataObjectInstance i)
+object decode(string value, void|object/*.DataObjectInstance*/ i)
 {
   if(context->personality->decode_timestamp_field)
     context->personality->decode_timestamp_field(value);  

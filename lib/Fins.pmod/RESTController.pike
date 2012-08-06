@@ -27,7 +27,7 @@ protected string model_component = 0;
 //! if your application contains multiple model definitions, this should be the 
 //! model "id" for the definition containing the component. the default value
 //! selects the default model definition.
-protected string model_id = "_default";
+protected string model_id = Fins.Model.DEFAULT_MODEL;
 
 //! a list of fields to filter from generated JSON for this type.
 //! 

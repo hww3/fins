@@ -17,7 +17,7 @@ int null;
 mixed default_value;
 string name;
 
-object renderer = Fins.Helpers.Renderers.DateRenderer(); // ScaffoldRenderer
+object renderer = master()->resolv("Fins.Helpers.Renderers.DateRenderer")(); // ScaffoldRenderer
 
 function encode_get = encode;
 function validate_get = validate;
@@ -42,7 +42,7 @@ static void create(string _name, int(0..1) _null, mixed|void _default)
 
 }
 
-object decode(string value, void|.DataObjectInstance i)
+object decode(string value, void|object/*.DataObjectInstance*/ i)
 {
    object x;
    catch {
@@ -51,7 +51,7 @@ object decode(string value, void|.DataObjectInstance i)
    return x;
 }
 
-string encode(mixed value, void|.DataObjectInstance i)
+string encode(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   value = validate(value, i);
 
@@ -65,7 +65,7 @@ string encode(mixed value, void|.DataObjectInstance i)
   return "'" + value->format_ymd() + "'";
 }
 
-string encode_xml(mixed value, void|.DataObjectInstance i)
+string encode_xml(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   value = validate(value, i);
   if(value == .Undefined)
@@ -78,12 +78,12 @@ string encode_xml(mixed value, void|.DataObjectInstance i)
   return value->format_smtp();
 }
 
-string describe(mixed v, void|.DataObjectInstance i)
+string describe(mixed v, void|object/*.DataObjectInstance*/ i)
 {
   v->format_ymd();
 }
 
-mixed validate(mixed value, void|.DataObjectInstance i)
+mixed validate(mixed value, void|object/*.DataObjectInstance*/ i)
 {
    if(value == .Undefined && !null && default_value == .Undefined)
    {

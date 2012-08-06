@@ -16,7 +16,7 @@ string model_component = 0;
 //! if your application contains multiple model definitions, this should be the 
 //! model "id" for the definition containing the component. the default value
 //! selects the default model definition.
-string model_id = "_default";
+string model_id = Fins.Model.DEFAULT_MODEL;
 
 object model_object;
 object model_context;

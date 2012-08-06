@@ -5,7 +5,7 @@ int null;
 string name;
 string default_value;
 
-object renderer = Fins.Helpers.Renderers.StringRenderer(); // ScaffoldRenderer
+object renderer = master()->resolv("Fins.Helpers.Renderers.StringRenderer")(); // ScaffoldRenderer
 
 constant type = "String";
 
@@ -18,7 +18,7 @@ void create(string _name, int _len, int(0..1) _null, string|void _default)
    ::create();
 }
 
-mixed validate(mixed value, void|.DataObjectInstance i)
+mixed validate(mixed value, void|object/*.DataObjectInstance*/ i)
 {
    if(value == .Undefined && !null && !default_value)
    {
@@ -50,7 +50,7 @@ mixed validate(mixed value, void|.DataObjectInstance i)
    return value;
 }
 
-string encode(mixed value, void|.DataObjectInstance i)
+string encode(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   value = validate(value, i);
 //werror("validated value " + value + "\n");

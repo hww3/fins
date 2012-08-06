@@ -25,7 +25,7 @@ static void create(Fins.Application a)
 //! definition will be registered in @[Fins.DataSources] using the value of its "id" attribute as the key.
 //!
 //! in addition to being available from Fins.Model, the default model is also available from @[Fins.Datasources] by its
-//! "id" attribute, or if no "id" is specified, using the key "_default".
+//! "id" attribute, or if no "id" is specified, using the key  @[Fins.Model.DEFAULT_MODEL], or "_default".
 //!
 //! @example
 //!    // get a context for the default model
@@ -33,80 +33,36 @@ static void create(Fins.Application a)
 //!    // get a context for the model whose configuration specifies an "id" of "my_additional_model"
 //!    Fins.Model.DataModelContext ctx2 = Fins.DataSources.my_additional_model;
 //!
+
+
 void load_model()
 {
-  object context = configure_context(config["model"], 1);
+  object context = get_context(config["model"], Fins.Model.DEFAULT_MODEL);
 
-  Fins.Model.set_context("_default", context);
+  Fins.Model.set_context(Fins.Model.DEFAULT_MODEL, context);
 
   if(config["model"]["id"])
     Fins.Model.set_context(config["model"]["id"], context);     
 
   foreach(glob("model_*", config->get_sections());; string md)
   {
-	 log->info("configuring model id <" + config[md]["id"] + "> specified in config secion " + md);
-     object ctx = configure_context(config[md], 0);
-     Fins.Model.set_context(config[md]["id"], ctx);
-   }
+	  log->info("configuring model id <" + config[md]["id"] + "> specified in config secion " + md);
+    object ctx = get_context(config[md], config[md]["id"]);
+    Fins.Model.set_context(config[md]["id"], ctx);
+  }
 }
 
-object get_context(mapping config_section)
+object get_context(mapping config_section, string id)
 {
-	return master()->resolv("Fins.Model.DataModelContext")();
-}
+	object c = master()->resolv("Fins.Model.DataModelContext")(config_section, id);
 
-object configure_context(mapping config_section, int is_default)
-{
-  Fins.Model.Repository repository;
-  string definition_module;
-  object o;
+  c->config = config;
+  c->cache = cache;
+  c->app = app;
+  c->model = this;
 
-  object defaults = Fins.Helpers.Defaults;
-  catch(defaults = (object)"defaults");
-
-  string url = config_section["datasource"];
-  if(!url) throw(Error.Generic("Unable to load model: no datasource defined.\n"));
-
-  if(is_default) definition_module = (config_section->definition_module || config->module_root);
-  else definition_module = config_section->definition_module;
-
-  if(!definition_module)
-  {
-    throw(Error.Generic("No model definition module specified. Cannot configure model."));
-  }
-
-  object d = get_context(config_section);
-  d->context_id = config_section["id"] || "_default";
-
-  repository = d->get_repository();
-  string mn = definition_module + "." + defaults->data_mapping_module_name;
-  if(o = master()->resolv(mn))
-  {
-    repository->set_model_module(o);
-    log->debug("Model %s using %s for data mapping objects.", d->context_id, mn); 
-  }
-  else
-    log->warn("Unable to find model data mapping definition module %s.", mn); 
-
-  mn = definition_module + "." + defaults->data_instance_module_name;
-  if(o = master()->resolv(mn))
-  {
-    repository->set_object_module(o);
-    log->debug("Model %s using %s for data object instances.", d->context_id, mn); 
-  }
-  else
-    log->warn("Unable to find model data object instance module %s.", mn); 
-
- d->set_url(url);
- d->debug = (int)config_section["debug"];
- d->repository = repository;
- d->cache = cache;
- d->app = app;
- d->model = this;
- d->initialize();
-
- repository->set_default_context(d);
-
- d->register_types();
-  return d;
+  c->initialize();
+  c->register_types();
+  
+  return c;
 }
