@@ -1,5 +1,7 @@
 #pike __REAL_VERSION__
 
+constant default_handler_key = "_default";
+
 #if constant(thread_create)
 class Thread
 {
