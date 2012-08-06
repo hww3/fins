@@ -1,7 +1,7 @@
 constant __author = "Bill Welliver <hww3@riverweb.com>";
 constant __version = "0.9.5";
 
-#if __VERSION__ >= 7.9.5
+#if __VERSION__ >= 7.8.5
 #define FINS_MULTI_TENANT 1
 #endif
 
@@ -46,7 +46,7 @@ class my_master
 
   constant multi_tenant_aware = 1;
 
-#define DEFAULT_KEY "_fins_default"
+#define DEFAULT_KEY Thread.default_handler_key
  
   mapping(string:object) handlers = ([]);
   mapping(object:string) handlers_for_thread = ([]);//set_weak_flag(([]), Pike.WEAK_INDICES);
