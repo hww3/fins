@@ -149,6 +149,7 @@ protected void create(.Configuration _config)
 //! performs housekeeping functions related to multi-tenancy. 
 void start()
 {
+  logger->info("Application URL is %s\n", get_my_url());
 }
 
 mixed do_method(string method, mixed ... args)
