@@ -160,7 +160,7 @@ int do_create(string migration)
     return 1;    
   }
   
-  string dir = Stdio.append_path(appname, "migration");
+  string dir = Stdio.append_path(appname, Fins.Util.Migrator.MIGRATION_DIR);
 
   Stdio.mkdirhier(dir);
   string fn = Fins.Util.Migrator()->low_new_migration(migration, 0, dir);
