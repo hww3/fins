@@ -35,7 +35,7 @@ static void create(string _name, string _otherobject, string _otherkey, .Criteri
 }
 
 // value will be null in a foreign key, as we're not in an object where that's a real field. 
-mixed decode(string value, void|.DataObjectInstance i) 
+mixed decode(string value, void|object/*.DataObjectInstance*/ i) 
 { 
   //werror("**--> decoding " + name + ", a link to %O from %O using %O\n", otherobject, i, otherkey);
 
@@ -53,13 +53,13 @@ mixed decode(string value, void|.DataObjectInstance i)
 }
 
 // value should be a dataobject instance of the type we're looking to set.
-string encode(.DataObjectInstance value, void|.DataObjectInstance i)
+string encode(.DataObjectInstance value, void|object/*.DataObjectInstance*/ i)
 {
   return "";
 }
 
 
-mixed validate(mixed value, void|.DataObjectInstance i)
+mixed validate(mixed value, void|object/*.DataObjectInstance*/ i)
 {
   return 0;
 }

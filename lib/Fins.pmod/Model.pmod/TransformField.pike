@@ -1,4 +1,4 @@
-inherit .Field;
+inherit .SqlField;
 
 int len;
 int null;

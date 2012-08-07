@@ -54,10 +54,9 @@ void load_model()
 
 object get_context(mapping config_section, string id)
 {
-	object c = master()->resolv("Fins.Model.DataModelContext")(config_section, id);
+	object c = master()->resolv("Fins.Model.SqlDataModelContext")(config_section, id);
 
   c->config = config;
-  c->cache = cache;
   c->app = app;
   c->model = this;
 

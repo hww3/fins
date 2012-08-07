@@ -1,11 +1,11 @@
-inherit .Field;
+inherit .SqlField;
 
 int len;
 int null;
 string name;
 string default_value;
 
-object renderer = master()->resolv("Fins.Helpers.Renderers.StringRenderer")(); // ScaffoldRenderer
+Fins.Helpers.Renderers.Renderer renderer = master()->resolv("Fins.Helpers.Renderers.StringRenderer")(); // ScaffoldRenderer
 
 constant type = "String";
 

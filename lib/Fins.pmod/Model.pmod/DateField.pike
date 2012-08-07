@@ -5,7 +5,7 @@
 //! (note that this is not a recommended way, as it's slow and 
 //! the parsing accuracy is not guaranteed.
 
-inherit .Field;
+inherit .SqlField;
 
 constant type = "Date";
 
@@ -16,8 +16,6 @@ string output_unit_format = "%Y-%M-%D";
 int null;
 mixed default_value;
 string name;
-
-object renderer = master()->resolv("Fins.Helpers.Renderers.DateRenderer")(); // ScaffoldRenderer
 
 function encode_get = encode;
 function validate_get = validate;
@@ -38,8 +36,9 @@ static void create(string _name, int(0..1) _null, mixed|void _default)
    }
    else default_value = .Undefined;
 
-   ::create();
+   renderer = master()->resolv("Fins.Helpers.Renderers.DateRenderer")(); // ScaffoldRenderer
 
+   ::create();
 }
 
 object decode(string value, void|object/*.DataObjectInstance*/ i)

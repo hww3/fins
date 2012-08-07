@@ -1,4 +1,4 @@
-inherit .Field;
+inherit .SqlField;
 
 string name;
 int is_primary_key = 1;

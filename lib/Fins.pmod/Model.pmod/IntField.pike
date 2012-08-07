@@ -1,11 +1,10 @@
-inherit .Field;
+inherit .SqlField;
 
 int len;
 int null;
 mixed default_value;
 string name;
 
-object renderer = master()->resolv("Fins.Helpers.Renderers.IntRenderer")(); // ScaffoldRenderer
 
 constant type = "Integer";
 
@@ -19,6 +18,8 @@ void create(string _name, int _len, int(0..1) _null, int|void _default)
    if(na == 4) 
      default_value = _default;
    else default_value = .Undefined;
+
+   renderer = master()->resolv("Fins.Helpers.Renderers.IntRenderer")(); // ScaffoldRenderer
 
    ::create();
 }

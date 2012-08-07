@@ -14,7 +14,7 @@ program unit_program = Calendar.Second;
 function unit_parse = Calendar.ISO.dwim_time;
 string output_unit_format = "%Y-%M-%D %h:%m:%s";
 
-object renderer = master()->resolv("Fins.Helpers.Renderers.DateTimeRenderer")(); // ScaffoldRenderer
+Fins.Helpers.Renderers.Renderer renderer = master()->resolv("Fins.Helpers.Renderers.DateTimeRenderer")(); // ScaffoldRenderer
 
 function encode_get = _encode_get;
 

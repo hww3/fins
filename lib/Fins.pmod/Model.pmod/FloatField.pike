@@ -1,4 +1,4 @@
-inherit .Field;
+inherit .SqlField;
 
 int len;
 int null;
@@ -7,7 +7,6 @@ string name;
 
 constant type = "Float";
 
-object renderer = master()->resolv("Fins.Helpers.Renderers.FloatRenderer")(); // ScaffoldRenderer
 
 void create(string _name, int _len, int(0..1) _null, float|void _default)
 {
@@ -18,6 +17,7 @@ void create(string _name, int _len, int(0..1) _null, float|void _default)
      default_value = _default;
    else default_value = .Undefined;
 
+   renderer = master()->resolv("Fins.Helpers.Renderers.FloatRenderer")(); // ScaffoldRenderer
    ::create();
 }
 

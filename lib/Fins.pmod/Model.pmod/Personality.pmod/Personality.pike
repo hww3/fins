@@ -13,19 +13,19 @@ static void create(object c)
 
 object initialize()
 {
-    object s = get_connection();
-    initialize_connection(s);
-    return s;
-  }
+  object s = get_connection();
+  initialize_connection(s);
+  return s;
+}
 
-  void initialize_connection(object s)
-  {  
-  }
+void initialize_connection(object s)
+{  
+}
 
-  object get_connection()
-  {
-    return master()->resolv("Sql.Sql")(context->sql_url);
-  }
+object get_connection()
+{
+  return master()->resolv("Sql.Sql")(context->url);
+}
 
 string get_serial_insert_value()
 {
