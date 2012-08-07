@@ -5,7 +5,7 @@ constant DOWN = 1;
 
 constant name = "";
 constant id = "";
-constant model = "";
+constant model_id = "";
 
 int verbose;
 
