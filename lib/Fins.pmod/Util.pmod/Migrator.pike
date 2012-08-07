@@ -1,5 +1,7 @@
 object application;
 
+constant MIGRATION_DIR = "db/migration";
+
 protected void create(void|object app)
 {
   application = app;  
@@ -54,7 +56,7 @@ array(Fins.Util.MigrationTask) get_migrations()
   if(!application)
     throw(Error.Generic("new_migration: no application loaded"));
 
-  string migration_dir = Stdio.append_path(application->config->app_dir, "migration");
+  string migration_dir = Stdio.append_path(application->config->app_dir, MIGRATION_DIR);
 
   array f = glob("*.pike", get_dir(migration_dir));
 
