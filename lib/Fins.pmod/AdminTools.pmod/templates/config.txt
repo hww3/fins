@@ -1,0 +1,19 @@
+# this is a Fins Application configuration file.
+#
+[model]
+class=model
+debug=1
+#datasource=mysql://user:pass@host/db
+#datasource=sqlite://${appdir}/config/${appname}.sqlite3
+
+[controller]
+class=controller
+reload=1
+
+[view]
+class=view
+reload=1
+
+[application]
+name=__APPNAME__
+class=application

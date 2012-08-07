@@ -3,80 +3,13 @@ import Tools.Logging;
 string newappname;
 
 string locale_contents = 
-#"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>
-<project name=\"__APPNAME__\">
- <baselang>eng</baselang>
- <xmlpath>translations/%L/__APPNAME__.xml</xmlpath>
- <nocopy/>
-</project>
-";
+#string "templates/locale.txt";
 
 string config_contents = 
-#"# this is a Fins Application configuration file.
-#
-[model]
-class=model
-debug=1
-#datasource=mysql://user:pass@host/db
-#datasource=sqlite://${appdir}/config/${appname}.sqlite3
-
-[controller]
-class=controller
-reload=1
-
-[view]
-class=view
-reload=1
-
-[application]
-name=__APPNAME__
-class=application
-";
+#string "templates/config.txt";
 
 string log_config_contents = 
-#"
-[logger.default]
-appender=default_console
-appender=default_debuglog
-level=INFO
-
-# this is the base logger for fins
-[logger.fins]
-level=INFO
-appender=default_console
-appender=default_debuglog
-
-[logger.fins.model.query]
-level=INFO
-appender=default_console
-
-[logger.fins.model]
-level=DEBUG
-
-[logger.access]
-appender=access_log
-class=Tools.Logging.Log.AccessLogger
-
-[logger.session]
-level=INFO
-appender=default_console
-appender=default_debuglog
-
-[appender.default_console]
-class=Tools.Logging.Log.ConsoleAppender
-format=%{mday:02d}/%{mon:02d}/%{year} %{hour:02d}:%{min:02d} - %{name} %{level} - ${app}/${config} - %{msg}
-
-[appender.default_debuglog]
-class=Tools.Logging.Log.RollingFileAppender
-file=${appdir}/logs/${config}_debug.log
-format=%{mday:02d}/%{mon:02d}/%{year} %{hour:02d}:%{min:02d} - %{name} %{level} - ${app}/${config} - %{msg}
-max_file_size=1mb
-max_backup=5
-
-[appender.access_log]
-file=${appdir}/logs/${config}_access.log
-class=Tools.Logging.Log.AccessFileAppender
-";
+#string "templates/log_config.txt";
 
 string model_contents =
 #"
@@ -95,46 +28,10 @@ inherit Fins.Application;
 ";
 
 string controller_contents =
-#"
-inherit Fins.FinsController;
-inherit Fins.RootController;
-
-protected void create(object application)
-{
-  ::create(application);
-}
-
-void index(object id, object response, mixed ... args)
-{
-  string req = sprintf(\"%O\", mkmapping(indices(id), values(id)));
-  string con = master()->describe_object(this);
-  string method = function_name(backtrace()[-1][2]);
-  object v = view->get_view(\"internal:index\");
-
-  v->add(\"appname\", \"__APPNAME__\");
-  v->add(\"request\", req);
-  v->add(\"controller\", con);
-  v->add(\"method\", method);
-
-  response->set_view(v);
-}
-";
+#string "templates/controller.txt";
 
 string script_base =
-#"#!/bin/sh
-
-  PIKE_ARGS=\"\"
-
-  if [ x$FINS_HOME != \"x\" ]; then
-    PIKE_ARGS=\"$PIKE_ARGS -M$FINS_HOME/lib\"
-  else
-    echo \"FINS_HOME is not defined. Define if you have Fins installed outside of your standard Pike module search path.\"
-  fi
-
-  ARG0=$1
-
-  cd `dirname $0`/../..
-";
+#string "templates/script_base.txt";
 
 string hilfe_contents = script_base +
 #"
@@ -182,8 +79,8 @@ int run()
   cd(newappname);
   
   // now, let's create the subfolders.
-  foreach(({"classes", "config", "modules", "templates", "static", "logs", "bin", "translations", "translations/eng"});; string dir)
-    mkdir(dir);
+  foreach(({"classes", "config", "modules", "templates", "static", "logs", "bin", "db/schema", "db/migration", "translations", "translations/eng"});; string dir)
+    Stdio.mkdirhier(dir);
  
   // now, we create the configfiles, one each for dev, test, prod.
   cd("config");

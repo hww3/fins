@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<project name="__APPNAME__">
+ <baselang>eng</baselang>
+ <xmlpath>translations/%L/__APPNAME__.xml</xmlpath>
+ <nocopy/>
+</project>
