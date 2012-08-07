@@ -12,7 +12,7 @@ void create(array(string) argv)
 
 void print_help()
 {
-  Log.error("Usage: pike -x fins migration create \"migration description\"\n");
+  Log.error("Usage: pike -x fins migration -a appname -c configname [create \"migration description\"]|[run [migration1 [migrationN]]]\n");
   exit(1);
 }
 int run()
