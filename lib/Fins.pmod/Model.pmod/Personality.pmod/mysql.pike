@@ -1,5 +1,6 @@
 inherit .Personality;
 
+constant splitter = ";\n";
 
 string quote_binary(string s)
 {

@@ -3,6 +3,8 @@ inherit .Personality;
 int use_datadir;
 string datadir;
 
+constant splitter = "\\g\n";
+
 mapping indexes = ([]);
 
 int initialize_connection(object s)
