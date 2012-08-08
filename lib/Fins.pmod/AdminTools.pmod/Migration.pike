@@ -98,7 +98,10 @@ int do_run(string... args)
   {
     appname = Stdio.append_path(getcwd(), appname);
   }
-  
+
+  // we only load 1 app in this tool, so there's no need to do multi-tenancy
+  // which makes it's easier to interact with the application from the main thread.
+  Fins.Loader.set_multi_tenant(0);
   object app = Fins.Loader.load_app(appname, config_name);
   
   if(!app)
