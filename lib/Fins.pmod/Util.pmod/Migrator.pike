@@ -2,9 +2,19 @@ object application;
 
 constant MIGRATION_DIR = "db/migration";
 
+//!
+string migration_dir;
+
+function write_func = Stdio.stdout.write;
+
 protected void create(void|object app)
 {
   application = app;  
+  
+  if(!application)
+    throw(Error.Generic("new_migration: no application loaded"));
+
+  migration_dir = Stdio.append_path(application->config->app_dir, MIGRATION_DIR);
 }
 
 string make_descriptor(string text)
@@ -17,6 +27,7 @@ string make_id(object id)
   return replace(id->format_time(), ({" ", "-", ":", "."}), ({"", "", "", ""})); 
 }
 
+//!
 string make_class(string text, object id)
 {
   return
@@ -49,15 +60,8 @@ void announce(string message, mixed ... args)
   write_func(m + " " + ("="*l) + "\n");
 }
 
-function write_func = Stdio.stdout.write;
-
 array(Fins.Util.MigrationTask) get_migrations()
 {
-  if(!application)
-    throw(Error.Generic("new_migration: no application loaded"));
-
-  string migration_dir = Stdio.append_path(application->config->app_dir, MIGRATION_DIR);
-
   array f = glob("*.pike", get_dir(migration_dir));
 
   array migrations = ({});
@@ -79,18 +83,19 @@ array(Fins.Util.MigrationTask) get_migrations()
       werror("program %s doesn't implement MigrationTask.\n", p);
     }
     else
-      migrations += ({mp(application)});
+      migrations += ({mp(application, this)});
   }
   
   return migrations;
 }
 
+//!
 string new_migration(string text, object|void id)
 {
   if(!application)
     throw(Error.Generic("new_migration: no application loaded"));
     
-  return low_new_migration(text, id, application->config->app_dir);
+  return low_new_migration(text, id, migration_dir);
 }
 
 string low_new_migration(string text, object|void id, string dir)
