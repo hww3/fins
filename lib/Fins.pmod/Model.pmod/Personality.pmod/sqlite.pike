@@ -1,9 +1,10 @@
 inherit .Personality;
 
+constant type = "sqlite";
+constant splitter = "\\g\n";
+
 int use_datadir;
 string datadir;
-
-constant splitter = "\\g\n";
 
 mapping indexes = ([]);
 

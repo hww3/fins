@@ -1,5 +1,6 @@
 inherit .Personality;
 
+constant type = "postgres";
 constant splitter = "\\g\n";
 
 string get_serial_insert_value()

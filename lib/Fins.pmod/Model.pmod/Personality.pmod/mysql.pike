@@ -1,5 +1,6 @@
 inherit .Personality;
 
+constant type = "mysql";
 constant splitter = ";\n";
 
 string quote_binary(string s)

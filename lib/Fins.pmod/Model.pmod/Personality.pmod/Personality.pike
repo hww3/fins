@@ -1,3 +1,6 @@
+constant type = "";
+constant splitter = ";\n";
+
 object log = Tools.Logging.get_logger("fins.model.personality");
 object context;
 
