@@ -46,6 +46,7 @@ object get_default_context()
 
 object set_context(string model_id, object context)
 {
+//  werror("set_context(%O, %O)\n", model_id, context);
   contexts[model_id] = context;
 }
 
@@ -55,6 +56,7 @@ object set_context(string model_id, object context)
 //!  an error if the requested model is not defined.
 object get_context(string model_id)
 {
+//  werror("contexts: %O\n", contexts);
   if(contexts[model_id])
   {
   //	werror("context [%s] = %O\n", model_id, contexts[model_id]);
