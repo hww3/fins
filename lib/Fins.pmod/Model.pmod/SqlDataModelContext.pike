@@ -155,6 +155,11 @@ int drop_table(string table)
   else return 0;
 }
 
+int drop_column(string table, string|array columns)
+{
+  return personality->drop_column(table, columns);
+}
+
 void rebuild_fields()
 {
    foreach(repository->object_definitions;; object d)

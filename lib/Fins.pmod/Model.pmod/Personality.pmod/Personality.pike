@@ -35,6 +35,47 @@ string get_serial_insert_value()
 	return "NULL";
 }
 
+
+//! delete columns from a table.
+//!
+//! @param table
+//!   name of the table containing columns to drop
+//!
+//! @param columns
+//!   name or array of names of colums to drop
+//!
+//! @note
+//!   transaction will be rolled back if this operation fails.
+int drop_column(string table, string|array columns)
+{
+   if(stringp(columns))
+   {
+     columns = ({columns});
+   }
+   
+   array spec = allocate(sizeof(columns));
+   
+   foreach(columns; int i; string c)
+   {
+     spec[i] = sprintf("DROP COLUMN %s", c);
+   }
+   
+   string query = sprintf("ALTER TABLE %s %s", table, spec*", ");
+   
+   mixed e;
+   
+   context->begin_transaction();
+   if((e = catch(context->execute(query))))
+   {
+     context->rollback_transaction();
+     throw(e);
+   }
+   else
+     context->begin_transaction();
+   
+   return 1; 
+}
+
 array(mapping) list_fields(string table)
 {
    array x = context->sql->list_fields(table);
