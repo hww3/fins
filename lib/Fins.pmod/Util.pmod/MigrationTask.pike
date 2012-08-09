@@ -130,7 +130,7 @@ void apply_sql(string segment_name, string|void engine_specific)
    mapping tables = ([]);
    array commands = ({});
 
-   log->info("loaded schema %s for %s.", segment_name, engine);
+   log->info("loaded ddl %s for %s.", segment_name, engine);
 
    // Remove the #'s, if they're there.
    string _s = "";
@@ -152,14 +152,14 @@ void apply_sql(string segment_name, string|void engine_specific)
    foreach((s / splitter) - ({ "\n" }), command) 
    {
      string table_name;
-     if (sscanf(upper_case(command), "CREATE TABLE %s %*s", table_name))
+     if (sscanf(lower_case(command), "create table %s %*s", table_name))
      {
-       log->debug("found definition for %s.", table_name);
+       log->info("found definition for %s.", table_name);
        tables[table_name] = String.trim_all_whites(command);
      }
-     else
+     else if(sizeof(command))
      {
-       log->debug("adding sql query to queue.");
+       log->info("adding sql query to queue.");
        commands += ({command});
      }
    }
@@ -178,7 +178,7 @@ void apply_sql(string segment_name, string|void engine_specific)
        log->info("skipping definition for %s.", name);
        continue;
      } 
-     log->debug("command: %s", tables[name]);
+     log->info("command: %s", tables[name]);
        
      e = catch(context->execute(tables[name]));
      if (e) 
@@ -190,7 +190,7 @@ void apply_sql(string segment_name, string|void engine_specific)
 
    foreach(commands;; string c)
    {
-     log->debug("executing: %s", c);
+     log->info("executing: %O", c);
      e = catch(context->execute(c));
      if (e) 
      {
