@@ -10,8 +10,12 @@ constant id = "";
 constant model_id = Fins.Model.DEFAULT_MODEL;
 
 int verbose;
-object context;
-object migration_engine;
+
+//!
+Fins.Model.DataModelContext context;
+
+//!
+Fins.Util.Migrator migration_engine;
 
 static void create(object app, object migrator)
 {
@@ -24,6 +28,7 @@ static void create(object app, object migrator)
   setup();
 }
 
+//! actions performed before the migration is initiated.
 void setup()
 {
   
@@ -61,16 +66,25 @@ void run(int|void direction)
   announce(dir + " in %0.2f sec, %0.2f cpu", t, g);
 }
 
+//! perform a migration
 void up()
 {
   
 }
 
+//! revert a migration
 void down()
 {
   
 }
 
+//! display a message
+//!
+//! @param message
+//!   the message to display
+//! 
+//! @param args
+//!   arguments to insert into message, @[sprintf]-style.
 void announce(string message, mixed ... args)
 {
   int l;
@@ -82,7 +96,8 @@ void announce(string message, mixed ... args)
 
 //! run a set of engine specific sql statements.
 //!
-//! files are stored in db/migration/scripts.
+//! files are stored in db/migration/scripts. each file should contain statements
+//! separated by semicolons and at least 1 new line.
 //!
 //! @param segment_name
 //!   the base name of a file containing sql statements. the extension for the 
@@ -198,4 +213,13 @@ void apply_sql(string segment_name, string|void engine_specific)
        throw(e);
      }
    }
+}
+
+//! drop a sql table 
+//!
+//! @param table
+//!   the sql table name to drop.
+void drop_table(string table)
+{
+  context->drop_table(table);
 }
