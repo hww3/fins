@@ -114,6 +114,8 @@ int drop_column(string table, string|array columns)
      columns = ({columns});
    }
   
+   // TODO: verify that the column already exists in the table.
+   
    array columns_left = get_columns(table, columns);
    
    mapping ddl = regenerate_ddl(table, columns, 1);
@@ -140,7 +142,6 @@ int drop_column(string table, string|array columns)
 
        foreach(ddl->triggers;; q)
          context->execute(q);
-
    };
    if(e)  
    {

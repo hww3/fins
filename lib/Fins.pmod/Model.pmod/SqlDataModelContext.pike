@@ -143,6 +143,16 @@ int in_transaction()
   return in_xa;
 }
 
+int create_index(string table, string name, array fields, int unique)
+{
+  return personality->create_index(table, name, fields, unique);  
+}
+
+int drop_index(string table, string index)
+{
+  return personality->drop_index(table, index);
+}
+
 //! @returns
 //!  1 if table existed and was dropped, 0 otherwise.
 int drop_table(string table)
@@ -155,9 +165,21 @@ int drop_table(string table)
   else return 0;
 }
 
+//! drops one or more columns from a table
+//!
+//! @note
+//!  this functionality is simulated for some databases (such as sqlite)
+//!  and therefore may not behave properly in all situations. always
+//!  backup data and test before relying on the results of this operation.
 int drop_column(string table, string|array columns)
 {
   return personality->drop_column(table, columns);
+}
+
+//!
+int rename_table(string table, string newname)
+{
+  return personality->rename_table(table, newname);
 }
 
 void rebuild_fields()

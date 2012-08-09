@@ -35,6 +35,29 @@ string get_serial_insert_value()
 	return "NULL";
 }
 
+int create_index(string table, string name, array fields, int unique)
+{
+  context->execute(sprintf("CREATE %s INDEX %s ON %s (%s)", (unique?"UNIQUE":""), name, table, fields *","));
+
+  // TODO: return a better value.
+  return 1;
+}
+
+int drop_index(string table, string index)
+{
+  context->execute(sprintf("DROP INDEX %s ON %s", index, table));
+
+  // TODO: return a better value.
+  return 1;
+}
+
+//!
+int rename_table(string table, string newname)
+{
+  context->execute(sprintf("ALTER TABLE %s RENAME TO %s", table, newname));
+  
+  return 1;
+}
 
 //! delete columns from a table.
 //!
