@@ -177,7 +177,7 @@ array get_columns(string table, array columns_to_exclude)
 //! and can also fetch trigger information. note that triggers may need to be
 //! assessed manually, as they may involve columns excluded from the table definition.
 //!
-//! @todo
+//! @note
 //!  doesn't handle foreign keys yet.
 mapping regenerate_ddl(string table, array columns_to_exclude, int newtable)
 {
