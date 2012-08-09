@@ -143,6 +143,18 @@ int in_transaction()
   return in_xa;
 }
 
+//! @returns
+//!  1 if table existed and was dropped, 0 otherwise.
+int drop_table(string table)
+{
+  array t = sql->list_tables(table);
+  if(search(t, table) != -1)
+  {
+    sql->query(sprintf("drop table %s", table));
+  }
+  else return 0;
+}
+
 void rebuild_fields()
 {
    foreach(repository->object_definitions;; object d)
