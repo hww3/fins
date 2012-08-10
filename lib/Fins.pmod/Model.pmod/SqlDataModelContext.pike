@@ -182,6 +182,11 @@ int rename_table(string table, string newname)
   return personality->rename_table(table, newname);
 }
 
+int rename_column(string table, string name, string newname)
+{
+  
+}
+
 void rebuild_fields()
 {
    foreach(repository->object_definitions;; object d)

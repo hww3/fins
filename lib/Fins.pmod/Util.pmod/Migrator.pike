@@ -1,6 +1,13 @@
-object application;
+//!  Entry point for migration subsystem
+//!
+//!
 
 constant MIGRATION_DIR = "db/migration";
+
+//!
+object application;
+
+object log = Tools.Logging.get_logger("fins.db.migration");
 
 //!
 string migration_dir;
@@ -95,7 +102,7 @@ string new_migration(string text, object|void id)
   if(!application)
     throw(Error.Generic("new_migration: no application loaded"));
     
-  return low_new_migration(text, id, migration_dir);
+  return low_new_migration(text, id, Stdio.append_path(application->config->app_dir, migration_dir));
 }
 
 string low_new_migration(string text, object|void id, string dir)
@@ -103,8 +110,10 @@ string low_new_migration(string text, object|void id, string dir)
   if(!id) id = Calendar.now();
   string c = make_class(text, id);
   string fn = make_id(id) + "_" + make_descriptor(text) + ".pike";
+  string afn = Stdio.append_path(dir || getcwd(), fn);
   
-  Stdio.write_file(Stdio.append_path(dir || getcwd(), fn), c);
+  log->debug("Creating new migration in %s.", afn);
+  Stdio.write_file(afn, c);
   
   return fn;
 }

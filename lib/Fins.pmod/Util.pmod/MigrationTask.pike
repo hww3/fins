@@ -223,3 +223,10 @@ void drop_table(string table)
 {
   context->drop_table(table);
 }
+
+int rename_table(string table, string newname);
+int rename_column(string table, string name, string newname);
+int drop_column(string table, string|array columns);
+int drop_table(string table);
+int drop_index(string table, string index);
+int create_index(string table, string name, array fields, int unique);

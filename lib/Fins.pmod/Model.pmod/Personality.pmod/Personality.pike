@@ -59,6 +59,12 @@ int rename_table(string table, string newname)
   return 1;
 }
 
+int rename_column(string table, string name, string newname)
+{
+  string def;
+  context->execute(sprintf("ALTER TABLE %s CHANGE %s %s", table, name, newname, def));
+}
+
 //! delete columns from a table.
 //!
 //! @param table

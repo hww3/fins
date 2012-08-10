@@ -119,12 +119,57 @@ int drop_column(string table, string|array columns)
    array columns_left = get_columns(table, columns);
    
    mapping ddl = regenerate_ddl(table, columns, 1);
-   string query = 
    
    context->begin_transaction();
    mixed e;
 
    string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (columns_left->name)*", ", (columns_left->name) *", ", table);
+   string drop_query = sprintf("DROP TABLE %s", table);
+   string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
+   
+   e = catch
+   {
+     context->execute(ddl->table);
+     context->execute(copy_query);
+     context->execute(drop_query);
+     context->execute(rename_query);
+
+     string q;
+     
+     foreach(ddl->indexes;; q)
+       context->execute(q);
+
+       foreach(ddl->triggers;; q)
+         context->execute(q);
+   };
+   if(e)  
+   {
+     context->rollback_transaction();
+     throw(e);
+   }
+   else
+     context->commit_transaction();
+   
+   return 1; 
+}
+
+int rename_column(string table, string name, string newname)
+{
+   array columns_left = get_columns(table, ({}));
+   array newnames = columns_left->name;
+   
+   int i = search(newnames, name);
+   if(i == -1)
+     Tools.throw(Error.Generic, "field %s does not exist in table %s", name, table);
+   
+   newnames[i] = newname;
+   
+   mapping ddl = low_regenerate_ddl(table, columns_left + ({}), newnames, 1);
+   
+   context->begin_transaction();
+   mixed e;
+
+   string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, newnames*", ", (columns_left->name) *", ", table);
    string drop_query = sprintf("DROP TABLE %s", table);
    string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
    
@@ -179,36 +224,33 @@ array get_columns(string table, array columns_to_exclude)
 //!
 //! @note
 //!  doesn't handle foreign keys yet.
-mapping regenerate_ddl(string table, array columns_to_exclude, int newtable)
+mapping low_regenerate_ddl(string table, array columns, array newnames, int newtable)
 {
   string primary_key;
   array indexes = ({});
-  array x;
-  
-  x = get_columns(table, columns_to_exclude);    
-//  werror("%O\n", columns);
+  array spec = ({});  
 
-  array spec = ({});
-    
-  foreach(x;;mapping c)
+  foreach(columns; int i;mapping c)
   {
+    c->newname = newnames[i];
+      
     if((int)c->pk) primary_key = c->name;
-    
+
     string def = sprintf("%s %s %s %s %s", 
-      c->name, 
+      c->newname, 
       c->type, 
       (c->dflt_value != ""?(sprintf("DEFAULT VALUE '%s'", c->dflt_value)):""), 
       ((int)c->notnull?"NOT NULL":""), 
       ((int)c->pk?"PRIMARY KEY":""));
     spec += ({def});
   }
-
+  
   string query = sprintf("CREATE TABLE %s (\n%s\n)", (newtable?"new_" + table:table), spec*",\n");
 
   mapping ind = ([]);
 
-  x = context->execute(sprintf("PRAGMA index_list (%s)", table));
-//  werror("%O\n", x);
+  array x = context->execute(sprintf("PRAGMA index_list (%s)", table));
+  //  werror("%O\n", x);
 
   foreach(x;; mapping i)
   {
@@ -220,16 +262,22 @@ mapping regenerate_ddl(string table, array columns_to_exclude, int newtable)
 
     foreach(z;; mapping index_info)
     {
-      if(search(columns_to_exclude, index_info->name) == -1)
-        def->columns = def->columns + ({index_info->name});
+      if(search(columns->name, index_info->name) != -1)
+      {
+        string n = index_info->name;
+        
+        // map the old name to the new name.
+        n = newnames[search(columns->name, n)];
+        def->columns = def->columns + ({n});
+      }
     }
     if(sizeof(def->columns))
       ind[i->name] = def;
   }
 
   array index_queries = ({});
-    
- foreach(ind; string index_name;mapping index)
+
+  foreach(ind; string index_name;mapping index)
   {
     // if the index name is a sqlite generated name, we can't use it.
     if(has_prefix(index_name, "sqlite_autoindex_"))
@@ -237,9 +285,19 @@ mapping regenerate_ddl(string table, array columns_to_exclude, int newtable)
     string iq = sprintf("CREATE %s INDEX %s ON %s (%s)", (index->unique?"UNIQUE":""), index_name, table, index->columns * ", ");
     index_queries += ({iq});
   } 
-  
+
   x = context->execute(sprintf("SELECT * FROM sqlite_master where tbl_name='%s' and type='trigger'", table));
-   
-//  write(query + "\n");
+
+  //  write(query + "\n");
   return (["table": query, "indexes": index_queries, "triggers": x->sql]);
+}
+
+mapping regenerate_ddl(string table, array columns_to_exclude, int newtable)
+{
+  array x;
+  
+  x = get_columns(table, columns_to_exclude);    
+//  werror("%O\n", columns);
+
+  return low_regenerate_ddl(table, x, x->name, newtable);
 }
