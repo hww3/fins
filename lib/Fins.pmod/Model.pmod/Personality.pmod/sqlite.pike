@@ -153,6 +153,56 @@ int drop_column(string table, string|array columns)
    return 1; 
 }
 
+//!
+int change_column(string table, string name, mapping fd)
+{
+  array columns_left = get_columns(table, ({}));
+
+  int i = search(columns_left->names, name);
+  if(i == -1)
+    Tools.throw(Error.Generic, "field %s does not exist in table %s", name, table);
+
+  array oldnames = columns_left->name;
+  columns_left[i] = fd;
+
+  array newnames = columns_left->name;
+
+  mapping ddl = low_regenerate_ddl(table, columns_left, newnames, 1);
+
+  context->begin_transaction();
+  mixed e;
+
+  string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (newnames * ", "), (oldnames * ", "), table);
+  string drop_query = sprintf("DROP TABLE %s", table);
+  string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
+
+  e = catch
+  {
+    context->execute(ddl->table);
+    context->execute(copy_query);
+    context->execute(drop_query);
+    context->execute(rename_query);
+
+    string q;
+    
+    foreach(ddl->indexes;; q)
+      context->execute(q);
+
+      foreach(ddl->triggers;; q)
+        context->execute(q);
+  };
+  if(e)  
+  {
+    context->rollback_transaction();
+    throw(e);
+  }
+  else
+    context->commit_transaction();
+  
+  return 1; 
+}
+
+
 int rename_column(string table, string name, string newname)
 {
    array columns_left = get_columns(table, ({}));
@@ -164,7 +214,7 @@ int rename_column(string table, string name, string newname)
    
    newnames[i] = newname;
    
-   mapping ddl = low_regenerate_ddl(table, columns_left + ({}), newnames, 1);
+   mapping ddl = low_regenerate_ddl(table, columns_left, newnames, 1);
    
    context->begin_transaction();
    mixed e;

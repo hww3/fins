@@ -35,6 +35,7 @@ string get_serial_insert_value()
 	return "NULL";
 }
 
+//!
 int create_index(string table, string name, array fields, int unique)
 {
   context->execute(sprintf("CREATE %s INDEX %s ON %s (%s)", (unique?"UNIQUE":""), name, table, fields *","));
@@ -43,6 +44,7 @@ int create_index(string table, string name, array fields, int unique)
   return 1;
 }
 
+//!
 int drop_index(string table, string index)
 {
   context->execute(sprintf("DROP INDEX %s ON %s", index, table));
@@ -59,7 +61,7 @@ int rename_table(string table, string newname)
   return 1;
 }
 
-// returns sql datatype definition (but not the field name) for a given field.
+//! returns sql datatype definition (but not the field name) for a given field.
 string get_field_definition(string table, string field, int|void include_index)
 {
   mapping fd = context->sql->list_fields(table, field)[0];
@@ -78,6 +80,7 @@ protected string low_get_field_definition(mapping fd, int|void include_index)
                   ((include_index&&fd->flags->primary_key)?"PRIMARY KEY":""));
 }
 
+//!
 int rename_column(string table, string name, string newname)
 {
   string def;
@@ -88,6 +91,17 @@ int rename_column(string table, string name, string newname)
   log->info("executing "+ q);
   
   context->execute(q);
+}
+
+//!
+int change_column(string table, string name, mapping fd)
+{
+  string def;
+  def = get_field_definition(table, name);  
+  string q = sprintf("ALTER TABLE %s CHANGE %s %s %s", table, name, newname, def);
+
+  log->info("executing "+ q);
+  context->execute(q);  
 }
 
 //! delete columns from a table.
@@ -130,9 +144,10 @@ int drop_column(string table, string|array columns)
    return 1; 
 }
 
-array(mapping) list_fields(string table)
+//!
+array(mapping) list_fields(string table, string|void wild)
 {
-   array x = context->sql->list_fields(table);
+   array x = context->sql->list_fields(table, wild);
    return map(x, map_field, table);
 }
 
@@ -148,6 +163,7 @@ string make_fn(string s)
   return  (string)hash(s + time());
 }
 
+//!
 string quote_binary(string s)
 {
   if(!use_datadir)
@@ -161,6 +177,7 @@ string quote_binary(string s)
   }
 }
 
+//!
 string unquote_binary(string s)
 {
   if(!use_datadir)
@@ -274,21 +291,25 @@ mapping map_field(mapping t, string table)
   return field;
 }
 
+//!
 int(0..1) transaction_supported()
 {
   return 0;
 }
 
+//! abstract method
 void begin_transaction()
 {
   Tools.throw(Fins.Errors.ModelError, "Transactions are not supported by this database engine.");
 }
 
+//! abstract method
 void rollback_transaction()
 {
   Tools.throw(Fins.Errors.ModelError, "Transactions are not supported by this database engine.");
 }
 
+//! abstract method
 void commit_transaction()
 {
   Tools.throw(Fins.Errors.ModelError, "Transactions are not supported by this database engine.");
