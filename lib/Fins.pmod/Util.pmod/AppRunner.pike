@@ -281,7 +281,7 @@ void register_ports()
   }
   else
   {
-    logger->exception("Unable to determine application URL. Still starting app but you probably won't be able to access it. Root exception follows.", err);
+    logger->warn("Unable to determine application URL. Still starting app but you probably won't be able to access it. Root exception follows.", err);
   }  
 }
 
