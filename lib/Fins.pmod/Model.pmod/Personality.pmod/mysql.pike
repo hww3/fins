@@ -34,13 +34,41 @@ mapping get_field_info(string table, string field)
   mapping m = ([]);
 
   array r = context->execute("SHOW FIELDS FROM " + table + " LIKE '" + field + "'"); 
-  if(!sizeof(r)) throw(Error.Generic("Field " + field + " does not exist in " + table + ".\n"));
+  if(!sizeof(r)) 
+    Tools.throw(Error.Generic, "Field %s does not exist in %s.", field, table);
 
   if(has_prefix(r[0]->Type, "timestamp")) m->type = "timestamp";
   else m->type = r[0]->Type;
   if(r[0]->Key && r[0]->Key == "UNI") m->unique = 1;
 
   return m;
+}
+
+string get_field_definition(string table, string field, int include_index)
+{
+  array r = context->execute("SHOW FIELDS FROM " + table + " LIKE '" + field + "'"); 
+  if(!sizeof(r)) 
+    Tools.throw(Error.Generic, "Field %s does not exist in %s.", field, table);
+  
+  mapping fd = r[0];
+  if(fd->Field != field)
+    Tools.throw(Error.Generic, "Field %s does not exist in %s.", field, table);
+  string def;
+  
+  def = fd->Type + " " + ((fd->Null == "NO")?"NOT NULL ":"")  + 
+  
+  if(fd->Default)
+    def += (" " + fd->default);
+  def += (" " + fd->extra);
+  
+  if(include_index)
+  {
+    if(fd->Key == "UNI")
+      def += " UNIQUE";
+    else if(fd->Key == "PRI")
+      def += " PRIMARY KEY";
+  }
+  return def;
 }
 
 int(0..1) transaction_supported()

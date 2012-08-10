@@ -59,10 +59,29 @@ int rename_table(string table, string newname)
   return 1;
 }
 
+string get_field_definition(string table, string name)
+{
+  string def;
+  mapping fd = context->sql->list_fields(table, name)[0];
+  
+  if(fd->name != name)
+    Tools.throw(Error.Generic, "unable to find field %s in table %s.", name, table);
+  
+  def = sprintf("%s(%s%s) %s %s", fd->type, fd->length, (fd->decimals?(", " + fd->decimals):""), (fd->flags->not_null?"NOT NULL":""), (fd->default?("DEFAULT '" + fd->default + "'") :""));
+  
+  return def;
+}
+
 int rename_column(string table, string name, string newname)
 {
   string def;
-  context->execute(sprintf("ALTER TABLE %s CHANGE %s %s", table, name, newname, def));
+
+  def = get_field_definition(table, name);  
+  string q = sprintf("ALTER TABLE %s CHANGE %s %s %s", table, name, newname, def);
+  
+  log->info("executing "+ q);
+  
+  context->execute(q);
 }
 
 //! delete columns from a table.
@@ -88,7 +107,7 @@ int drop_column(string table, string|array columns)
    {
      spec[i] = sprintf("DROP COLUMN %s", c);
    }
-   
+
    string query = sprintf("ALTER TABLE %s %s", table, spec*", ");
    
    mixed e;
