@@ -201,7 +201,7 @@ int rename_column(string table, string name, string newname)
 
 array get_columns(string table, array columns_to_exclude)
 {
-  array x = context->execute(sprintf("PRAGMA table_info (%s)", table));
+  array x = context->sql->list_fields(table);
 
   if(!x) return 0;
   
@@ -214,6 +214,30 @@ array get_columns(string table, array columns_to_exclude)
   }
   
   return columns;
+}
+
+string get_field_definition(string table, string field, int|void include_index)
+{
+  mapping c;
+  array x = context->sql->list_fields(table, field);
+  
+  if(!sizeof(x) || x[0]->name != field)
+    Tools.throw(Error.Generic, "field %s not found in table %s.", field, table);
+  
+  c = x[0];
+
+  return low_get_field_definition(c, include_index);
+}
+
+protected string low_get_field_definition(mapping fd, int|void include_index)  
+{
+  string def = sprintf("%s%s %s %s %s", 
+    upper_case(fd->type), (fd->length?("(" + fd->length + ")"):""),
+    (fd->default != ""?(sprintf("DEFAULT VALUE '%s'", fd->default)):""), 
+    ((int)fd->flags->not_null?"NOT NULL":""), 
+    ((include_index && (int)fd->flags->primary_key)?"PRIMARY KEY":""));
+
+  return String.trim_whites(def);
 }
 
 //! generate a set of sql to generate a table and associated objects
@@ -234,14 +258,11 @@ mapping low_regenerate_ddl(string table, array columns, array newnames, int newt
   {
     c->newname = newnames[i];
       
-    if((int)c->pk) primary_key = c->name;
+    if((int)c->flags->primary_key) primary_key = c->name;
 
-    string def = sprintf("%s %s %s %s %s", 
+    string def = sprintf("%s %s",  
       c->newname, 
-      c->type, 
-      (c->dflt_value != ""?(sprintf("DEFAULT VALUE '%s'", c->dflt_value)):""), 
-      ((int)c->notnull?"NOT NULL":""), 
-      ((int)c->pk?"PRIMARY KEY":""));
+      low_get_field_definition(c, 1));
     spec += ({def});
   }
   

@@ -59,17 +59,23 @@ int rename_table(string table, string newname)
   return 1;
 }
 
-string get_field_definition(string table, string name)
+// returns sql datatype definition (but not the field name) for a given field.
+string get_field_definition(string table, string field, int|void include_index)
 {
-  string def;
-  mapping fd = context->sql->list_fields(table, name)[0];
+  mapping fd = context->sql->list_fields(table, field)[0];
   
-  if(fd->name != name)
-    Tools.throw(Error.Generic, "unable to find field %s in table %s.", name, table);
+  if(fd->name != field)
+    Tools.throw(Error.Generic, "unable to find field %s in table %s.", field, table);
   
-  def = sprintf("%s(%s%s) %s %s", fd->type, fd->length, (fd->decimals?(", " + fd->decimals):""), (fd->flags->not_null?"NOT NULL":""), (fd->default?("DEFAULT '" + fd->default + "'") :""));
-  
-  return def;
+  return low_get_field_definition(fd, include_index);
+}
+
+protected string low_get_field_definition(mapping fd, int|void include_index)
+{
+  return sprintf("%s(%s%s) %s %s %s", fd->type, fd->length, 
+                  (fd->decimals?(", " + fd->decimals):""), (fd->flags->not_null?"NOT NULL":""), 
+                  (fd->default?("DEFAULT '" + fd->default + "'") :""), 
+                  ((include_index&&fd->flags->primary_key)?"PRIMARY KEY":""));
 }
 
 int rename_column(string table, string name, string newname)
@@ -275,15 +281,15 @@ int(0..1) transaction_supported()
 
 void begin_transaction()
 {
-  throw(Fins.Errors.ModelError("Transactions are not supported by this database engine.\n"));
+  Tools.throw(Fins.Errors.ModelError, "Transactions are not supported by this database engine.");
 }
 
 void rollback_transaction()
 {
-  throw(Fins.Errors.ModelError("Transactions are not supported by this database engine.\n"));
+  Tools.throw(Fins.Errors.ModelError, "Transactions are not supported by this database engine.");
 }
 
 void commit_transaction()
 {
-  throw(Fins.Errors.ModelError("Transactions are not supported by this database engine.\n"));
+  Tools.throw(Fins.Errors.ModelError, "Transactions are not supported by this database engine.");
 }

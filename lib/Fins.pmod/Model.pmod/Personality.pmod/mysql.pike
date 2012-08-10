@@ -44,15 +44,22 @@ mapping get_field_info(string table, string field)
   return m;
 }
 
-string get_field_definition(string table, string field, int include_index)
+string get_field_definition(string table, string field, int|void include_index)
 {
   array r = context->execute("SHOW FIELDS FROM " + table + " LIKE '" + field + "'"); 
   if(!sizeof(r)) 
     Tools.throw(Error.Generic, "Field %s does not exist in %s.", field, table);
   
   mapping fd = r[0];
+
   if(fd->Field != field)
     Tools.throw(Error.Generic, "Field %s does not exist in %s.", field, table);
+  
+  return low_get_field_definition(fd, include_index);
+}
+
+protected string low_get_field_definition(mapping fd, int|void include_index)
+{
   string def;
   
   def = fd->Type + " " + ((fd->Null == "NO")?"NOT NULL ":"")  + 
