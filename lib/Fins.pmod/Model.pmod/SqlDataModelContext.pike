@@ -79,7 +79,7 @@ array execute(mixed ... args)
   
   if(err)
   {
-    int r = sql->ping();
+    int r = sql->ping?sql->ping():0;
     if(r != 1)
       throw(err);
     else

@@ -8,6 +8,22 @@ string datadir;
 
 mapping indexes = ([]);
 
+mapping dbtype_to_finstype = ::dbtype_to_finstype +
+([
+    "string": "string",
+    "integer": "integer",
+    "float": "float"
+]);
+
+mapping dbtype_ranges =
+([
+  "blob": (["min": 0, "max": 4294967295]),
+  "string": (["min": 0, "max": 4294967295]),
+  "integer": (["min": -9223372036854775808, "max": 9223372036854775807]),
+  "float": (["min": -9223372036854775808, "max": 9223372036854775807]),
+]);
+
+
 int initialize_connection(object s)
 {
 
@@ -99,6 +115,7 @@ void commit_transaction()
 {
   context->execute("COMMIT");
 }
+
 
 //! the alter table command in sqlite doesn't support dropping columns.
 //! in order to simulate this functionality, we create a new table without 
@@ -202,7 +219,6 @@ int change_column(string table, string name, mapping fd)
   return 1; 
 }
 
-
 int rename_column(string table, string name, string newname)
 {
    array columns_left = get_columns(table, ({}));
@@ -281,9 +297,14 @@ string get_field_definition(string table, string field, int|void include_index)
 
 protected string low_get_field_definition(mapping fd, int|void include_index)  
 {
-  string def = sprintf("%s%s %s %s %s", 
-    upper_case(fd->type), (fd->length?("(" + fd->length + ")"):""),
-    (fd->default != ""?(sprintf("DEFAULT VALUE '%s'", fd->default)):""), 
+write("low_get_field_definition(%O)\n", fd);
+  string type = fd->type;
+  if(dbtype_ranges[fd->type] && dbtype_ranges[fd->type]->include_size)
+    type = sprintf("%s(%s%s}", type, fd->length, (fd->decimals?(", " + fd->decimals):""));
+
+  string def = sprintf("%s %s %s %s", 
+    upper_case(type),
+    (has_index(fd, "default")?(sprintf("DEFAULT %s", format_literal(fd->default))):""), 
     ((int)fd->flags->not_null?"NOT NULL":""), 
     ((include_index && (int)fd->flags->primary_key)?"PRIMARY KEY":""));
 

@@ -3,6 +3,53 @@ inherit .Personality;
 constant type = "mysql";
 constant splitter = ";\n";
 
+mapping dbtype_to_finstype = 
+([
+   "tinyblob": "binary_string",
+   "blob": "binary_string",
+   "mediumblob": "binary_string",
+   "longblob": "binary_string",
+
+   "tinytext": "string",
+   "text": "string",
+   "mediumtext": "string",
+   "longtext": "string",
+
+   "char": "string",
+   "varchar": "string",
+
+   "tinyint": "integer",
+   "smallint": "integer",
+   "integer": "integer",
+   "bigint": "integer",
+
+   "float": "float",
+   "double": "float",
+ ]);
+
+mapping dbtype_ranges =
+([
+  "tinyblob": (["min": 0, "max": 255]),
+  "blob": (["min": 0, "max": 65535]),
+  "mediumblob": (["min": 0, "max": 16777215]),
+  "longblob": (["min": 0, "max": 4294967295]),
+
+  "tinytext": (["min": 0, "max": 255]),
+  "text": (["min": 0, "max": 65535]),
+  "mediumtext": (["min": 0, "max": 16777215]),
+  "longtext": (["min": 0, "max": 4294967295]),
+
+  "tinyint": (["min": -128, "max": 127, "num": 1]),
+  "smallint": (["min": -32768, "max": 32767, "num": 1]),
+  "mediumint": (["min": -8388608, "max": 8388607, "num": 1]),
+  "int": (["min": -2147483648, "max": 2147483647, "num": 1]),
+  "bigint": (["min": -9223372036854775808, "max": 9223372036854775807, "num": 1]),
+
+  "char": (["min": 0, "max": 255, "include_size": 1]),
+  "varchar": (["min": 0, "max": 255, "include_size": 1]),
+]);
+
+
 string quote_binary(string s)
 {
   return context->sql->quote(s);
