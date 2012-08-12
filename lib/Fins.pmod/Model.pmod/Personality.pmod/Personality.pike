@@ -89,6 +89,20 @@ int drop_index(string table, string index)
 }
 
 //!
+int drop_index_for_column(string table, array columns)
+{
+  string name = get_index_for_column(table, columns);
+  drop_index(table, name);
+  // TODO: return a better value.
+  return 1;
+}
+
+string get_index_for_column(string table, array columns)
+{
+  Tools.throw(Fins.Errors.AbstractClass);
+}
+
+//!
 int rename_table(string table, string newname)
 {
   context->execute(sprintf("ALTER TABLE %s RENAME TO %s", table, newname));

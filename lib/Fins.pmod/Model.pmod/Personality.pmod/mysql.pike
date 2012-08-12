@@ -91,6 +91,50 @@ mapping get_field_info(string table, string field)
   return m;
 }
 
+string get_index_for_column(string table, array columns)
+{
+  string expr;
+ 
+  array cx = ({});
+  columns = columns + ({}); // make a copy.
+      
+  foreach(columns;; string c)
+    cx += ({ sprintf("column_name='%s'", c) });
+  
+  expr = cx * " OR ";
+  
+  foreach(columns; int i; string s)
+    columns[i] = lower_case(s);
+  
+  array res = context->execute(sprintf("SHOW INDEX FROM %s WHERE %s", table, expr));
+  
+  if(sizeof(res) <= sizeof(columns))
+  {
+    return 0;
+  }
+  else if(sizeof(res) > sizeof(columns))
+  {
+    Tools.throw(Error.Generic, "ambiguous match for index for columns <%s> in table <%s>", columns * ", ", table);
+  }
+
+  array keys = uniq(res->key_name);
+  
+  foreach(keys;; string keyname)
+  {
+    array res = context->execute(sprintf("SHOW INDEX FROM %s WHERE %s", table, expr));
+    res = res->column_name;
+    foreach(res; int i; string s)
+      res[i] = lower_case(s);
+      
+    if(sizeof(res) == sizeof(columns) || sizeof(res - columns) == 0)
+    {
+      return keyname;
+    }
+  }
+  
+  return 0;
+}
+
 string get_field_definition(string table, string field, int|void include_index)
 {
   array r = context->execute("SHOW FIELDS FROM " + table + " LIKE '" + field + "'"); 

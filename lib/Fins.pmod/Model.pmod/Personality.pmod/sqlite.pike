@@ -48,6 +48,37 @@ string get_limit_clause(int limit, int|void start)
   return "LIMIT " + limit + (start?(" OFFSET " + ((start-1)||"0")):"");
 }
 
+//!
+string get_index_for_column(string table, array columns)
+{
+  columns = columns + ({});
+     
+  array res = context->execute(sprintf("PRAGMA index_list(%s)", table));
+  
+  if(!sizeof(res))
+  {
+    return 0;
+  }
+  
+  foreach(columns; int i; string s)
+    columns[i] = lower_case(s);
+  
+  foreach(res;;mapping index)
+  {
+    res = context->execute(sprintf("PRAGMA index_info(%s)", index->name));
+    res = res->name;
+    if(sizeof(res) != sizeof(columns))
+      continue;
+      
+    foreach(res; int i; string s)
+      res[i] = lower_case(s);
+    if(sizeof(res - columns) == 0)
+      return index->name;
+  }
+  
+  return 0;
+}
+
 mapping get_field_info(string table, string field, mapping info)
 {  
   if(!indexes[table])
