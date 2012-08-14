@@ -73,6 +73,9 @@ static  string _fields_string = "";
 protected mapping renderers = ([]);
 protected int renderers_set = 0;
 
+//
+protected int manual_config = 0;
+
 //!
 mapping relationships = ([]);
 
@@ -94,6 +97,18 @@ string table_name = "";
 
 //! used by @[Fins.ScaffoldController] to determine the order fields are displayed in generated forms.
 array(string) field_order = ({});
+
+//!
+void set_manual_config(int mcfg)
+{
+  manual_config = mcfg;
+}
+
+//!
+int get_manual_config()
+{
+  return manual_config;
+}
 
 //! repo is retained, context is not. Data mapping objects that inherit this type are
 //! automatically created by the model configuration mechanism provided by @[Fins.FinsModel].
@@ -285,6 +300,7 @@ void validate_on_create(mapping changes, Fins.Errors.Validation errors, .DataObj
 
 static void reflect_definition(.DataModelContext context)
 {  
+  string table;
   string instance = master()->describe_program(object_program(this));
   instance = (instance / "/")[-1];
   instance = (instance / ".")[0];
@@ -293,16 +309,26 @@ static void reflect_definition(.DataModelContext context)
 
   if(!get_table_name() || !sizeof(get_table_name()))
   {
-    string table = Tools.Language.Inflect.pluralize(lower_case(instance));
+    table = Tools.Language.Inflect.pluralize(lower_case(instance));
 	log->info("reflect_definition: table name for %s is %s.", instance, table);
     set_table_name(table);
+  }
+  if(!instance_name || !sizeof(instance_name))
+  {
     set_instance_name(instance);
-    foreach(context->personality->list_fields(table);; mapping field)
+  }  
+
+  // load from the object
+  table = table_name;
+  instance = instance_name;
+    
+  if(!get_manual_config())
+  {
+    foreach(context->personality->list_fields(table) ;; mapping field)
     {
-//      mapping field = context->personality->map_field(t, table);
+//    mapping field = context->personality->map_field(t, table);
 
       log->debug("reflect_definition: looking at field %s: %O.", field->name, field);
-
       if(field->primary_key || (!primary_key && field->name =="id"))
       {
         // for now, primary keys must be integer.
@@ -324,7 +350,6 @@ static void reflect_definition(.DataModelContext context)
   }
 
   if(!primary_key) throw(Error.Generic("No primary key defined for " + instance_name + ".\n"));
-
 }
 
 void do_add_field(.DataModelContext context, mapping field)

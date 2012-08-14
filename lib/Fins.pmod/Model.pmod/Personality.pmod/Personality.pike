@@ -416,6 +416,10 @@ mapping map_field(mapping t, string table)
           log->warn("No maximum field length specification available for type %s.", field->otype);
       }
       break;
+    case "timestamp":
+    case "time":
+    case "date":
+    case "datetime":
     case "integer":  
       // TODO: handle mix/max limit setting.
       break;
