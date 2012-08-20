@@ -181,7 +181,7 @@ private class DocRunner(function req)
 
     werror("Running %O(%O, %O, %O, %O)\n", req, request, response, lview, args);
     
-    req(request, response, lview, args);    
+    req(request, response, lview, @args);
 
     return;
   }
