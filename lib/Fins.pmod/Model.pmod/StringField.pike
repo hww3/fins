@@ -60,5 +60,15 @@ string encode(mixed value, void|object/*.DataObjectInstance*/ i)
   if(value == 0 || value == .Undefined)
     return "NULL";
   else
-    return "'" + context->quote(value) + "'";
+    return "'" + context->quote(string_to_utf8(value)) + "'";
+}
+
+
+string decode(mixed value, void|.DataObjectInstance i)
+{
+  if(value && catch(value =utf8_to_string(value)))
+  {
+    werror("decode caught error decoding utf8: %O.\n", value);
+  }
+  return value;
 }

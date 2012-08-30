@@ -1110,10 +1110,13 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
        }
      }
 
-     string update_query = sprintf(single_update_query, table_name, fields[field]->field_name, new_value, primary_key->name, key_value);
      i->set_saved(1);
 
-     querylog->debug("%O: %O", Tools.Function.this_function(), update_query);
+     string update_query;
+
+     update_query = sprintf(single_update_query, table_name, fields[field]->field_name, new_value, primary_key->name, key_value);
+
+//     querylog->debug("%O: %O", Tools.Function.this_function(), update_query);
      context->execute(update_query);
      load(context, i->get_id(), i, 1);   
    }

@@ -291,6 +291,10 @@ import Tools.JSON;
 //! 
 //! @returns
 //!  An object.
+
+program objectprog;
+program arrayprog;
+
 		public mixed nextObject()
 		{
 			int c = nextClean();
@@ -304,14 +308,16 @@ import Tools.JSON;
 			if (c == '{') 
 			{
 				back();
-				return JSONObject(this);
+				if(!objectprog) objectprog = master()->resolv("Tools.JSON.JSONObject");
+				return objectprog(this);
 			}
 
 			// JSON Array
 			if (c == '[')
 			{
 				back();
-				return JSONArray(this);
+				if(!arrayprog) arrayprog = master()->resolv("Tools.JSON.JSONArray");
+				return arrayprog(this);
 			}
 
 			String.Buffer sb = String.Buffer();
