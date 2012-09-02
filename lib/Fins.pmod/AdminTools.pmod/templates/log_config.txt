@@ -16,6 +16,9 @@ appender=default_console
 [logger.fins.model]
 level=DEBUG
 
+[logger.session]
+level=WARN
+
 [logger.access]
 appender=access_log
 class=Tools.Logging.Log.AccessLogger
