@@ -97,6 +97,7 @@ int drop_index_for_column(string table, array columns)
   return 1;
 }
 
+//!
 string get_index_for_column(string table, array columns)
 {
   Tools.throw(Fins.Errors.AbstractClass);
