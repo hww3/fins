@@ -770,6 +770,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   {
     e = catch 
     {  
+      // prefer the cookie over form variable.
       string ssid=request->cookies[session_cookie_name]||request->variables[session_cookie_name];
       object /*Session.Session*/ sess = session_manager->get_session(ssid);
       request->get_session_by_id = session_manager->get_session;
