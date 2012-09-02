@@ -192,6 +192,8 @@ werror("args: %O\n", args);
 
   if(use_ssl)
   {
+    // TODO: we should support SNI somehow. Need to decide how to specify the keys for 
+    // a given servername, then parse and set them in the SSL context.
     err = catch(port = ssl_server(handle_request, p, (bind=="*"?0:bind), args));
   }
   else

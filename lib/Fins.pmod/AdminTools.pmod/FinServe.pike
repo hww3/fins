@@ -275,6 +275,8 @@ int start_admin(int my_port)
   object port;
 
   logger->info("FinServe starting admin server on port " + my_port + ".");
+
+  // TODO: we should probably support SSL here, along with SNI.
   port = server(admin_handle_request, my_port);  
   port->request_program = Fins.HTTPRequest;
 
