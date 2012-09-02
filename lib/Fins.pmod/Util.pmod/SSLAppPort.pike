@@ -8,11 +8,14 @@ protected object logger = Tools.Logging.get_logger("fins.sslport");
 private string key;
 protected array certificates;
 
-protected void create(function cb, int port, string|void bind, mapping args)
+protected void create(function cb, int _port, string|void bind, mapping args)
 {
   load_key_and_certs(args);
     
-  sslport::create(cb, port, bind, key, certificates);
+  sslport::create(cb, _port, bind, key, certificates);
+
+//  sslport::port->sni_certificates["fooba-dev.10.211.55.2.xip.io"] = ({"foo"});
+//  sslport::port->sni_keys["fooba-dev.10.211.55.2.xip.io"] = this->port->rsa;
 }
 
 protected void load_key_and_certs(mapping args)

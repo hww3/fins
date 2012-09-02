@@ -179,7 +179,7 @@ object register_port(int p, string|void bind, mapping|void args)
 {
   object port;
   int use_ssl = 0;
-
+werror("args: %O\n", args);
   if(args && args->ssl)
   {
     use_ssl = 1;
@@ -237,7 +237,7 @@ void register_ports()
   // prefer command line specification to config file to default.
   if(p)
   {
-    port = register_port(p, addr);
+    port = register_port(p, addr, app->config["web"]);
     ports += ({port});
   }
   
