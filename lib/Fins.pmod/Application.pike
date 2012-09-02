@@ -358,6 +358,8 @@ protected void load_controller()
   if(conclass)
   {
 	controller = low_load_controller(conclass);
+        controller->__do_start();
+
 // 	string conclassn = conclass;
 // 	if(!file_stat("classes/" + conclass)) conclassn = conclass + ".pike";
 // 

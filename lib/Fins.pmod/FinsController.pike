@@ -28,6 +28,7 @@ int __last_load;
 
 string __controller_source;
 string __controller_name;
+array(string) __controllers = set_weak_flag(({}), Pike.WEAK);
 
 array __before_filters = ({});
 array __after_filters = ({});
@@ -44,6 +45,25 @@ array __around_filters = ({});
 //! The presence of an entry in this mapping for a given action will take priority over any action
 //! defined within the controller class.
 mapping(string:function|string|object) __actions = ([]);
+
+
+void __do_start()
+{
+  if(functionp(start))
+  {
+//    werror("calling %O->start()\n", this);
+    start();
+  //  log->debug("scheduling startup of controller %O.\n", this);
+  //    call_out(start, 0);
+//    app->call_out(start, 0);
+  }
+
+  foreach(__controllers;; mixed c)
+  {
+    if(c && c->__do_start) c->__do_start();
+  }
+
+}
 
 //!
  void add_action(string action_name, function|string|object action)
@@ -102,6 +122,7 @@ static object load_controller(string controller_name)
   object o = c(app);
   o->__controller_name = cn;
   o->__controller_source = f;
+  __controllers += ({o});
   return o;
 }
 
@@ -172,12 +193,6 @@ static void create(object a)
   __last_load = time();
   ::create(a);
 
-  if(functionp(start))
-  {
-  //  log->debug("scheduling startup of controller %O.\n", this);
-      start();
-//    app->call_out(start, 0);
-  }
 }
 
 //! the preferred method from which controllers are loaded.
