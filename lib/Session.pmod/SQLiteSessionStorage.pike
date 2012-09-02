@@ -5,6 +5,8 @@ int writing_session = 0;
 static string storage_dir;
 static object sql;
 
+object log = Tools.Logging.get_logger("session.sqlitesessionstorage");
+
 void create()
 {
 }
@@ -65,10 +67,12 @@ int expunge(string sessionid)
 
 void set(string sessionid, .Session data, int timeout)
 {
+  log->info("storing session, sessionid=<%s>, data=<%O>", sessionid, data);
    string d = MIME.encode_base64(encode_value(data->data)); 
 
   sql->query("INSERT OR REPLACE INTO SESSIONS (sessionid, data, timeout) VALUES('" + 
     sessionid + "','" + d + "', CURRENT_TIMESTAMP)");
+  log->info("stored session, sessionid=<%s>", sessionid);
 
    return;
 }

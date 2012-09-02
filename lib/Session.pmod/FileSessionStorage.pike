@@ -1,6 +1,7 @@
 inherit .SessionStorage;
 
 int writing_session = 0;
+object log = Tools.Logging.get_logger("session.ramsessionstorage");
 
 static string storage_dir;
 
@@ -17,7 +18,7 @@ void clean_sessions(int default_timeout)
     Stdio.Stat s = f->stat();
     if(s && s->isreg && ((s->mtime+default_timeout) < time()))
     {
-      werror("deleting stale session " + dir+file + "\n");
+      log->debug("deleting stale session " + dir+file + "\n");
       rm(dir + file);
     }
     else if(!s && sizeof(get_dir(dir+file)) == 0)
@@ -25,7 +26,7 @@ void clean_sessions(int default_timeout)
       // this is a really bad way to do this...
       if(!writing_session)
       {
-        werror("deleting empty directory " + dir+file + "\n");
+        log->debug("deleting empty directory " + dir+file + "\n");
         Stdio.recursive_rm(dir+file);
       }
     }
@@ -93,32 +94,38 @@ void set(string sessionid, .Session data, int timeout)
 {
  string sessionfile;
 
- writing_session = 1;
- if(data->get_attr("FileSessionPath"))
- {
-   sessionfile = data->get_attr("FileSessionPath");
- }
- else
- {
-   string p;
+  log->info("storing session, sessionid=<%s>, data=<%O>", sessionid, data);
 
-   [p, sessionfile] = sessionfile_from_session(sessionid);
+  writing_session = 1;
+  if(data->get_attr("FileSessionPath"))
+  {
+    sessionfile = data->get_attr("FileSessionPath");
+  }
+  
+  else
+  {
+    string p;
 
-   Stdio.mkdirhier(p);
+    [p, sessionfile] = sessionfile_from_session(sessionid);
+
+    Stdio.mkdirhier(p);
  
-   data->set_attr("FileSessionPath", sessionfile);
- }
+    data->set_attr("FileSessionPath", sessionfile);
+  }
 
- string d = encode_value(data->data); 
+  string d = encode_value(data->data); 
 
-if(!sessionfile) 
-{
-  werror("Sessionfile not set! not saving session.\n");
-  return;
-}
+  if(!sessionfile) 
+  {
+    log->warn("Sessionfile not set! not saving session.\n");
+    return;
+  }
 
-   Stdio.write_file(sessionfile, d);
- writing_session = 0;
+  Stdio.write_file(sessionfile, d);
+
+  log->info("stored session, sessionid=<%s>", sessionid);
+
+  writing_session = 0;
  return;
 }
 

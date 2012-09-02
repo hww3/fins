@@ -1,6 +1,7 @@
 inherit .SessionStorage;
 
 mapping sessions = ([]);
+object log = Tools.Logging.get_logger("session.ramsessionstorage");
 
 
 void create()
@@ -45,7 +46,11 @@ int expunge(string sessionid)
 
 void set(string sessionid, .Session data, int timeout)
 {
-   sessions[sessionid] = ({ time(), data->data });
+  log->info("storing session, sessionid=<%s>, data=<%O>", sessionid, data);
 
-   return;
+  sessions[sessionid] = ({ time(), data->data });
+
+  log->info("stored session, sessionid=<%s>", sessionid);
+
+  return;
 }
