@@ -20,7 +20,7 @@ constant CRITICAL = 32;
 static array appenders = ({});
 
 int enabled = 1;
-int loglevel = TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL;
+int loglevel = INFO|WARN|ERROR|CRITICAL;
 
 mapping log_strs = ([
   TRACE: "TRACE",
@@ -57,7 +57,7 @@ void configure(mapping config)
   if(config->level)
     set_level(strs_log[config->level]);
   else
-    set_level(DEBUG);
+    set_level(INFO);
 
   if(!config->appender)
   {

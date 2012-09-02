@@ -14,7 +14,7 @@ mapping _default_config_variables = (["host": gethostname(),
 				"pid": (string)getpid(), 
 				"user": Tools.System.get_user() ]);
 
-mapping _default_logger_config = (["appender": "default", "level": "DEBUG"]);
+mapping _default_logger_config = (["appender": "default", "level": "INFO"]);
 
 object default_logger = Tools.Logging.Log.Logger();
 
@@ -112,8 +112,7 @@ void set_config_file(string configfile)
 
   load_config_file();
 
-  if(!config_values["logger.default"])
-    config_values["logger.default"] = _default_logger_config;
+   config_values["logger.default"] = _default_logger_config + (config_values["logger.default"]||([])); 
 
   if(config_values["logger.default"])
   {
@@ -185,72 +184,119 @@ Tools.Logging.Log.Logger create_logger(string loggername)
 
 mapping build_logger_config(string loggername)
 {
-  mapping cx = ([]);
-  mapping _cx;
-  string cn;
-  int isroot;
-
   if(!is_configed) 
   {
-    default_logger->warn("logging system has not been configured yet, using default settings.");
-//    default_logger->warn("logger thread: %O, handler: %O", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
+    default_logger->warn("logging system has not been configured yet, using default settings for <%s>.", loggername);
   }
+
+  return low_build_logger_config(loggername);
+}
+
+mapping low_build_logger_config(string loggername)
+{
+
+  mapping cx = ([]);
+  string cn;
+  int need_to_add;
+
+  //werror("build_logger_config(%O)\n", loggername);
+
+  if(loggername == "") throw(Error.Generic("Foo!\n"));
+
   // first, find the nearest logger in the hierarchy.
 
-  if(!(_cx = config_values["logger." + loggername]))  // if we don't have an exact match   
+  // "default" should always be present.
+  cx = config_values["logger." + loggername];
+
+  if(!cx)
   {
-    array ln = indices(config_values);
-
-    // get the closest match.
-
-    // generate a list of parts.
-    array lp = ((loggername/".")-({""}));
-
-    for(int x = sizeof(lp); x > 1; x--)
+    if(loggername != "default")  // if we don't have an exact match
     {
-      string acn = lp[0..x-1]*".";
-//      werror("does logger config %O exist? ", acn);
-      if(config_values["logger." + acn])
-      {
-//         werror("yes!\n");
-         cn = acn;
-         if(x==1) isroot = 1;
-      }
-//      else werror("no!\n");
-    }
-  }
-  else cx=_cx, cn = loggername;
-
-  if(!cn) cn = "default";
-  mapping tc = config_values["logger." + cn];
-
-  // do we want to blend in the previous higher level logger configuration in?
-  if(cn!= "default" && !(tc->additivity && lower_case(tc->additivity) == "false"))
-  {
-    if(isroot)
-    {
-      default_logger->debug("additivity is true, but we're the root logger, merging defaults.");
-      cx = config_values["logger.default"] + cx;
+      need_to_add = 1;
+      // get the closest match.
+      // generate a list of parts.
+      array lp = ((loggername/".")-({""}));
+      string ncn = lp[..<1] * ".";
+      if(ncn == "")
+        ncn = "default";
+      cx = low_build_logger_config(ncn);
     }
     else
-    {
-      // generate the parent logger name.
-      array cnp = (cn/".") - ({""});
-      string pln = cnp[0..sizeof(cnp)-2] * ".";
-      if(pln!=loggername)
-      {
-      	default_logger->debug("additivity is true, blending settings from parent logger %O", pln);
-        mapping lc = build_logger_config(pln);
-        cx = lc + cx;
-      }
-    }
+      cx = low_build_logger_config("default");
   }
+  
+  cn = loggername;
 
-  cx += (config_values["logger." + cn]);
+  if(!cx->additivity) cx->additivity = "true";
+
   cx["name"] = cn;
   cx["_name"] = cn;
 
+  // do we want to blend in the previous higher level logger configuration in?
+
+  default_logger->debug("configuring <%s>", (string)cn);
+  if(cn != "default" && lower_case(cx->additivity) == "true")
+  {
+      // generate the parent logger name.
+      array lp = ((cn/".")-({""}));
+      string ncn = lp[..<1] * ".";
+      if(ncn == "")
+        ncn = "default";
+
+      if(ncn!=loggername)
+      {
+      	default_logger->debug("<%s> - additivity is true, blending settings from parent logger %O", cn, ncn);
+        mapping lc = low_build_logger_config(ncn);
+//werror("first: <%s>: %O\n", cn, cx);
+        cx = additize(cx, lc);
+      }
+  }
+
+  if(need_to_add)
+    config_values["logger." + loggername] = cx;
+
+  //werror("after: <%s>: %O\n", loggername, cx);
+
   return cx;
+}
+
+protected mapping additize(mapping a, mapping b)
+{
+  mapping c = ([]);
+
+  foreach(b; string k; mixed v)
+  {
+    if(k != "appender")
+    {
+      if(!has_index(a, k))
+        c[k] = v;
+      else
+        c[k] = a[k];
+
+      continue;
+    }
+    else
+    {
+      if(!has_index(a, k))
+      {
+        c[k] = v;
+        continue;
+      }
+
+      if(!arrayp(a[k]))
+        c[k] = ({a[k]});
+      else c[k] = a[k];
+
+      if(!arrayp(v))
+        c[k] += ({v});
+      else c[k] += v; 
+
+      c[k] = Array.uniq(c[k]);
+    }
+  }
+
+  return c;
+
 }
 
 //!
@@ -273,6 +319,8 @@ Tools.Logging.Log.Logger create_logger_from_config(string loggername)
   cx->name = loggername;
 
   cx = insert_config_variables(cx);
+
+  //werror("config: <%s>: %O\n", loggername, cx); 
 
   if(!cx->level) 
   {
