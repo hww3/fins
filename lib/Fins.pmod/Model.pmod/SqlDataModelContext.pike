@@ -71,6 +71,7 @@ int initialize()
   ::initialize();
 }
 
+//!
 array execute(mixed ... args)
 {
   mixed x;
@@ -95,6 +96,11 @@ array execute(mixed ... args)
   }
   
 	return x;
+}
+
+int transaction_supported()
+{
+  return personality->transaction_supported();
 }
 
 //!
@@ -143,24 +149,36 @@ int in_transaction()
   return in_xa;
 }
 
-int create_index(string table, string name, array fields, int unique)
+//!
+//! @param
+//!   mapping containing the following elements: name, order, unique
+int create_index(string table, string name, array fields, mapping opts, int|void dry_run)
 {
-  return personality->create_index(table, name, fields, unique);  
+  return personality->create_index(table, fields, opts, dry_run);  
 }
 
-int drop_index(string table, string index)
+//!
+int drop_index(string table, string index, int|void dry_run)
 {
-  return personality->drop_index(table, index);
+  return personality->drop_index(table, index, dry_run);
+}
+
+//!
+int drop_index_for_column(string table, array columns, int|void dry_run)
+{
+  return personality->drop_index_for_column(table, columns, dry_run);  
 }
 
 //! @returns
 //!  1 if table existed and was dropped, 0 otherwise.
-int drop_table(string table)
+int drop_table(string table, int|void dry_run)
 {
   array t = sql->list_tables(table);
   if(search(t, table) != -1)
   {
-    sql->query(sprintf("drop table %s", table));
+    string query = sprintf("drop table %s", table);
+    if(!dry_run)
+      execute(query);
   }
   else return 0;
 }
@@ -171,20 +189,25 @@ int drop_table(string table)
 //!  this functionality is simulated for some databases (such as sqlite)
 //!  and therefore may not behave properly in all situations. always
 //!  backup data and test before relying on the results of this operation.
-int drop_column(string table, string|array columns)
+int drop_column(string table, string|array columns, int|void dry_run)
 {
-  return personality->drop_column(table, columns);
+  return personality->drop_column(table, columns, dry_run);
 }
 
 //!
-int rename_table(string table, string newname)
+int rename_table(string table, string newname, int|void dry_run)
 {
-  return personality->rename_table(table, newname);
+  return personality->rename_table(table, newname, dry_run);
 }
 
-int rename_column(string table, string name, string newname)
+//!
+//! @note
+//!  this functionality is simulated for some databases (such as sqlite)
+//!  and therefore may not behave properly in all situations. always
+//!  backup data and test before relying on the results of this operation.
+int rename_column(string table, string name, string newname, int|void dry_run)
 {
-  
+  return personality->rename_column(table, name, newname, dry_run);
 }
 
 void rebuild_fields()

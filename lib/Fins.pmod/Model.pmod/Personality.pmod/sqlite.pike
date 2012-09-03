@@ -156,7 +156,7 @@ void commit_transaction()
 //! fraught with problems, because, for example, not all index definitions 
 //! can be reconstructed. please be careful with this function, and 
 //! always, always, ALWAYS have a good database backup before use.
-int drop_column(string table, string|array columns)
+int drop_column(string table, string|array columns, int dry_run)
 {
    if(stringp(columns))
    {
@@ -169,41 +169,45 @@ int drop_column(string table, string|array columns)
    
    mapping ddl = regenerate_ddl(table, columns, 1);
    
-   context->begin_transaction();
-   mixed e;
 
    string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (columns_left->name)*", ", (columns_left->name) *", ", table);
    string drop_query = sprintf("DROP TABLE %s", table);
    string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
-   
-   e = catch
-   {
-     context->execute(ddl->table);
-     context->execute(copy_query);
-     context->execute(drop_query);
-     context->execute(rename_query);
 
-     string q;
+   if(!dry_run)
+   {
+//     context->begin_transaction();
+     mixed e;
+
+     e = catch
+     {
+       context->execute(ddl->table);
+       context->execute(copy_query);
+       context->execute(drop_query);
+       context->execute(rename_query);
+
+       string q;
      
-     foreach(ddl->indexes;; q)
-       context->execute(q);
-
-       foreach(ddl->triggers;; q)
+       foreach(ddl->indexes;; q)
          context->execute(q);
-   };
-   if(e)  
-   {
-     context->rollback_transaction();
-     throw(e);
+
+         foreach(ddl->triggers;; q)
+           context->execute(q);
+     };
+     if(e)  
+     {
+//       context->rollback_transaction();
+       throw(e);
+     }
+//     else
+//       context->commit_transaction();
    }
-   else
-     context->commit_transaction();
    
    return 1; 
 }
 
 //!
-int change_column(string table, string name, mapping fd)
+int change_column(string table, string name, mapping fd, int dry_run)
 {
   array columns_left = get_columns(table, ({}));
 
@@ -218,40 +222,43 @@ int change_column(string table, string name, mapping fd)
 
   mapping ddl = low_regenerate_ddl(table, columns_left, newnames, 1);
 
-  context->begin_transaction();
-  mixed e;
-
   string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (newnames * ", "), (oldnames * ", "), table);
   string drop_query = sprintf("DROP TABLE %s", table);
   string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
 
-  e = catch
+  if(!dry_run)
   {
-    context->execute(ddl->table);
-    context->execute(copy_query);
-    context->execute(drop_query);
-    context->execute(rename_query);
+//    context->begin_transaction();
+    mixed e;
 
-    string q;
-    
-    foreach(ddl->indexes;; q)
-      context->execute(q);
+    e = catch
+    {
+      context->execute(ddl->table);
+      context->execute(copy_query);
+      context->execute(drop_query);
+      context->execute(rename_query);
 
-      foreach(ddl->triggers;; q)
+      string q;
+  
+      foreach(ddl->indexes;; q)
         context->execute(q);
-  };
-  if(e)  
-  {
-    context->rollback_transaction();
-    throw(e);
+
+        foreach(ddl->triggers;; q)
+          context->execute(q);
+    };
+    if(e)  
+    {  
+//      context->rollback_transaction();
+      throw(e);
+    }
+//    else
+//      context->commit_transaction();
   }
-  else
-    context->commit_transaction();
   
   return 1; 
 }
 
-int rename_column(string table, string name, string newname)
+int rename_column(string table, string name, string newname, int dry_run)
 {
    array columns_left = get_columns(table, ({}));
    array newnames = columns_left->name;
@@ -264,35 +271,39 @@ int rename_column(string table, string name, string newname)
    
    mapping ddl = low_regenerate_ddl(table, columns_left, newnames, 1);
    
-   context->begin_transaction();
+//   context->begin_transaction();
    mixed e;
 
    string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, newnames*", ", (columns_left->name) *", ", table);
    string drop_query = sprintf("DROP TABLE %s", table);
    string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
-   
-   e = catch
-   {
-     context->execute(ddl->table);
-     context->execute(copy_query);
-     context->execute(drop_query);
-     context->execute(rename_query);
 
-     string q;
+   if(!dry_run)
+   {
+     e = catch
+     {
+       context->execute(ddl->table);
+       context->execute(copy_query);
+       context->execute(drop_query);
+       context->execute(rename_query);
+
+       string q;
      
-     foreach(ddl->indexes;; q)
-       context->execute(q);
-
-       foreach(ddl->triggers;; q)
+       foreach(ddl->indexes;; q)
          context->execute(q);
-   };
-   if(e)  
-   {
-     context->rollback_transaction();
-     throw(e);
+
+         foreach(ddl->triggers;; q)
+           context->execute(q);
+     };
+
+     if(e)  
+     {
+//       context->rollback_transaction();
+       throw(e);
+     }
+//     else
+//       context->commit_transaction();
    }
-   else
-     context->commit_transaction();
    
    return 1; 
 }
@@ -329,7 +340,7 @@ string get_field_definition(string table, string field, int|void include_index)
 
 protected string low_get_field_definition(mapping fd, int|void include_index)  
 {
-write("low_get_field_definition(%O)\n", fd);
+  log->debug("low_get_field_definition(%O)\n", fd);
   string type = fd->type;
   if(dbtype_ranges[fd->type] && dbtype_ranges[fd->type]->include_size)
     type = sprintf("%s(%s%s}", type, fd->length, (fd->decimals?(", " + fd->decimals):""));
@@ -338,7 +349,7 @@ write("low_get_field_definition(%O)\n", fd);
     upper_case(type),
     (has_index(fd, "default")?(sprintf("DEFAULT %s", format_literal(fd->default))):""), 
     ((int)fd->flags->not_null?"NOT NULL":""), 
-    ((include_index && (int)fd->flags->primary_key)?"PRIMARY KEY":""));
+    ((include_index && (int)fd->flags->primary_key)?"PRIMARY KEY":0) || ((include_index && (int)fd->flags->unique)?"UNIQUE":""));
 
   return String.trim_whites(def);
 }

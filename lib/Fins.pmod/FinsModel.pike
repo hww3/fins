@@ -3,6 +3,12 @@ inherit FinsBase;
 
 object log = Tools.Logging.get_logger("model");
 
+#ifdef FINS_MIGRATION_MODE
+int do_register_types = 0;
+#else
+int do_register_types = 1;
+#endif
+
 static void create(Fins.Application a)
 {
   ::create(a);
@@ -61,7 +67,9 @@ object get_context(mapping config_section, string id)
   c->model = this;
 
   c->initialize();
-  c->register_types();
+  
+  if(do_register_types)
+    c->register_types();
   
   return c;
 }

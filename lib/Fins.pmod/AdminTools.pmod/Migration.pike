@@ -3,6 +3,7 @@ import Tools.Logging;
 string appname;
 string config_name;
 array args;
+object app;
 
 void create(array(string) argv)
 {
@@ -78,10 +79,8 @@ int run()
   return 0;
 }
 
-int do_run(string... args)
+void load_app()
 {
-  int dir = Fins.Util.MigrationTask.UP;
-
   if(!appname)
   {
     Log.error("No application specified.");
@@ -102,13 +101,21 @@ int do_run(string... args)
   // we only load 1 app in this tool, so there's no need to do multi-tenancy
   // which makes it's easier to interact with the application from the main thread.
   Fins.Loader.set_multi_tenant(0);
-  object app = Fins.Loader.load_app(appname, config_name);
+  app = Fins.Loader.load_app(appname, config_name);
   
   if(!app)
   {
     Log.error("Unable to load application.");
     exit(2);
   }
+
+}
+
+int do_run(string... args)
+{
+  int dir = Fins.Util.MigrationTask.UP;
+
+  load_app();
 
   array a2 = ({" "}) + args;
 
@@ -155,18 +162,12 @@ int do_create(string migration)
     return 1;
   }
 
-  object st = file_stat(appname);
-  
-  if(!st || !st->isdir)
-  {
-    Log.error("Application directory %O does not exist.", appname);
-    return 1;    
-  }
-  
+  load_app();
+
   string dir = Stdio.append_path(appname, Fins.Util.Migrator.MIGRATION_DIR);
 
   Stdio.mkdirhier(dir);
-  string fn = Fins.Util.Migrator()->low_new_migration(migration, 0, dir);
+  string fn = Fins.Util.Migrator(app)->low_new_migration(migration, 0, dir);
   
   Log.info("Created new migration %s", fn);
   return 0;

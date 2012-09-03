@@ -66,6 +66,7 @@ int main(int argc, array(string) argv)
   int my_port = default_port;
   array(string) config_name = ({});
   string scandir;
+  array projects = ({});
   
   foreach(Getopt.find_all_options(argv,aggregate(
     ({"port",Getopt.HAS_ARG,({"-p", "--port"}) }),
@@ -75,6 +76,7 @@ int main(int argc, array(string) argv)
     ({"sessionloc",Getopt.HAS_ARG,({"--session-storage-location"}) }),
     ({"scandir",Getopt.HAS_ARG,({"--scan"}) }),
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
+    ({"app",Getopt.HAS_ARG,({"-a", "--application"}) }),    
     ({"local-network",Getopt.HAS_ARG,({"--local-network"}) }),
     ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
@@ -106,7 +108,9 @@ int main(int argc, array(string) argv)
 	    }
 		  config_name += ({opt[1]});
 		  break;
-		  
+
+    case "app":
+      projects += ({opt[1]});
 		case "scandir":
 		  if(sizeof(config_name))
 		  {
@@ -151,7 +155,6 @@ int main(int argc, array(string) argv)
         if(!sizeof(config_name)) config_name = ({"dev"});
 
   admin_port = my_port;
-  array projects = ({});
   if(scandir)
   {
     mixed fs = file_stat(scandir);
@@ -166,7 +169,7 @@ int main(int argc, array(string) argv)
     }
     scan_loc = scandir;
   }
-  else if(argc>=2) projects = argv[1..];
+  else if(!sizeof(projects) && argc>=2) projects = argv[1..];
 
   if((sizeof(projects) - sizeof(config_name))>0)
     config_name += allocate(sizeof(projects) - sizeof(config_name));

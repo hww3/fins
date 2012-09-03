@@ -22,6 +22,38 @@ mapping dbtype_ranges =
 protected mapping rdbtypes;
 
 
+//! @param fields
+//!  an array containing arrays with 2 elements: element 0 is the name of the field,
+//!  element 1 is a mapping containing the field definition.
+//!
+//! @param indexes
+//!  an array containing arrays with 2 elements: element 0 is the name of the field or fields in the index,
+//!  element 1 is a mapping containing the index options. see @[create_index()].
+int create_table(string tablename, array fields, array indexes)
+{
+  array defs = ({});
+  array idx = ({});
+
+  foreach(fields;; array fd)
+  {
+    defs += ({fd[0] + " " + low_get_field_definition(unmap_field(fd[1], tablename), 1)});
+  }
+
+  foreach(indexes;; array id)
+  {
+    create_index(tablename, stringp(id[0])? ({id[0]}): id[0], id[1], 1);
+  }
+
+  context->execute(sprintf("CREATE TABLE %s (%s)", tablename, defs* ",\n"));
+
+  foreach(indexes;; array id)
+  {
+    create_index(tablename, stringp(id[0])? ({id[0]}): id[0], id[1], 1);
+  }
+
+  return 0;
+}
+
 mapping get_field_info(string table, string field, mapping|void info);
 
 static void create(object c)
@@ -53,7 +85,7 @@ string get_serial_insert_value()
 
 //! @param options
 //!   a set of optional parameters: name, unique, order (mapping of fieldname to direction)
-int create_index(string table, array fields, mapping|void options)
+int create_index(string table, array fields, mapping|void options, int|void dry_run)
 {
   if(!options) options = ([]);
 
@@ -73,26 +105,34 @@ int create_index(string table, array fields, mapping|void options)
 
   if(!options->name)
     options->name = sprintf("fins_%s_index_%s", table, fields * "_");
-  context->execute(sprintf("CREATE %s INDEX %s ON %s (%s)", (options->unique?"UNIQUE":""), options->name, table, fields *","));
+
+  string query = sprintf("CREATE %s INDEX %s ON %s (%s)", (options->unique?"UNIQUE":""), options->name, table, fields *",");
+  
+  if(!dry_run)
+    context->execute(query);
 
   // TODO: return a better value.
   return 1;
 }
 
 //!
-int drop_index(string table, string index)
+int drop_index(string table, string index, int dry_run)
 {
-  context->execute(sprintf("DROP INDEX %s ON %s", index, table));
-
+  string query = sprintf("DROP INDEX %s ON %s", index, table);
+  if(!dry_run)
+  {
+    context->execute(query);
+  }
   // TODO: return a better value.
   return 1;
 }
 
 //!
-int drop_index_for_column(string table, array columns)
+int drop_index_for_column(string table, array columns, int dry_run)
 {
   string name = get_index_for_column(table, columns);
-  drop_index(table, name);
+
+  drop_index(table, name, dry_run);
   // TODO: return a better value.
   return 1;
 }
@@ -104,10 +144,13 @@ string get_index_for_column(string table, array columns)
 }
 
 //!
-int rename_table(string table, string newname)
+int rename_table(string table, string newname, int dry_run)
 {
-  context->execute(sprintf("ALTER TABLE %s RENAME TO %s", table, newname));
-  
+  string query = sprintf("ALTER TABLE %s RENAME TO %s", table, newname);
+
+  if(!dry_run)
+    context->execute(query);
+    
   return 1;
 }
 
@@ -139,44 +182,52 @@ protected string low_get_field_definition(mapping fd, int|void include_index)
     type = sprintf("%s(%s%s}", type, fd->length, (fd->decimals?(", " + fd->decimals):""));
    string def = sprintf("%s %s %s %s", upper_case(type), (fd->flags->not_null?"NOT NULL":""), 
                   (has_index(fd,"default")?("DEFAULT " + format_literal(fd->default)) :""), 
-                  ((include_index&&fd->flags->primary_key)?"PRIMARY KEY":""));
+                  ((include_index&&fd->flags->primary_key)?"PRIMARY KEY":0) || ((include_index&&fd->flags->unique)?"UNIQUE":"")    );
 
    return String.trim_whites(def);
 }
 
 //!
-int rename_column(string table, string name, string newname)
+int rename_column(string table, string name, string newname, int dry_run)
 {
   string def;
 
   def = get_field_definition(table, name);  
   string q = sprintf("ALTER TABLE %s CHANGE %s %s %s", table, name, newname, def);
   
-  log->info("executing "+ q);
-  
-  context->execute(q);
-}
+  if(!dry_run)
+  {   
+    log->info("executing "+ q);
+    context->execute(q);
+  }
+} 
 
 //! change the column type but not the name
-int change_column(string table, string name, mapping fd)
+int change_column(string table, string name, mapping fd, int dry_run)
 {
   string def;
   def = get_field_definition(table, name);  
   string q = sprintf("ALTER TABLE %s CHANGE %s %s %s", table, name, name, def);
 
-  log->info("executing "+ q);
-  context->execute(q);  
+  if(!dry_run)
+  {
+    log->info("executing "+ q);
+    context->execute(q);  
+  }
 }
 
 //!
-int add_column(string table, string name, mapping fd)
+int add_column(string table, string name, mapping fd, int dry_run)
 {
   string def;
   def = low_get_field_definition(unmap_field(fd, table));
   string q = sprintf("ALTER TABLE %s ADD COLUMN %s %s", table, name, def);
 
-  log->info("executing "+ q);
-  context->execute(q);  
+  if(!dry_run)
+  {
+    log->info("executing "+ q);
+    context->execute(q);  
+  }
 }
 
 //! delete columns from a table.
@@ -189,7 +240,7 @@ int add_column(string table, string name, mapping fd)
 //!
 //! @note
 //!   transaction will be rolled back if this operation fails.
-int drop_column(string table, string|array columns)
+int drop_column(string table, string|array columns, int dry_run)
 {
    if(stringp(columns))
    {
@@ -206,15 +257,18 @@ int drop_column(string table, string|array columns)
    string query = sprintf("ALTER TABLE %s %s", table, spec*", ");
    
    mixed e;
-   
-   context->begin_transaction();
-   if((e = catch(context->execute(query))))
-   {
-     context->rollback_transaction();
-     throw(e);
-   }
-   else
+
+   if(!dry_run)
+   { 
      context->begin_transaction();
+     if((e = catch(context->execute(query))))
+     {
+//       context->rollback_transaction();
+       throw(e);
+     }
+//     else
+//       context->begin_transaction();
+   }
    
    return 1; 
 }
@@ -277,8 +331,7 @@ mapping unmap_field(mapping t, string table)
   if(!field->flags)
     field->flags = ([]);
 
-
-  if(t->default)
+  if(has_index(t, "default"))
     field->default = t->default;
   if(t->type_class)
     field->type_class = t->type_class;
@@ -333,7 +386,7 @@ mapping unmap_field(mapping t, string table)
   field->flags->not_null = t->not_null;
   field->flags->primary_key = t->primary_key;
 
-  werror("unmapped to %O\n", field);
+  log->debug("unmapped to %O\n", field);
 
   return field;
 }

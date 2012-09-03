@@ -9,6 +9,8 @@ constant name = "";
 constant id = "";
 constant model_id = Fins.Model.DEFAULT_MODEL;
 
+int dry_run = 0;
+
 int verbose;
 
 //!
@@ -58,8 +60,27 @@ void run(int|void direction)
     announce("reverting");
   }
   
+  mixed g;
   int ntime = gethrtime();
-  mixed g = gauge(m());
+  if(context->transaction_supported())
+    context->begin_transaction();
+  mixed e = catch 
+  {
+    g = gauge(m());
+  };
+  
+  if(e)
+  {
+    if(context->transaction_supported())
+      context->rollback_transaction();
+    announce("Migration failed; transaction rolled back. Error follows.");
+    throw(e);
+  }
+  else
+  {
+    if(context->transaction_supported())
+      context->commit_transaction();
+  }  
   ntime = gethrtime() - ntime;
   
   float t = ntime / 1000000.0;  
@@ -221,12 +242,58 @@ void apply_sql(string segment_name, string|void engine_specific)
 //!   the sql table name to drop.
 void drop_table(string table)
 {
-  context->drop_table(table);
+  announce("dropping table %s.", table);
+  context->drop_table(table, dry_run);
 }
 
-int rename_table(string table, string newname);
-int rename_column(string table, string name, string newname);
-int drop_column(string table, string|array columns);
-int drop_table(string table);
-int drop_index(string table, string index);
-int create_index(string table, string name, array fields, int unique);
+//!
+int rename_table(string table, string newname)
+{
+  announce("renaming table %s to %s.", table, newname);
+  return context->rename_table(table, newname, dry_run);  
+}
+
+//!
+int rename_column(string table, string name, string newname)
+{
+  announce("renaming column %s in %s to %s.", name, table, newname);
+  return context->rename_column(table, name, newname, dry_run);    
+}
+
+//!
+int drop_column(string table, string|array columns)
+{
+  announce("dropping columns %s in %s.", (stringp(columns)?columns:String.implode_nicely(columns)), table);
+  return context->drop_column(table, (stringp(columns)?({columns}):columns), dry_run);    
+}
+
+//!
+int drop_index(string table, string index)
+{
+  announce("dropping index %s for table %s.", index, table);
+  return context->drop_index(table, index, dry_run);      
+}
+
+//!
+int drop_index_for_column(string table, array|string columns)
+{
+  announce("dropping index on columns %s for table %s.", (stringp(columns)?columns:String.implode_nicely(columns)), table);
+  return context->drop_index(table, (stringp(columns)?({columns}):columns), dry_run);        
+}
+
+//!
+int create_index(string table, string name, array|string columns, int|void unique, string|void order)
+{
+  mapping opts = ([]);
+  
+  if(unique)
+    opts->unique = 1;
+  if(order)
+    opts->order = order;
+    
+  opts->name = name;
+
+  announce("creating index on columns %s for table %s.", (stringp(columns)?columns:String.implode_nicely(columns)), table);
+  
+  return context->create_index(table, columns, opts, dry_run);
+}

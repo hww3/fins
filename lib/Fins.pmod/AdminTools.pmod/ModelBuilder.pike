@@ -2,7 +2,7 @@ import Tools.Logging;
 
 object app;
 //Fins.Application app;
-string project;
+string appname;
 string config_name = "dev";
 array commands;
 string model_id = Fins.Model.DEFAULT_MODEL;
@@ -16,57 +16,83 @@ void create(array args)
   Log.info("ModelBuilder module loading");
   Log.info("Fins version " + Fins.__version);
 
-  if(!sizeof(args))
-  {
-    Log.error("ModelBuilder requires the name of the application to work with.");
-    exit(1);
-  }
+  array a2 = ({""}) + args;
 
-  foreach(Getopt.find_all_options(args,aggregate(
+  foreach(Getopt.find_all_options(a2,aggregate(
     ({"help",Getopt.NO_ARG,({"--help"}) }),
     ({"config",Getopt.HAS_ARG,({"--config", "-c"}) }),
     ({"model",Getopt.HAS_ARG,({"--model", "-m"}) }),
+    ({"app",Getopt.HAS_ARG,({"-a", "--application"}) }),
     ({"force",Getopt.NO_ARG,({"--force", "-f"}) }),
     )),array opt)
     {
       switch(opt[0])
       {
         case "help":
-  		  print_help();
-		  return 0;
-		  break;
+  		    print_help();
+		      return 0;
+		      break;
+        case "app":
+        werror("got appname.\n");
+          appname = opt[1];
+		      break;
         case "config":
           config_name = opt[1];
-		  break;
+		      break;
         case "model":
           model_id = opt[1];
-		  break;
+		      break;
        case "force":
           overwrite ++;
-		  break;
+		      break;
 	  }
 	}
 
-	args-=({0});
+  args = a2[1..] - ({0});
 	argc = sizeof(args);
 
-  if(argc) project = args[0];
-
-  if(argc>1)
-    commands = args[1..];
+  if(argc)
+    commands = args;
 }
+
+void load_app()
+{
+  if(!appname)
+  {
+    Log.error("No application specified.");
+    exit(3);
+  }
+  if(!config_name)
+  {
+    Log.error("No configuration specified.");  
+    exit(6);
+  }
+  Log.error("Loading application %s with configuration %s.", appname, config_name);
+  
+  if(appname[0]!='/')
+  {
+    appname = Stdio.append_path(getcwd(), appname);
+  }
+
+  // we only load 1 app in this tool, so there's no need to do multi-tenancy
+  // which makes it's easier to interact with the application from the main thread.
+  Fins.Loader.set_multi_tenant(0);
+  app = Fins.Loader.load_app(appname, config_name);
+  
+  if(!app)
+  {
+    Log.error("Unable to load application.");
+    exit(2);
+  }
+
+}
+
 
 int run()
 {
   Log.info("ModelBuilder module running.");
 
-  project = combine_path(getcwd(), project);
-
-  Fins.Loader.set_multi_tenant(0);
-
-  app = Fins.Loader.load_app(project, config_name);  
-
-  Log.debug("Application loaded.");
+  load_app();
 
   object modelbuilder = Fins.Util.ModelBuilder(app, model_id);
   
@@ -118,7 +144,7 @@ int run()
 
 void print_help()
 {
-	werror("Usage: pike -x fins model [-f|--force] [-c config] [-m modelid] AppDir (scan | [add table [table1... tableN]])\n");
+	werror("Usage: pike -x fins model -a appdir [-f|--force] [-c config] [-m modelid] AppDir (scan | [add table [table1... tableN]])\n");
 	return;
 }
 
