@@ -285,16 +285,14 @@ import Tools.JSON;
                     }
 		}
 
-//! 
+program objectprog;
+program arrayprog;
+
 //! Get the next value as object. The value can be a Boolean, Double, Integer,
 //! JSONArray, JSONObject, or String, or the JSONObject.NULL object.
 //! 
 //! @returns
 //!  An object.
-
-program objectprog;
-program arrayprog;
-
 		public mixed nextObject()
 		{
 			int c = nextClean();
