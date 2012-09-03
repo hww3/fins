@@ -21,7 +21,9 @@ object default_logger = Tools.Logging.Log.Logger();
 //! 
 //!  configuration file is standard ini-style.
 //!
-//!  [logger.logger_name] <-- configures a logger named "logger_name"
+//!  [logger.logger_name] <-- configures a logger named "logger_name", loggers are hierarchal, with "." separating
+//!  the various components in the logger hierarchy. For example, "myapp.subsystem.component". The root logger
+//!  from which all configurations inherit, is called "default".
 //!
 //!  level=TRACE|DEBUG|INFO|WARN|ERROR <-- optional log level for this logger
 //!
@@ -31,6 +33,8 @@ object default_logger = Tools.Logging.Log.Logger();
 //!    defaults to Tools.Logging.Log.Logger
 //!
 //!  additivity=false <-- do not use the parent configuration as a basis for this logger's configuration to override.
+//!    Defaults to "true", in which case any value not specified in the child will be sourced from the parent. If set to 
+//!    true, any logger targets from the parent will also be added to the child.
 //!
 //!  enable=true/false/yes/no <-- whether the logger should generate entries
 //!
@@ -134,7 +138,8 @@ void load_config_file()
 //! get a logger for loggername
 //!
 //! by default, this call will always return a logger object. if the requested 
-//! logger is not found, the default logger will be returned.
+//! logger is not found, the nearest parent logger will be returned, up to and
+//! including the default root logger.
 //!
 //! @param loggername
 //!   may be a string, in which the logger is directly specified,
