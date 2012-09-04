@@ -439,5 +439,5 @@ void initialize_links()
 
 object get_table_builder(string table)
 {
-  return TableBuilder(table, this);
+  return .TableBuilder(table, this);
 }
