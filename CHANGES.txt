@@ -2,6 +2,9 @@ Version 0.9.5
 
 INCOMPATIBLE CHANGES
 
+- pike -x fins tools that require the appname use thargument -a.
+    Previous tools just looked at the arguments for a directory,
+    which could have ambiguous results.
 - Fins.Model is no longer the go-to location for finding objects.
     In its place, you want to use context->find and friends. To get 
     a context for your data model, use Fins.DataSource.modelid, where
@@ -26,6 +29,9 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added pike -x fins [*] -aname argument.
+-  If pike -x fins start does not include an appname argument,
+     assume that the current directoris the app to start.
 -  Added pike -x fins start --local-network=CIDR to specify network
      address ranges considered local for access to admin pages (in
      addition to localhost). Requires IP.v4 module.
