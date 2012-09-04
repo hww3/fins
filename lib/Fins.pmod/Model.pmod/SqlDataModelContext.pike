@@ -436,3 +436,8 @@ void initialize_links()
   builder->has_many = ({});
   builder->has_many_many = ({});
 }
+
+object get_table_builder(string table)
+{
+  return TableBuilder(table, this);
+}

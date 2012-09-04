@@ -35,12 +35,12 @@ string script_base =
 
 string hilfe_contents = script_base +
 #"
-  exec pike $PIKE_ARGS -x fins start __APPNAME__ --hilfe $*
+  exec pike $PIKE_ARGS -x fins start -a __APPNAME__ --hilfe $*
 ";
 
 string start_contents = script_base + 
 #"
-  exec pike $PIKE_ARGS -x fins start __APPNAME__ $*
+  exec pike $PIKE_ARGS -x fins start -a __APPNAME__ $*
 ";
 
 string fins_contents = script_base + 
@@ -51,7 +51,7 @@ string fins_contents = script_base +
   fi
   shift 1
 
-  exec pike $PIKE_ARGS -x fins $ARG0 __APPNAME__ $*
+  exec pike $PIKE_ARGS -x fins $ARG0 -a __APPNAME__ $*
 ";
 
 void create(array args)
