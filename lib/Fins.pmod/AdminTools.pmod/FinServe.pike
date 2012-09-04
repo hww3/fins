@@ -154,6 +154,7 @@ int main(int argc, array(string) argv)
 	
 	argv-=({0});
 	argc = sizeof(argv);
+        if(!sizeof(projects)) projects += ({getcwd()});
         if(!sizeof(config_name)) config_name = ({"dev"});
 
   admin_port = my_port;
