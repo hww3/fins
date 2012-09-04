@@ -111,6 +111,8 @@ int main(int argc, array(string) argv)
 
     case "app":
       projects += ({opt[1]});
+      break;
+
 		case "scandir":
 		  if(sizeof(config_name))
 		  {
