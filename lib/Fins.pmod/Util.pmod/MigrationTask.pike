@@ -286,7 +286,8 @@ int drop_index_for_column(string table, array|string columns)
   return context->drop_index(table, (stringp(columns)?({columns}):columns), dry_run);        
 }
 
-object get_table_builder(string table)
+//
+Fins.Model.TableBuilder get_table_builder(string table)
 {
   return context->get_table_builder(table, this);
 }

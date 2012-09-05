@@ -29,6 +29,8 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added TableBuilder tools to migration tasks.
+-  Migration tool -c argument defaults to "dev".
 -  Added pike -x fins [*] -aname argument.
 -  If pike -x fins start does not include an appname argument,
      assume that the current directoris the app to start.
