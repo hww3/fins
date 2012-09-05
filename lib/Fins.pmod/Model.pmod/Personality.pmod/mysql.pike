@@ -17,11 +17,13 @@ mapping dbtype_to_finstype =
 
    "char": "string",
    "varchar": "string",
+   "var string": "string",
 
    "tinyint": "integer",
    "smallint": "integer",
    "integer": "integer",
    "bigint": "integer",
+   "long": "integer",
 
    "float": "float",
    "double": "float",
@@ -43,6 +45,7 @@ mapping dbtype_ranges =
   "smallint": (["min": -32768, "max": 32767, "num": 1]),
   "mediumint": (["min": -8388608, "max": 8388607, "num": 1]),
   "int": (["min": -2147483648, "max": 2147483647, "num": 1]),
+  "long": (["min": -9223372036854775808, "max": 9223372036854775807, "num": 1]),
   "bigint": (["min": -9223372036854775808, "max": 9223372036854775807, "num": 1]),
 
   "char": (["min": 0, "max": 255, "include_size": 1]),
@@ -67,7 +70,7 @@ string get_limit_clause(int limit, int|void start)
 
 object get_connection()
 {
-  return master()->resolv("Sql.Sql")(context->sql_url, 0, 0, 0, (["reconnect": 1]));
+  return master()->resolv("Sql.Sql")(context->url, 0, 0, 0, (["reconnect": 1]));
 }
 
 void initialize_connection(object s)
@@ -117,7 +120,7 @@ string get_index_for_column(string table, array columns)
     Tools.throw(Error.Generic, "ambiguous match for index for columns <%s> in table <%s>", columns * ", ", table);
   }
 
-  array keys = uniq(res->key_name);
+  array keys = Array.uniq(res->key_name);
   
   foreach(keys;; string keyname)
   {
@@ -153,10 +156,10 @@ protected string low_get_field_definition(mapping fd, int|void include_index)
 {
   string def;
   
-  def = fd->Type + " " + ((fd->Null == "NO")?"NOT NULL ":"")  + 
+  def = fd->Type + " " + ((fd->Null == "NO")?"NOT NULL ":"");
   
   if(fd->Default)
-    def += (" " + fd->default);
+    def += (" DEFAULT " + fd->default);
   def += (" " + fd->extra);
   
   if(include_index)
