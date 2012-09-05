@@ -6,7 +6,7 @@ mixed default_value = .Undefined;
 int null = 0;
 .Criteria criteria;
 
-object renderer = Fins.Helpers.Renderers.KeyRenderer(); // ScaffoldRenderer
+Fins.Helpers.Renderers.Renderer renderer = Fins.Helpers.Renderers.KeyRenderer(); // ScaffoldRenderer
 
 static void create(string _name, string _myfield, string _otherobject, void|.Criteria _criteria, void|int _null)
 {

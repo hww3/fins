@@ -9,6 +9,7 @@ string datadir;
 
 mapping dbtype_to_finstype = 
 ([
+  "int": "integer",
    "var string": "string",
    "char": "string",
    "varchar": "string",
@@ -358,6 +359,8 @@ mapping unmap_field(mapping t, string table)
       field->type = "float";
       break;
 
+    case "int":
+      t->type = "integer";
     case "integer":
     case "string":
       field->length = t->length;
