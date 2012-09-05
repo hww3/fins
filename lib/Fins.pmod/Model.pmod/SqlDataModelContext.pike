@@ -442,7 +442,7 @@ void create_table(string table, array fields, array indexes, int|void dry_run)
   personality->create_table(table, fields, indexes, dry_run);
 }
 
-object get_table_builder(string table)
+object get_table_builder(string table, object|void migration)
 {
-  return .TableBuilder(table, this);
+  return .TableBuilder(table, this, migration);
 }

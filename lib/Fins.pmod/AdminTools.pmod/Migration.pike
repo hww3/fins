@@ -81,6 +81,11 @@ int run()
 
 void load_app()
 {
+  // FinsMode.get_context() will check for this constant and defer type registration if it exists.
+  // Naturally, we want that, as there may be datatype mapping elements present that aren't reflected
+  // in the schema (yet).
+  add_constant("__defer_register_types", 1);
+  
   if(!appname)
   {
     Log.error("No application specified.");

@@ -3,11 +3,7 @@ inherit FinsBase;
 
 object log = Tools.Logging.get_logger("model");
 
-#ifdef FINS_MIGRATION_MODE
-int do_register_types = 0;
-#else
 int do_register_types = 1;
-#endif
 
 static void create(Fins.Application a)
 {
@@ -43,6 +39,7 @@ static void create(Fins.Application a)
 
 void load_model()
 {
+  do_register_types = !((int)config["model"]["skip_register_types"]);
   object context = get_context(config["model"], Fins.Model.DEFAULT_MODEL);
 
   Fins.Model.set_context(Fins.Model.DEFAULT_MODEL, context);
@@ -67,9 +64,9 @@ object get_context(mapping config_section, string id)
   c->model = this;
 
   c->initialize();
-  
-  if(do_register_types)
+
+  if(!all_constants()["__defer_register_types"])
     c->register_types();
-  
+
   return c;
 }

@@ -286,6 +286,11 @@ int drop_index_for_column(string table, array|string columns)
   return context->drop_index(table, (stringp(columns)?({columns}):columns), dry_run);        
 }
 
+object get_table_builder(string table)
+{
+  return context->get_table_builder(table, this);
+}
+
 //!
 int create_index(string table, string name, array|string columns, int|void unique, string|void order)
 {
