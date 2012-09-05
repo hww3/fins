@@ -154,7 +154,7 @@ int in_transaction()
 //!   mapping containing the following elements: name, order, unique
 int create_index(string table, string name, array fields, mapping opts, int|void dry_run)
 {
-  return personality->create_index(table, fields, opts, dry_run);  
+  return personality->create_index(table, fields, opts + (["name": name]), dry_run);  
 }
 
 //!
@@ -435,6 +435,11 @@ void initialize_links()
   builder->belongs_to = ({});
   builder->has_many = ({});
   builder->has_many_many = ({});
+}
+
+void create_table(string table, array fields, array indexes, int|void dry_run)
+{
+  personality->create_table(table, fields, indexes, dry_run);
 }
 
 object get_table_builder(string table)

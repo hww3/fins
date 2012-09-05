@@ -19,7 +19,7 @@
 //! "Appname.DataMappings.User."
 //! 
 
-#define R(X) master()->resolv("X")
+#define R(X) master()->resolv(X)
 object log = Tools.Logging.get_logger("fins.model.dataobject");
 object querylog = Tools.Logging.get_logger("fins.model.query");
 
@@ -362,36 +362,36 @@ void do_add_field(.DataModelContext context, mapping field)
   log->debug("adding field %O.", field);
       if(field->type == "integer")
       {
-        add_field(context, (field->type_class||R(Fins.Model.IntField))(field->name, field->length, !field->not_null, 		
+        add_field(context, (field->type_class||R("Fins.Model.IntField"))(field->name, field->length, !field->not_null, 		
 			field->default?(int)field->default:Fins.Model.Undefined));
       }
       if(field->type == "float")
       {
-        add_field(context, (field->type_class||R(Fins.Model.FloatField))(field->name, field->length, !field->not_null, field->default?(float)field->default:0));
+        add_field(context, (field->type_class||R("Fins.Model.FloatField"))(field->name, field->length, !field->not_null, field->default?(float)field->default:0));
       }
       if(field->type == "timestamp")
       {
-        add_field(context, (field->type_class||R(Fins.Model.TimeStampField))(field->name, 0));
+        add_field(context, (field->type_class||R("Fins.Model.TimeStampField"))(field->name, 0));
       }
       else if(field->type == "date")
       {
-        add_field(context, (field->type_class||R(Fins.Model.DateField))(field->name, !field->not_null, field->default));
+        add_field(context, (field->type_class||R("Fins.Model.DateField"))(field->name, !field->not_null, field->default));
       }
       else if(field->type == "datetime")
       {
-        add_field(context, (field->type_class||R(Fins.Model.DateTimeField))(field->name, !field->not_null, field->default));
+        add_field(context, (field->type_class||R("Fins.Model.DateTimeField"))(field->name, !field->not_null, field->default));
       }
       else if(field->type == "time")
       {
-        add_field(context, (field->type_class||R(Fins.Model.TimeField))(field->name, !field->not_null, field->default));
+        add_field(context, (field->type_class||R("Fins.Model.TimeField"))(field->name, !field->not_null, field->default));
       }
       else if(field->type == "string")
       {
-        add_field(context, (field->type_class||R(Fins.Model.StringField))(field->name, field->length, !field->not_null, field->default));
+        add_field(context, (field->type_class||R("Fins.Model.StringField"))(field->name, field->length, !field->not_null, field->default));
       }
       else if(field->type == "binary_string")
       {
-        add_field(context, (field->type_class||R(Fins.Model.BinaryStringField))(field->name, field->length, !field->not_null, field->default));
+        add_field(context, (field->type_class||R("Fins.Model.BinaryStringField"))(field->name, field->length, !field->not_null, field->default));
       }
    if(field->unique && ! alternate_key)
      set_alternate_key(field->name);

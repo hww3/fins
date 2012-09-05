@@ -1,7 +1,7 @@
 import Tools.Logging;
 
 string appname;
-string config_name;
+string config_name = "dev";
 array args;
 object app;
 

@@ -29,7 +29,7 @@ protected mapping rdbtypes;
 //! @param indexes
 //!  an array containing arrays with 2 elements: element 0 is the name of the field or fields in the index,
 //!  element 1 is a mapping containing the index options. see @[create_index()].
-int create_table(string tablename, array fields, array indexes)
+int create_table(string tablename, array fields, array indexes, int|void dry_run)
 {
   array defs = ({});
   array idx = ({});
@@ -44,11 +44,12 @@ int create_table(string tablename, array fields, array indexes)
     create_index(tablename, stringp(id[0])? ({id[0]}): id[0], id[1], 1);
   }
 
-  context->execute(sprintf("CREATE TABLE %s (%s)", tablename, defs* ",\n"));
+  if(!dry_run)
+    context->execute(sprintf("CREATE TABLE %s (%s)", tablename, defs* ",\n"));
 
   foreach(indexes;; array id)
   {
-    create_index(tablename, stringp(id[0])? ({id[0]}): id[0], id[1], 1);
+    create_index(tablename, stringp(id[0])? ({id[0]}): id[0], id[1], dry_run);
   }
 
   return 0;
