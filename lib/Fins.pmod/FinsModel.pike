@@ -5,6 +5,11 @@ object log = Tools.Logging.get_logger("model");
 
 int do_register_types = 1;
 
+//! normally, fields that represent references between objects will be created using the referenced
+//! type's proper object name using mixed case (such as "User"). If this field is set to true, the
+//! reference will be created using lower case (such as "user").
+int lower_case_link_names = 0;
+
 static void create(Fins.Application a)
 {
   ::create(a);
@@ -64,9 +69,15 @@ object get_context(mapping config_section, string id)
   c->model = this;
   
   // TODO: fix this properly. 
-  c->lower_case_link_names = this["lower_case_link_names"];
+  c->lower_case_link_names = lower_case_link_names;
   c->initialize();
 
+  // this exists primarily for the migration tools, which should run before model objects are
+  // configured. that way, any database objects will be up-to-date before the model tries to
+  // configure itself via reflection.
+  //
+  // a migration that needs to access model-mapped objects can call initialize_types() itself
+  // before doing so.
   if(!all_constants()["__defer_register_types"])
     c->register_types();
 
