@@ -6,8 +6,30 @@ mixed default_value = .Undefined;
 int null = 0;
 .Criteria criteria;
 
+//!  A field type that represents some other object identified that object's unique id
+//!  stored in this field. 
+//! 
+//!  @example
+//!  An object representing a "book" may have a single owner. 
+//!  That relationship could be modeled using a KeyReference that links that book to its 
+//!  owner (perhaps a "user" object) via a field on the book that contains the owner's id.
+//!
+//!  @seealso
+//!   @[Fins.Model.DataObject.belongs_to()]
+
+
 Fins.Helpers.Renderers.Renderer renderer = Fins.Helpers.Renderers.KeyRenderer(); // ScaffoldRenderer
 
+//! @param _name
+//!   the name this field will be accessible via (such as "User")
+//! @param _myfield
+//!   the name of the database field that represents this reference (such as "user_id")
+//! @param _otherobject
+//!   the name of the object type this link represents (such as "User")
+//! @param _criteria
+//!   not used in this class
+//! @param _null
+//!   if set, an object can be saved without providing a value for this field
 static void create(string _name, string _myfield, string _otherobject, void|.Criteria _criteria, void|int _null)
 {
   name = _name;
