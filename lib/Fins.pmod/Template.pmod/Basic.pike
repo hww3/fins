@@ -129,7 +129,7 @@ static class RegexReplacer{
             function f;
             if(has_prefix(substrings[-2], "!"))
             {
-              f = .get_simple_macro(substrings[-2][1..]);
+              f = .get_macro(substrings[-2][1..]);
               if(f)
                 components += ({ MacroField(substrings[-2][1..], f, substrings[-1]) });
               else components += ({ TextString("UNKNOWN MACRO " + substrings[-2][1..]) });

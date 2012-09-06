@@ -2,6 +2,9 @@ import Tools.Logging;
 
 static .TemplateContext context;
 
+//! template extension, including any dot or other separator character.
+constant TEMPLATE_EXTENSION = "";
+
 //!
 static void create(string template, .TemplateContext c)
 {

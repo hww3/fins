@@ -135,7 +135,7 @@ object t =  Thread.this_thread();
 }
 
 
-array(Block) psp_to_blocks(string file, string realfile, void|object compilecontext)
+BlockHolder psp_to_blocks(string file, string realfile, void|object compilecontext)
 {
   int file_len = strlen(file);
   int in_tag = 0;
@@ -204,7 +204,7 @@ array(Block) psp_to_blocks(string file, string realfile, void|object compilecont
   }
   while (sp < file_len);
 
-  return contents;
+  return BlockHolder(contents);
 }
 
 string parse_psp(string file, string realname, object|void compilecontext)
@@ -213,7 +213,7 @@ string parse_psp(string file, string realname, object|void compilecontext)
 
 //werror("**** parse_psp: %O %O\n", file, realname);
 //werror("%O\n", backtrace());
-  array(Block) contents = psp_to_blocks(file, realname, compilecontext);
+  BlockHolder contents = psp_to_blocks(file, realname, compilecontext);
   string ps = "", h = "" , header = "", initialization = "", pikescript = "";
  
   [ps, h] = render_psp(contents, "", "", compilecontext);
@@ -224,7 +224,7 @@ string parse_psp(string file, string realname, object|void compilecontext)
   foreach(macros_used; string macroname;)
   {
     header += ("function __macro_" + macroname + ";");
-    initialization += ("__macro_" + macroname + " = __context->view->get_simple_macro(\"" + macroname + "\");");
+    initialization += ("__macro_" + macroname + " = __context->view->get_macro(\"" + macroname + "\");");
 //    initialization += ("werror(\"__macro_" + macroname + ": %O\\n\",__macro_" + macroname + ");");
   }
 
@@ -236,26 +236,38 @@ string parse_psp(string file, string realname, object|void compilecontext)
   return header + "\n\n" + pikescript + "}";
 }
 
-array render_psp(array(Block) contents, string pikescript, string header, object|void compilecontext)
+array render_psp(BlockHolder contents, string pikescript, string header, object|void compilecontext)
 {
-  foreach(contents, object e)
+  object e;
+  while(e = contents->next())
   {
     if(e->get_type() == TYPE_DECLARATION)
       header += e->render(compilecontext);
     else if(e->get_type() == TYPE_DIRECTIVE)
     {
       mixed ren = e->render(compilecontext);
-      if(arrayp(ren))
+      if(objectp(ren))
         [pikescript, header] = render_psp(ren, pikescript, header, compilecontext);
 	  else pikescript += ren;
     }
     else
-      pikescript += e->render(compilecontext);
+      pikescript += e->render(compilecontext, contents);
   }
 
   return ({pikescript, header});
 }
 
+class BlockHolder(array(Block) blocks)
+{
+  int current_pos = 0;
+  
+  Block next()
+  {
+    if(current_pos >= sizeof(blocks))
+      return 0;
+    return blocks[current_pos++];
+  }
+}
 
 int main(int argc, array(string) argv)
 {
@@ -380,7 +392,7 @@ class PikeBlock
     else return TYPE_SCRIPTLET;
   }
 
-  array(Block) | string render(object|void compilecontext)
+  BlockHolder | string render(object|void compilecontext)
   {
     if(has_prefix(contents, "<%!"))
     {
@@ -501,7 +513,7 @@ class PikeBlock
 
      default:
        string rx = "";
-       function f = context->view->get_simple_macro(cmd);
+       function f = context->view->get_macro(cmd);
        if(!f)
          throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid macro command %O at line %d.\n", cmd, (int)start)));
 
@@ -572,7 +584,7 @@ class PikeBlock
    return rv;
  }
 
- string|array(Block) parse_directive(string exp, object|void compilecontext)
+ string|BlockHolder parse_directive(string exp, object|void compilecontext)
  {
    exp = String.trim_all_whites(exp);
  
@@ -601,7 +613,7 @@ class PikeBlock
    }
  }
 
- string|array(Block) process_project(string exp, object|void compilecontext)
+ string|BlockHolder process_project(string exp, object|void compilecontext)
  {
 	string project;
 	
@@ -615,7 +627,7 @@ class PikeBlock
  }
 
  // we don't handle absolute includes yet.
- array(Block) process_include(string exp, object|void compilecontext)
+ BlockHolder process_include(string exp, object|void compilecontext)
  {
    string file;
    string contents;
@@ -635,7 +647,7 @@ class PikeBlock
  
    if(contents)
    {
-     array x = psp_to_blocks(contents, file, compilecontext);
+     mixed x = psp_to_blocks(contents, file, compilecontext);
      //werror("blocks: %O\n", x);
      return x;
    }

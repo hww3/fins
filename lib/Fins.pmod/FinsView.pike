@@ -18,7 +18,7 @@ program default_data = Fins.Template.TemplateData;
 program default_context = Fins.Template.TemplateContext;
 
 static mapping templates = ([]);
-static mapping simple_macros = ([]);
+static mapping(string:function|string) macros = ([]);
 
 //! the base View class
 
@@ -35,48 +35,89 @@ static void load_macros()
   foreach(glob("simple_macro_*", indices(this)); ; string mf)
   {
     log->debug("loading macro %O", mf[13..]);
-    add_simple_macro(mf[13..], this[mf]);
+    add_macro(mf[13..], this[mf]);
+  }
+  
+  foreach(glob("*" +  default_template.TEMPLATE_EXTENSION, get_dir("macros")); ; string mf)
+  {
+    string mn = mf[0..<sizeof(default_template.TEMPLATE_EXTENSION)];
+    log->debug("loading string macro %O", mn);
+    add_macro(mn, Stdio.read_file(combine_path("macros", mf)));
+  }
+  
+}
+
+//! macros can be either "simple" macros, which are pike functions, or they can be text strings,
+//! which are treated as templates of the default type, and which receive any arguments passed
+//! in the macro invocation as data in a mapping called "args".
+//! 
+//! upon startup, string macros are loaded from files contained in the macros directory.
+//! "simple" macros are loaded by scanning the view class for functions with names in the form of
+//! "simple_macro_abc", where abc is the name under which the macro will be registered.
+public void add_macro(string name, function|string macrocode)
+{
+  if(functionp(macrocode))
+    macros[name] = macrocode;
+  else
+    macros[name] = StringMacroRunner(name, macrocode, this);
+}
+
+class StringMacroRunner(string name, string macrocode, object view)
+{
+  static function `()(Fins.Template.TemplateData data, mapping|void args)
+  {
+    return view->render_string_partial(macrocode, data->get_data() + (["args": args]), 0, 0, data->get_request());
   }
 }
 
 //!
-public void add_simple_macro(string name, function macrocode)
+public function|string get_macro(string name)
 {
-  simple_macros[name] = macrocode;
+  return macros[name];
 }
 
-//!
-public function get_simple_macro(string name)
-{
-  return simple_macros[name];
-}
-
-//!
-public string render_partial(string view, mapping data, 
+public string render_partial(string view,  mapping data, 
                                  string|void collection_name, mixed|void collection, void|Fins.Request request)
 {
 //werror("render_partial(%O)\n", request);
 	string result = "";
 	object v = get_view(view);
+  return low_render_partial(v, data, collection_name, collection, request);
+}
 
+public string render_string_partial(string view,  mapping data, 
+                                 string|void collection_name, mixed|void collection, void|Fins.Request request)
+{
+//werror("render_partial(%O)\n", request);
+	string result = "";
+	object v = get_string_view(view);
+  return low_render_partial(v, data, collection_name, collection, request);
+}
+
+//!
+public string low_render_partial(object v, mapping data, 
+                                 string|void collection_name, mixed|void collection, void|Fins.Request request)
+{
+//werror("render_partial(%O)\n", request);
+	string result = "";
+	
 	if(collection_name)
 	{
 		if(request)
-                  v->data->set_request(request);
+      v->data->set_request(request);
 		foreach(collection;mixed i; mixed c)
 		{
 			mapping d = data + ([]);
 			d[collection_name] = c;
-                        d->id = i;
-
+      d->id = i;
 			v->data->set_data(d);
 			result += v->render();
 		}
 	}
-        else
+  else
 	{
 		if(request)
-                  v->data->set_request(request);
+      v->data->set_request(request);
 		v->data->set_data(data);
 		result += v->render();
 	}	
