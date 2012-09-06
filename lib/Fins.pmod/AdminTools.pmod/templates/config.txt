@@ -4,7 +4,7 @@
 class=model
 debug=1
 #datasource=mysql://user:pass@host/db
-#datasource=sqlite://${appdir}/config/${appname}.sqlite3
+#datasource=sqlite://${appdir}/config/${appname}_${config}.sqlite3
 
 [controller]
 class=controller

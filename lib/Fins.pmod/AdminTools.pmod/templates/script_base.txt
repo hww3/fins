@@ -10,4 +10,4 @@ fi
 
 ARG0=$1
 
-cd `dirname $0`/../..
+cd `dirname $0`/..

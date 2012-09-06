@@ -21,12 +21,8 @@ level=WARN
 
 [logger.access]
 appender=access_log
+additivity=false
 class=Tools.Logging.Log.AccessLogger
-
-[logger.session]
-level=INFO
-appender=default_console
-appender=default_debuglog
 
 [appender.default_console]
 class=Tools.Logging.Log.ConsoleAppender
