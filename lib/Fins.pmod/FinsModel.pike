@@ -39,7 +39,8 @@ static void create(Fins.Application a)
 //!    Fins.Model.DataModelContext ctx = Fins.DataSources._default;
 //!    // get a context for the model whose configuration specifies an "id" of "my_additional_model"
 //!    Fins.Model.DataModelContext ctx2 = Fins.DataSources.my_additional_model;
-//!
+//!    // alternately, you can use get_context():
+//!    Fins.Model.DataModelContext ctx2 = Fins.Model.get_context("my_additional_model");
 
 
 void load_model()
