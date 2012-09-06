@@ -62,7 +62,9 @@ object get_context(mapping config_section, string id)
   c->config = config;
   c->app = app;
   c->model = this;
-
+  
+  // TODO: fix this properly. 
+  c->lower_case_link_names = this["lower_case_link_names"];
   c->initialize();
 
   if(!all_constants()["__defer_register_types"])
