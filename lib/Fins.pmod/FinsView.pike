@@ -199,7 +199,7 @@ public Template.Template low_get_template(program templateType, string templateN
   {
     context = default_context();
     context->application = app;
-	context->view = this;
+    context->view = this;
   }
 
   if(!templateName || !stringp(templateName))
@@ -212,8 +212,12 @@ public Template.Template low_get_template(program templateType, string templateN
 
   if(!(t = templates[templateType][templateName]))
   {
-    t = templateType(templateName, context, is_layout);
-
+ //   werror("trying for template.\n");
+    mixed err = catch(
+    t = templateType(templateName, context, is_layout));
+    if(err)
+      log->exception("error while compiling.", err);
+//    werror("got it.\n");
     if(!t)
     {
       throw(Error.Generic("get_template(): unable to load template " + templateName + "\n"));
@@ -223,7 +227,6 @@ public Template.Template low_get_template(program templateType, string templateN
   }
 
 //  if(t) werror("success.\n");
-
   return t;
 
 }
