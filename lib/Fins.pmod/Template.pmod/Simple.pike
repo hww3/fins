@@ -118,7 +118,8 @@ void render_view(String.Buffer buf, object ct, object d)
 program compile_string(string code, string realfile, object|void compilecontext)
 {
   string psp = parse_psp(code, realfile, compilecontext);
-//  Stdio.write_file("/tmp/" + realfile + ".txt", sprintf("PSP: %s\n\n", psp));
+  Stdio.write_file("/tmp/" + replace(realfile, "/", "_") + ".txt", sprintf("PSP: %s\n\n", psp));
+//  werror(sprintf("PSP: %s\n\n", psp));
   program p;
 
   object e = ErrorContainer();
@@ -214,6 +215,13 @@ string parse_psp(string file, string realname, object|void compilecontext)
 //werror("**** parse_psp: %O %O\n", file, realname);
 //werror("%O\n", backtrace());
   BlockHolder contents = psp_to_blocks(file, realname, compilecontext);
+  
+  return low_parse_psp(contents, compilecontext);
+}
+
+
+string low_parse_psp(BlockHolder contents, object|void compilecontext)  
+{
   string ps = "", h = "" , header = "", initialization = "", pikescript = "";
  
   [ps, h] = render_psp(contents, "", "", compilecontext);
@@ -242,16 +250,21 @@ array render_psp(BlockHolder contents, string pikescript, string header, object|
   while(e = contents->next())
   {
     if(e->get_type() == TYPE_DECLARATION)
-      header += e->render(compilecontext);
-    else if(e->get_type() == TYPE_DIRECTIVE)
-    {
-      mixed ren = e->render(compilecontext);
-      if(objectp(ren))
-        [pikescript, header] = render_psp(ren, pikescript, header, compilecontext);
-	  else pikescript += ren;
-    }
+      header += e->render(compilecontext, contents);
     else
-      pikescript += e->render(compilecontext, contents);
+    {
+      mixed ren = e->render(compilecontext, contents);
+      if(objectp(ren))
+      {
+        [pikescript, header] = render_psp(ren, pikescript, header, compilecontext);
+      }
+      else if(arrayp(ren))
+      {
+        pikescript+= ren[0];
+        header+= ren[1];
+      }
+	    else pikescript += ren;
+    }
   }
 
   return ({pikescript, header});
@@ -325,7 +338,7 @@ class Block(string contents, string filename, object|void compilecontext)
     return "Block(" + contents + ")";
   }
 
-  array(Block) | string render(object|void compilecontext);
+  array(Block) | string render(object|void compilecontext, object|void blocks);
 }
 
 class TextBlock
@@ -336,9 +349,11 @@ class TextBlock
 
  array out = ({"\\\\", "\\\"", "\\n"});
 
- string render(object|void compilecontext)
+ string render(object|void compilecontext, object|void blocks)
  {
-   return "{\n" + escape_string(contents)  + "}\n";
+   string c = "{\n" + escape_string(contents)  + "}\n";
+//   werror("contents: %O", c);
+   return c;
  }
 
  
@@ -348,7 +363,7 @@ class TextBlock
     int cl = start;
     int atend=0;
     int current=0;
-    retval+="\n buf->add(\n";
+    retval+="\n buf->add(";
     do
     {
        string line;
@@ -370,7 +385,7 @@ class TextBlock
        {
          cl++;
        } 
-         retval+=("#line " + cl + " \"" + filename + "\"\n\"" + line + "\"\n");
+        retval+=("#line " + cl + " \"" + filename + "\"\n\"" + line + "\"\n");
     } while(!atend);
 
     retval+=");\n";
@@ -380,35 +395,142 @@ class TextBlock
 
 }
 
+class MacroContainerBlock
+{
+  inherit Block;  
+  Block macro;
+  BlockHolder macro_contents;
+  
+  static void create(Block _macro, BlockHolder _macro_contents)
+  {
+    macro = _macro;
+    macro_contents = _macro_contents;
+  }
+  
+  BlockHolder | mixed render(object|void compilecontext, object|void blocks)
+  {
+    return pikeify(compilecontext, blocks);
+  }
+  
+  mixed pikeify(object|void compilecontext, object|void blocks)
+  {
+    string rx = "";
+    //werror("macro: %O\n", macro_contents->blocks);
+    mixed f = context->view->get_macro(macro->cmd);
+    if(!f)
+    throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid macro command %O at line %d.\n", macro->cmd, (int)macro->start)));
+
+    string classname = "macro_contents_" + time() + "_" + random(1000);
+    string preamble = "class " + classname + "\n{\n" + 
+      low_parse_psp(macro_contents, compilecontext) +  
+      "mixed data, v;"
+      "void set_info(mixed __d, mixed __view){data=__d; v=__view;}"
+      "static mixed cast(string type){if (type==\"string\"){object buf = String.Buffer(); render(buf, data, v); return buf->get();}}"
+    "}\n"
+    ;
+    
+    
+
+     return ({("// yo yo yo "+ macro->start + " - " + macro->end + "\n#line " + macro->start + " \"" + macro->filename + "\"\n" + 
+                  "{mixed e = catch{object obj_" + classname + " "
+                  + "=" +
+                  classname + "(__context); obj_"+classname+"->set_info(__d,__view);"
+                  " buf->add(__macro_" + macro->cmd + 
+                  "(__d, ([\"contents\":obj_"+classname+"])+" + macro->argify(macro->args) + 
+                  "));};if(e)__log->warn(\"An error occurred while calling macro " 
+                  + macro->cmd + " at " + "\" +e[1][-1][0] + \":\" + e[1][-1][1] + \"" + 
+                  " called from \"+ e[1][-2][0] + \":\" + e[1][-2][1] + \"" +  
+                  "(\"" + sprintf("%O", macro->args||"") + "\"):\" + e[0] + \"\\n\");}"), preamble });
+         break;
+  }
+
+}
+
 class PikeBlock
 {
   inherit Block;
 
-  int get_type()
+  string expr;
+  int type;
+  string cmd;
+  string args;
+  int is_macro;
+  int is_end;
+  
+  static void create(string contents, string filename, object|void compilecontext)
   {
-    if(has_prefix(contents, "<%$")) return TYPE_INLINE;
-//    if(has_prefix(contents, "<%!")) return TYPE_DECLARATION;
-    if(has_prefix(contents, "<%@")) return TYPE_DIRECTIVE;
-    else return TYPE_SCRIPTLET;
+    this->contents = contents;  
+    this->filename = filename;
+    this->compilecontext = compilecontext;
+    
+    get_expr();
+  }
+  
+  string get_expr()
+  {
+    get_type();
+    
+    if(type == TYPE_DECLARATION)
+    {
+      expr = contents[3..strlen(contents)-3];
+    }
+    else if(type == TYPE_DIRECTIVE)
+    {
+      expr = contents[3..strlen(contents)-3];
+    }
+    else if(type == TYPE_INLINE)
+    {
+      expr = String.trim_all_whites(contents[3..strlen(contents)-3]);
+    }
+    else if(type == TYPE_SCRIPTLET)
+    {
+      expr = String.trim_all_whites(contents[2..strlen(contents)-3]);   
+      array a = array_sscanf(expr, "%[/a-zA-Z0-9_] %s");
+      
+      if(sizeof(a)>1) 
+        args = String.trim_all_whites(a[1]);
+       cmd = a[0];
+       if(cmd[0] == '/')
+       {
+         cmd = cmd[1..];
+         is_end = 1;
+       }
+       if(!(<"if", "elseif", "else", "yield", "foreach", "end", "endif">)[cmd])
+         is_macro = 1;
+       if(is_end && !is_macro)
+       {
+         throw(Error.Generic("syntax error: '/' may only be used in conjunction with macros.\n"));
+       }
+    }
+    else
+    {
+      throw(Error.Generic("unknown block type " + type));
+    }
+    return expr;    
   }
 
-  BlockHolder | string render(object|void compilecontext)
+  int get_type()
+  {    
+    if(has_prefix(contents, "<%$")) return (type = TYPE_INLINE);
+    if(has_prefix(contents, "<%!")) return (type = TYPE_DECLARATION);
+    if(has_prefix(contents, "<%@")) return (type = TYPE_DIRECTIVE);
+    else return (type = TYPE_SCRIPTLET);
+  }
+
+  BlockHolder | string render(object|void compilecontext, object|void blocks)
   {
-    if(has_prefix(contents, "<%!"))
+    get_expr();
+
+    if(type == TYPE_DECLARATION)
     {
-      string expr = contents[3..strlen(contents)-3];
       return("// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + expr);
     }
-
-    else if(has_prefix(contents, "<%@"))
+    else if(type == TYPE_DIRECTIVE)
     {
-      string expr = contents[3..strlen(contents)-3];
       return parse_directive(expr, compilecontext);
     }
-
-    else if(has_prefix(contents, "<%$"))
-    {
-      string expr = String.trim_all_whites(contents[3..strlen(contents)-3]);
+    else if(type == TYPE_INLINE)
+    { 
       string i = "catch{ mixed expr; ";
       string f = "};";
       array e = expr/".";
@@ -425,58 +547,45 @@ class PikeBlock
 
       return(i + "\n// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\nexpr = " + expr + "; buf->add((string)(!zero_type(expr)?expr:\"\"));" + f);
     }
-
-    else
+    else // scriptlet
     {
-      string expr = String.trim_all_whites(contents[2..strlen(contents)-3]);
-      return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + pikeify(expr) + "\n";
+      return pikeify(blocks);
     }
   }
 
- string pikeify(string expr)
+ string|object pikeify(object blocks)
  {
-   string cmd = "";
-   string arg = "";
-
-  array a = array_sscanf(expr, "%[a-zA-Z0-9_] %s");
-
-  if(sizeof(a)>1) 
-    arg = String.trim_all_whites(a[1]);
-   cmd = a[0];
-
-
    if((<"if", "elseif", "foreach">)[expr])
    {
-     if(sizeof(a) !=2)
+     if(args)
      {
        throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid command format in %s at line %d.\n", templatename, start)));
      }
+   }
+   
+   //werror("cmd: %O; args=%O\n", cmd, args);
 
-   }
-/*
-   else 
-   {
-     cmd = expr;
-   }
-*/
    switch(cmd)
    {
      case "if":
-       return " if( " + arg + " ) { \n";
+       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + 
+        " if( " + args + " ) { \n";
        break;
 
      case "elseif":
-       return " } else if( " + arg + " ) { \n";
+       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+         " } else if( " + args + " ) { \n";
        break;
 
      case "foreach":
-       mapping a = p_argify(arg);
+       mapping a = p_argify(args);
        if(!a->var && a->val)
        {
          throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid foreach syntax in %s at line %d.\n", templatename, start)));
        }
        array ac = ({});
        string start = "";
+       // todo allow multiple $arg expressions
        if(a->var[0] == '$')
        {
          foreach((a->var[1..])/".";;string v)
@@ -486,47 +595,101 @@ class PikeBlock
        else start = "\"" + a->var + "\"";    
        if(!a->ind) a->ind = a->val + "_ind";
 
-       return " catch { foreach(" + start + ";mixed __v; mixed __q) {"
+       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+         " catch { foreach(" + start + ";mixed __v; mixed __q) {"
          "object __d = __d->clone(); __d->add(\"" + a->val + "\", __q); __d->add(\"" + a->ind + "\", __v); "
          "mapping data = __d->get_data(); data[\"" + a->val + "\"]=__q; data[\"" + a->ind + "\"] = __v;" ;
        break;
 
      case "end":
-       return " }}; // end \n";
+       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+         " }}; // end \n";
        break;
 
      case "else":
-       return " } else { \n";
+       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+         " } else { \n";
        break;
 
      case "yield":
        if(is_layout)
        {
-         return "if(__view) __view->render(buf, __d);";
+         return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+           "if(__view) __view->render(buf, __d);";
        }
        else throw(Fins.Errors.TemplateCompile("invalid yield in non-layout template.\n"));
        break;
 
      case "endif":
-       return " } // endif \n";
+       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+         " } // endif \n";
        break;
 
      default:
        string rx = "";
-       function f = context->view->get_macro(cmd);
+       //werror("macro: %O\n", cmd);
+       mixed f = context->view->get_macro(cmd);
        if(!f)
          throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid macro command %O at line %d.\n", cmd, (int)start)));
 
 //werror("adding macro " + cmd + "\n");
        macros_used[cmd] ++;
-
-       return ("{mixed e = catch{"
+       
+       // ok, we need to search to see if the macro is a container or not.
+       int cl = 0;
+       int foundend;
+       int cb;
+       array macro_contents = ({});
+       
+       for(cb = blocks->current_pos; cb < sizeof(blocks->blocks); cb++)
+       {
+         object block = blocks->blocks[cb];
+         //werror("searching... %O\n", blocks->blocks[cb]);
+         if(block->cmd == cmd)
+         {
+           if(cl == 0 && block->is_end)
+           {
+             foundend ++;
+             break;
+           }
+           else if(block->is_end)
+           {
+             cl--;
+           }
+           else
+           {
+             cl++;
+           }
+         }
+       }
+       
+       if(foundend)
+       {
+         //werror("found end.\n"); 
+         // we want to include everything except the end block, and set the current position to the block
+         // immediately following the end block, effectively "ignoring" the macro end block.
+         macro_contents = blocks->blocks[blocks->current_pos .. cb-1];
+         blocks->current_pos = cb+1;
+         //werror("found contents: %O.\n", macro_contents);
+       }
+       else
+       {
+         ;//werror("didn't find end.\n");
+       }
+       
+       if(sizeof(macro_contents))
+       {
+         return BlockHolder(({MacroContainerBlock(this, BlockHolder(macro_contents) ) }));
+       }
+       
+       return ("// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + 
+              "{mixed e = catch{\n"
               " buf->add(__macro_" + cmd + 
-              "(__d, " + argify(arg) + 
+              "(__d, " + argify(args) + 
               "));};if(e)__log->warn(\"An error occurred while calling macro " 
               + cmd + " at " + "\" +e[1][-1][0] + \":\" + e[1][-1][1] + \"" + 
               " called from \"+ e[1][-2][0] + \":\" + e[1][-2][1] + \"" +  
-              "(\"" + sprintf("%O", arg) + "\"):\" + e[0] + \"\\n\");}");
+              "(\"" + sprintf("%O", args||"") + "\"):\" + e[0] + \"\\n\");}");
        break;
    }
 
@@ -534,10 +697,12 @@ class PikeBlock
 
  string argify(string arg)
  {
-
    array rv = ({});
    int keepgoing = 0;
-   do{
+   if(!arg) 
+     return "([])";
+   do
+   {
     keepgoing = 0;
     string key, val;
     array values;
@@ -560,7 +725,8 @@ class PikeBlock
       }
         rv += ({"\"" + lower_case(key) + "\":" + (va*" + \"/\" + ")  });
      }
-   }while(keepgoing);
+   }
+   while(keepgoing);
 
 //werror("rv: %O\n", rv);
    return "([" + rv*", " + "])";
@@ -573,7 +739,7 @@ class PikeBlock
    do{
     keepgoing = 0;
     string key, value;
-    int r = sscanf(arg,  "%*[ \n\t]%[a-zA-Z0-9_]=\"%s\"%s", key, value, arg);
+    int r = sscanf(arg||"",  "%*[ \n\t]%[a-zA-Z0-9_]=\"%s\"%s", key, value, arg);
     if(r>2) keepgoing=1;
     if(r<2) break;
 
