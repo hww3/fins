@@ -423,9 +423,9 @@ class MacroContainerBlock
     string classname = "macro_contents_" + time() + "_" + random(1000);
     string preamble = "class " + classname + "\n{\n" + 
       low_parse_psp(macro_contents, compilecontext) +  
-      "mixed data, v;"
+      "mixed data, v,output;"
       "void set_info(mixed __d, mixed __view){data=__d; v=__view;}"
-      "static mixed cast(string type){if (type==\"string\"){object buf = String.Buffer(); render(buf, data, v); return buf->get();}}"
+      "static mixed cast(string type){if (type==\"string\"){object buf = String.Buffer(); render(buf, data, v); return output||(output=buf->get());}}"
     "}\n"
     ;
     
