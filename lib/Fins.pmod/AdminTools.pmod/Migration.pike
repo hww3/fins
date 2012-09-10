@@ -84,7 +84,7 @@ void load_app()
   // FinsMode.get_context() will check for this constant and defer type registration if it exists.
   // Naturally, we want that, as there may be datatype mapping elements present that aren't reflected
   // in the schema (yet).
-  add_constant("__defer_register_types", 1);
+  add_constant("__defer_full_startup", 1);
   
   if(!appname)
   {

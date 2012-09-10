@@ -38,7 +38,7 @@ static void load_macros()
     add_macro(mf[13..], this[mf]);
   }
   
-  foreach(glob("*" +  default_template.TEMPLATE_EXTENSION, get_dir("macros")); ; string mf)
+  foreach(glob("*" +  default_template.TEMPLATE_EXTENSION, get_dir(combine_path(config->app_dir, "macros"))); ; string mf)
   {
     string mn = mf[0..<sizeof(default_template.TEMPLATE_EXTENSION)];
     log->debug("loading string macro %O", mn);

@@ -3,8 +3,6 @@ inherit FinsBase;
 
 object log = Tools.Logging.get_logger("model");
 
-int do_register_types = 1;
-
 //! normally, fields that represent references between objects will be created using the referenced
 //! type's proper object name using mixed case (such as "User"). If this field is set to true, the
 //! reference will be created using lower case (such as "user").
@@ -45,7 +43,6 @@ static void create(Fins.Application a)
 
 void load_model()
 {
-  do_register_types = !((int)config["model"]["skip_register_types"]);
   object context = get_context(config["model"], Fins.Model.DEFAULT_MODEL);
 
   Fins.Model.set_context(Fins.Model.DEFAULT_MODEL, context);
@@ -79,7 +76,7 @@ object get_context(mapping config_section, string id)
   //
   // a migration that needs to access model-mapped objects can call initialize_types() itself
   // before doing so.
-  if(!all_constants()["__defer_register_types"])
+  if(!all_constants()["__defer_full_startup"])
     c->register_types();
 
   return c;
