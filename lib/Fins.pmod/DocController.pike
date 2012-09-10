@@ -179,7 +179,7 @@ private class DocRunner(function req)
 
     populate_template(request, response, lview, args);
 
-    werror("Running %O(%O, %O, %O, %O)\n", req, request, response, lview, args);
+    log->info("Running %O(%O, %O, %O, %O)", req, request, response, lview, args);
     
     req(request, response, lview, @args);
 

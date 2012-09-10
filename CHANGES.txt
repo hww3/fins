@@ -29,6 +29,12 @@ INCOMPATIBLE CHANGES
 
 NEW FEATURES AND BUG FIXES
 
+-  Added string macros, which may be stored as macros/macro1.phtml, etc.
+-  Macros may have content in simple templates; format is
+   <%mymacro%> content <%/mymacro%>. Content may be inserted into the 
+   output by using <%$args.contents%>; that is, it's passed as the 
+   argument "contents". Note: the content may contain template markup,
+   but will not be rendered until it's inserted in the output.
 -  Added TableBuilder tools to migration tasks.
 -  Migration tool -c argument defaults to "dev".
 -  Added pike -x fins [*] -aname argument.
