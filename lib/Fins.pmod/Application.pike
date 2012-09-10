@@ -129,16 +129,39 @@ protected void create(.Configuration _config)
   load_breakpoint();
   load_cache();
   load_model();
-  load_view();
-  load_processors();
-  load_controller();
 
+  // this constant is added when starting in migration mode; it also causes
+  // datatype registration to be skipped, allowing modifications to the underlying
+  // sql database. 
+  //
+  // we add resume_startup() below to continue startup, if it's required by a migration
+  // (after calling context->register_types()).
+  if(!all_constants()["__defer_full_startup"])
+  {
+    load_view();
+    load_processors();
+    load_controller();
+  }
 #if constant(Fins.Helpers.Filters.Compress)
   _gzfilter = Fins.Helpers.Filters.Compress();
 #endif
 
   _templatefilter = Fins.Helpers.Filters.TemplateParser();
 
+}
+
+void resume_startup()
+{
+  if(all_constants()["__defer_full_startup"])
+  {  
+    load_view();
+    load_processors();
+    load_controller();
+  }
+  else
+  {
+    logger->error("resume_startup() should only be called when running in migration mode.");
+  }
 }
 
 //! this method will be called after the cache, model, view and 
@@ -149,7 +172,7 @@ protected void create(.Configuration _config)
 //! performs housekeeping functions related to multi-tenancy. 
 void start()
 {
-  logger->info("Application URL is %s\n", get_my_url());
+  logger->info("Application URL is %s", get_my_url());
 }
 
 mixed do_method(string method, mixed ... args)
