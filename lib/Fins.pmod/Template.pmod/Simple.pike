@@ -118,7 +118,7 @@ void render_view(String.Buffer buf, object ct, object d)
 program compile_string(string code, string realfile, object|void compilecontext)
 {
   string psp = parse_psp(code, realfile, compilecontext);
-  Stdio.write_file("/tmp/" + replace(realfile, "/", "_") + ".txt", sprintf("PSP: %s\n\n", psp));
+  //Stdio.write_file("/tmp/" + replace(realfile, "/", "_") + ".txt", sprintf("PSP: %s\n\n", psp));
 //  werror(sprintf("PSP: %s\n\n", psp));
   program p;
 
@@ -363,7 +363,7 @@ class TextBlock
     int cl = start;
     int atend=0;
     int current=0;
-    retval+="\n buf->add(";
+    retval+="\n buf->add(\n";
     do
     {
        string line;
@@ -385,7 +385,7 @@ class TextBlock
        {
          cl++;
        } 
-        retval+=("#line " + cl + " \"" + filename + "\"\n\"" + line + "\"\n");
+        retval+=("# " + cl + " \"" + filename + "\"\n\"" + line + "\"\n");
     } while(!atend);
 
     retval+=");\n";
@@ -431,7 +431,7 @@ class MacroContainerBlock
     
     
 
-     return ({("// yo yo yo "+ macro->start + " - " + macro->end + "\n#line " + macro->start + " \"" + macro->filename + "\"\n" + 
+     return ({("// yo yo yo "+ macro->start + " - " + macro->end + "\n# " + macro->start + " \"" + macro->filename + "\"\n" + 
                   "{mixed e = catch{object obj_" + classname + " "
                   + "=" +
                   classname + "(__context); obj_"+classname+"->set_info(__d,__view);"
@@ -523,7 +523,7 @@ class PikeBlock
 
     if(type == TYPE_DECLARATION)
     {
-      return("// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + expr);
+      return("// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" + expr);
     }
     else if(type == TYPE_DIRECTIVE)
     {
@@ -545,7 +545,7 @@ class PikeBlock
           expr += "[\"" + ep + "\"]";
       }
 
-      return(i + "\n// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\nexpr = " + expr + "; buf->add((string)(!zero_type(expr)?expr:\"\"));" + f);
+      return(i + "\n// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\nexpr = " + expr + "; buf->add((string)(!zero_type(expr)?expr:\"\"));" + f);
     }
     else // scriptlet
     {
@@ -568,12 +568,12 @@ class PikeBlock
    switch(cmd)
    {
      case "if":
-       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + 
+       return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" + 
         " if( " + args + " ) { \n";
        break;
 
      case "elseif":
-       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+       return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" +
          " } else if( " + args + " ) { \n";
        break;
 
@@ -584,44 +584,44 @@ class PikeBlock
          throw(Fins.Errors.TemplateCompile(sprintf("PSP format error: invalid foreach syntax in %s at line %d.\n", templatename, start)));
        }
        array ac = ({});
-       string start = "";
+       string xstart = "";
        // todo allow multiple $arg expressions
        if(a->var[0] == '$')
        {
          foreach((a->var[1..])/".";;string v)
           ac += ({ "[\"" + v + "\"]" });
-          start = "data" + (ac * "");
+          xstart = "data" + (ac * "");
        }    
-       else start = "\"" + a->var + "\"";    
+       else xstart = "\"" + a->var + "\"";    
        if(!a->ind) a->ind = a->val + "_ind";
 
-       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
-         " catch { foreach(" + start + ";mixed __v; mixed __q) {"
+       return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" +
+         " catch { foreach(" + xstart + ";mixed __v; mixed __q) {"
          "object __d = __d->clone(); __d->add(\"" + a->val + "\", __q); __d->add(\"" + a->ind + "\", __v); "
          "mapping data = __d->get_data(); data[\"" + a->val + "\"]=__q; data[\"" + a->ind + "\"] = __v;" ;
        break;
 
      case "end":
-       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+       return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" +
          " }}; // end \n";
        break;
 
      case "else":
-       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+       return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" +
          " } else { \n";
        break;
 
      case "yield":
        if(is_layout)
        {
-         return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+         return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" +
            "if(__view) __view->render(buf, __d);";
        }
        else throw(Fins.Errors.TemplateCompile("invalid yield in non-layout template.\n"));
        break;
 
      case "endif":
-       return "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" +
+       return "// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" +
          " } // endif \n";
        break;
 
@@ -682,7 +682,7 @@ class PikeBlock
          return BlockHolder(({MacroContainerBlock(this, BlockHolder(macro_contents) ) }));
        }
        
-       return ("// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"\n" + 
+       return ("// "+ start + " - " + end + "\n# " + start + " \"" + filename + "\"\n" + 
               "{mixed e = catch{\n"
               " buf->add(__macro_" + cmd + 
               "(__d, " + argify(args) + 
