@@ -8,6 +8,7 @@ string controller_name;
 string event_name;
 object controller;
 mixed event;
+mixed args;
 
 mapping iso639_2 = Tools.Language.Names.iso639_2;
 

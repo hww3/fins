@@ -805,6 +805,8 @@ public mixed handle_http(.Request request)
     mixed er;
     er = catch
     {
+      request->event = event;
+      request->args = args;
       event(request, response, @args);
       mixed r = response->get_response();
       return r;
