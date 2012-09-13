@@ -78,6 +78,7 @@ void get_contents()
 {
   contents = ([]);
   //werror("%O\n", mkmapping(indices(field), values(field)));
+  //werror("find: %O %O\n", otherobject, ([ field->otherkey : (int) parentobject->get_id()]));
   foreach(context->old_find(otherobject, ([ field->otherkey :
                                   (int) parentobject->get_id()]));int i; mixed v)
   {

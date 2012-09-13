@@ -194,6 +194,15 @@ int drop_column(string table, string|array columns, int|void dry_run)
   return personality->drop_column(table, columns, dry_run);
 }
 
+
+//! insert column into table
+//!
+//! todo: add "after column" support.
+int add_column(string table, string name, mapping fd, int|void dry_run)
+{
+  return personality->add_column(table, name, fd, dry_run);
+}
+
 //!
 int rename_table(string table, string newname, int|void dry_run)
 {
@@ -291,7 +300,9 @@ void initialize_links()
     if(!a->my_name) a->my_name = Tools.Language.Inflect.pluralize(a->other_type);
 
 //    werror("we'll call the field " + a->my_name + "\n");
-    if(!a->other_field) a->other_field = repository->get_object(a->other_type)->primary_key->name	;    
+    object other_type = repository->get_object(a->other_type);
+    if(!other_type) Tools.throw(Error.Generic, "has_many_by_index: type %O does not exist.", a->other_type);
+    if(!a->other_field) a->other_field = a->obj->instance_name;
 
 	string my_name = a->my_name;
 	string other_field = a->other_field;
