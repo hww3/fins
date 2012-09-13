@@ -122,21 +122,27 @@ int do_run(string... args)
 
   load_app();
 
+  array run_migrations = ({});
+
   array a2 = ({" "}) + args;
 
   foreach(Getopt.find_all_options(a2,aggregate(
+     ({"migration",Getopt.HAS_ARG,({"-m", "--migration"}) }),
      ({"up",Getopt.NO_ARG,({"-u", "--up"}) }),
      ({"down",Getopt.NO_ARG,({"-d", "--down"}) }),
      )),array opt)
      {    
        switch(opt[0])
        {
-   		   case "up":
-  		     dir = Fins.Util.MigrationTask.UP;
- 		       break;
-     		 case "down":
-   		     dir = Fins.Util.MigrationTask.DOWN;
-   		     break;
+         case "migration":
+           run_migrations += ({ opt[1] });
+           break;
+         case "up":
+           dir = Fins.Util.MigrationTask.UP;
+           break;
+         case "down":
+           dir = Fins.Util.MigrationTask.DOWN;
+           break;
        }
      }
 
@@ -145,7 +151,19 @@ int do_run(string... args)
   object migrator = Fins.Util.Migrator(app);
   
   array migrations = migrator->get_migrations();
+
+  if(sizeof(run_migrations))
+  {
+    foreach(run_migrations;; string m)
+    {
+       foreach(migrations; int x; object mc)
+        if(mc->name != m)
+          migrations[x] = 0;
+    }
+  }
   
+  migrations -= ({0});
+
   if(dir == Fins.Util.MigrationTask.UP)
     migrator->announce("Applying migrations: ");
   else
