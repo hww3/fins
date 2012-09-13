@@ -273,6 +273,13 @@ int drop_column(string table, string|array columns)
 }
 
 //!
+int add_column(string table, string name, mapping fd)
+{
+  announce("adding column %s to %s.", name, table);
+  return context->add_column(table, name, fd, dry_run);    
+}
+
+//!
 int drop_index(string table, string index)
 {
   announce("dropping index %s for table %s.", index, table);
