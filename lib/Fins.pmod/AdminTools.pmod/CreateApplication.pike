@@ -79,7 +79,7 @@ int run()
   cd(newappname);
   
   // now, let's create the subfolders.
-  foreach(({"classes", "config", "modules", "templates", "static", "logs", "bin", "db/schema", "db/migration", "translations", "translations/eng"});; string dir)
+  foreach(({"classes", "config", "modules", "templates", "macros", "static", "logs", "bin", "db/schema", "db/migration", "translations", "translations/eng"});; string dir)
     Stdio.mkdirhier(dir);
  
   // now, we create the configfiles, one each for dev, test, prod.
