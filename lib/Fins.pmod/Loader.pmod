@@ -87,7 +87,7 @@ object low_load_app(string app_dir, string config_name)
 
  string stub = 
 #"void f(string app_dir, string config_name, string logcfg, string app_name) {
-Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"config\": config_name, \"home\": Tools.System.get_home() ]));
+Tools.Logging.set_config_variables(([\"appdir\": app_dir, \"app\": app_name, \"config\": config_name, \"home\": System.get_home() ]));
   if(file_stat(logcfg))
   {
     Tools.Logging.set_config_file(logcfg);
@@ -155,5 +155,7 @@ Fins.Configuration load_configuration(string app_dir, string config_name)
     logger->exception("Problem loading configuration.", err);
     throw(err);
   }
-  return master()->resolv("Fins.Configuration")(app_dir, config_file);
+  object c =  master()->resolv("Fins.Configuration")(app_dir, config_file);
+  c->set_config_variables((["home": System.get_home() ] ));
+  return c;
 }
