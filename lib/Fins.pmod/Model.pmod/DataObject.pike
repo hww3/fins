@@ -783,61 +783,62 @@ int(0..1) load(.DataModelContext context, mixed id, .DataObjectInstance i, int|v
 {
    // NOTE: zero is an invalid id... we use it to refer to a key reference that hasn't been set.
 
-mapping objs, objs_by_alt;
+  mapping objs, objs_by_alt;
 
-     log->debug("%O: loading object with id=%O, force=%d", Tools.Function.this_function(), id, force);
+  log->debug("%O: loading object with id=%O, force=%d", Tools.Function.this_function(), id, force);
 
-   if(!id) return 0;
+  if(!id) return 0;
 
-if(context->in_xa)
-{
-  objs = context->xa_storage[instance_name];      
-  if(!objs) objs = context->xa_storage[instance_name] = ([]);
+  if(context->in_xa)
+  {
+    objs = context->xa_storage[instance_name];      
+    if(!objs) objs = context->xa_storage[instance_name] = ([]);
 
-  objs_by_alt = context->xa_storage[instance_name + "_by_alt"];      
-  if(!objs_by_alt) objs_by_alt = context->xa_storage[instance_name + "_by_alt"] = ([]);
-}
-else
-{
-  objs_by_alt = _objs_by_alt;
-  objs = _objs;
-}
+    objs_by_alt = context->xa_storage[instance_name + "_by_alt"];      
+    if(!objs_by_alt) objs_by_alt = context->xa_storage[instance_name + "_by_alt"] = ([]);
+  }
+  else
+  {
+    objs_by_alt = _objs_by_alt;
+    objs = _objs;
+  }
 
-     log->debug("%O: must ask db? %O\n", Tools.Function.this_function(), force || !(id && objs[id]));
+  log->debug("%O: must ask db? %O\n", Tools.Function.this_function(), force || !(id && objs[id]));
 
-   if(force || !(id  && objs[id])) // not a new object, so there might be an opportunity to load from cache.
-   {
-     string query = sprintf(single_select_query, (_fields_string), 
-       table_name, primary_key->field_name, primary_key->encode(id, i));
-
-     querylog->debug("%O: %O", Tools.Function.this_function(), query);
-
-     array result = context->execute(query);
-
-     if(!sizeof(result) )
-     {
-        throw(Fins.Errors.RecordNotFoundError("Unable to load " + instance_name + " id " + id + ".\n"));
-     }
-     else if(sizeof(result) > 1)
-     {
-        throw(Fins.Errors.DataIntegrityError("Data Integrity Error: Unable to load unique row for " + instance_name + " id " + id + ".\n"));
-     }
-
-//     else
-//       if(context->debug) werror("got results from query: %s\n", query);
-     if(!result[0]) return 0;
-
-     i->set_id(id);
-     i->set_new_object(0);
-     i->set_initialized(1);
-     low_load(result[0], i, objs, objs_by_alt);
+  // not a new object, so there might be an opportunity to load from cache.
+  if(!force && objs[id])
+  {
+    i->set_initialized(1);
+    i->set_id(primary_key->decode(objs[id][primary_key->field_name]));
+    i->set_new_object(0);
+    i->object_data_cache = objs[i->get_id()];
   }
   else // guess we need this here, also.
   {
-     i->set_initialized(1);
-     i->set_id(primary_key->decode(objs[id][primary_key->field_name]));
-     i->set_new_object(0);
-     i->object_data_cache = objs[i->get_id()];
+    string query = sprintf(single_select_query, (_fields_string), 
+      table_name, primary_key->field_name, primary_key->encode(id, i));
+
+    querylog->debug("%O: %O", Tools.Function.this_function(), query);
+
+    array result = context->execute(query);
+
+    if(!sizeof(result) )
+    {
+      throw(Fins.Errors.RecordNotFoundError("Unable to load " + instance_name + " id " + id + ".\n"));
+    }
+    else if(sizeof(result) > 1)
+    {
+      throw(Fins.Errors.DataIntegrityError("Data Integrity Error: Unable to load unique row for " + instance_name + " id " + id + ".\n"));
+    }
+
+//     else
+//       if(context->debug) werror("got results from query: %s\n", query);
+    if(!result[0]) return 0;
+
+    i->set_id(id);
+    i->set_new_object(0);
+    i->set_initialized(1);
+    low_load(result[0], i, objs, objs_by_alt);
   }
 
   return 1;
