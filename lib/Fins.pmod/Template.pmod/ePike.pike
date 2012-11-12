@@ -23,7 +23,7 @@ string parse_psp(string file, string realname, object|void compilecontext)
   // now, let's render some pike!
   string pikescript = "", header = "";
 
-  array(Block) contents = psp_to_blocks(file, realname, compilecontext);
+  BlockHolder contents = psp_to_blocks(file, realname, compilecontext);
   string ps, h;
  
   [ps, h] = render_psp(contents, "", "", compilecontext);
@@ -118,7 +118,7 @@ return	 "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"
     }
   }
 
- string|array(Block) parse_directive(string exp, object|void compilecontext)
+ string|BlockHolder parse_directive(string exp, object|void compilecontext)
  {
    exp = String.trim_all_whites(exp);
  
@@ -147,7 +147,7 @@ return	 "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"
    }
  }
 
- string|array(Block) process_project(string exp, object|void compilecontext)
+ string|BlockHolder process_project(string exp, object|void compilecontext)
  {
 	string project;
 	
@@ -161,7 +161,7 @@ return	 "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"
  }
 
  // we don't handle absolute includes yet.
- array(Block) process_include(string exp, object|void compilecontext)
+ BlockHolder process_include(string exp, object|void compilecontext)
  {
    string file;
    string contents;
@@ -181,7 +181,7 @@ return	 "// "+ start + " - " + end + "\n#line " + start + " \"" + filename + "\"
  
    if(contents)
    {
-     array x = psp_to_blocks(contents, file, compilecontext);
+     BlockHolder x = psp_to_blocks(contents, file, compilecontext);
      //werror("blocks: %O\n", x);
      return x;
    }
