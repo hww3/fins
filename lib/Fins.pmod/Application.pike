@@ -180,7 +180,7 @@ mixed do_method(string method, mixed ... args)
   function m;
   mixed rv;
 
-  if(!(m = this[method]))
+  if(!(m = ::`[](method, 1)))
   {
     throw(Error.Generic("Method " + method + " not available.\n"));
   }
