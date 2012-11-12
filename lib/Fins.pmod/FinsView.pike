@@ -215,8 +215,8 @@ public Template.Template low_get_template(program templateType, string templateN
  //   werror("trying for template.\n");
     mixed err = catch(
     t = templateType(templateName, context, is_layout));
-    if(err)
-      log->exception("error while compiling.", err);
+//    if(err)
+//      log->exception("error while compiling.", err);
 //    werror("got it.\n");
     if(!t)
     {

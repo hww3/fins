@@ -153,24 +153,28 @@ private class DocRunner(function req)
     if(layout)
       log->debug("Have a layout: %O\n", layout);
 
-    mixed e = catch(lview = __get_view(request->not_args));
+    mixed e;
+    e = catch(lview = __get_view(request->not_args));
 
     if(e && objectp(e) && e->is_templatecompile_error)
-	{
-		log->exception("An error occurred while compiling the template " + request->not_args + "\n", e);
-		throw(e);
-	}
-    else if( e && !__quiet) log->exception("An error occurred while loading the template " + request->not_args + "\n"
-       "To turn these notices off, set the __quiet flag in your DocController instances.", e);
-	else if(e && __quiet)
-	{
-		if(!__has_errors)
-		{
-			log->critical("An error occurred while loading a template in controller %O; this error has been surpressed.\n"
-							"To enable these errors, unset the __quiet flag in your DocController instance.", get_controller());
-			__has_errors++;
-		}
-	}
+    {
+      log->exception("An error occurred while compiling the template " + request->not_args + "\n", e);	
+//      throw(e);
+    }
+    else if( e && !__quiet) 
+    {
+      log->exception("An error occurred while loading the template " + request->not_args + "\n"
+        "To turn these notices off, set the __quiet flag in your DocController instances.", e);
+    }
+    else if(e && __quiet)
+    {
+      if(!__has_errors)
+      {
+        log->critical("An error occurred while loading a template in controller %O; this error has been surpressed.\n"
+			"To enable these errors, unset the __quiet flag in your DocController instance.", get_controller());
+        __has_errors++;
+      }
+    }
 
     if(layout && lview)
       lview->set_layout(layout);
