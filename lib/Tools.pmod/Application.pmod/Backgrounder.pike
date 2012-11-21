@@ -1,5 +1,8 @@
-//! a convenience class that makes it straightforward to write applications that 
-//! detatch from the console and enter the background (such as for daemons).
+//! Backgrounder is a convenience class that makes it straightforward to write 
+//! applications that  detatch from the console and enter the background (for example,
+//! daemon-like processes). The idea is that the main class which wishes to become
+//! a daemon should inherit this class, being sure that its create() function calls
+//! @[::create()], see the note below and example.
 //!
 //! @note 
 //! This class will use @[fork()] on systems where it is available, however fork-like 
@@ -8,15 +11,48 @@
 //!
 //! Some systems, notably Windows, don't have @[fork()], so we must spawn a new
 //! pike process from the beginning. This class handles this madness automatically,
-//! though class that inherits this must explicitly call @[create()] with the command line
+//! though any class that inherits this must explicitly call @[create()] with the command line
 //! arguments passed to it, so that it knows how to spawn the program correctly.
+//! 
+//! Programs using this class should be aware that on non-fork-enabled systems, additional
+//! command-line arguments will be passed to the new process so that the backgrounding state
+//! is available. Because of this, argument parsing code should be tolerant of extra arguments
+//! in the form of --tools-application-backgrounder*.
 //!
 //! in this situation, this class will do some magic to make everything work, however
 //! the spawned background program will run everything up to the point that 
 //! @[enter_background()], so everyhing before @[enter_background()] be kept to an 
-//! absolute minimum, such as parsing command line arguments. There are likely other
-//! "gotchas" as well, so be careful out there!
-
+//! absolute minimum, such as limiting activities to parsing (but not acting on) command 
+//! line arguments. There are likely other "gotchas" as well, so be careful out there!
+//!
+//! @example
+//! inherit Tools.Application.Backgrounder;
+//!
+//! int should_background = 0;
+//! string logfile = "daemon.log";
+//!
+//! protected void main(array(string) args)
+//! {
+//!    ::create(args)
+//! }
+//!
+//! void do_parse_args(array(string) args)
+//! {
+//!    // let's pretend we've parsed arguments...
+//!    should_background = 1;
+//! }
+//!
+//! int main(int argc, array(string argv)
+//! {
+//!    // first, we should parse any argumensts, and decide whether backgrounding is desired.
+//!       do_parse_args(argc)
+//! 
+//!    // second, if appropriate, enter the background.
+//!    if(enter_background(should_background, logfile))
+//!    {
+//!       return 0;
+//!    }
+//! }
 
 private int in_child = 0;
 private object child_pid;
@@ -33,7 +69,7 @@ class pidlet
 //!  The arguments used to run this command line program
 //!  @param _bootargs
 //!  If _args is a subset of the full command line arguments (such as would be received by a 
-//! Tools.Standalone utility), then this parameter should contain the extra arguments that would
+//!  Tools.Standalone utility), then this parameter should contain the extra arguments that would
 //!  be required to get this program to be run (such as ({"-x", "mytool"})).
 //!
 static void create(array(string) _args, array(string)|void _bootargs)
@@ -67,6 +103,7 @@ static void create(array(string) _args, array(string)|void _bootargs)
   else argv = _args;
 }
 
+//! Cause this program to enter the background.
 //! 
 //! @param should_we
 //!   an integer that determines whether the process should be backgrounded or not
@@ -79,9 +116,22 @@ static void create(array(string) _args, array(string)|void _bootargs)
 //!    or don't need to enter the background.
 //!
 //! @note
-//!   when this function returns true (1), this means we're in the foreground process and 
-//!   should @[exit()] the program as expeditiously as possible. Otherwise, the process is 
-//!   in the background and should continue on with normal operations.
+//!   when this function returns true (1), this means we're in the foreground process (and a 
+//!   daemon was spawned and should therefore @[exit()] the program as expeditiously as 
+//!   possible. Otherwise, the process is in the background and should continue on with normal 
+//!   operations. 
+//! 
+//!   If, after calling @[enter_background()], an application needs to know whether the 
+//!   application is operating as a daemon or not, @[in_background()] may be used.
+//!
+//!  @note
+//!    because of the way certain functionality is emulated on systems without @[fork()], 
+//!    applications using this class should be careful to limit the amount of work performed
+//!    before this method is called. Specifically, anything performed should be "side-effect"
+//!    free, as the work will effectively be performed twice. Thus, it's probably best
+//!    to limit pre-background operations to the bare minimum, such as parsing arguments (but
+//!    not acting on them, except perhaps to determine if backgrounding has been requested, etc).
+//! 
 int enter_background(int(0..1) should_we, string logfile, void|int(0..1) quiet)
 {
   // no need to attempt to enter the background if we're already there.
