@@ -303,8 +303,13 @@ static void reflect_definition(.DataModelContext context)
 {  
   string table;
   string instance = master()->describe_program(object_program(this));
-  instance = (instance / "/")[-1];
-  instance = (instance / ".")[0];
+
+  if(search(instance, "/") != -1)
+  {
+    instance = (instance / "/")[-1];
+  }
+  else
+    instance = (instance /".")[-1];
 
   instance = basename(instance);
 

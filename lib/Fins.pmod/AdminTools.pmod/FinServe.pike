@@ -29,12 +29,13 @@ int admin_port;
 string scan_loc;
 
 // url to runner mapping
+object nvapp;
 mapping(string:object|int) urls = ([]);
-
 multiset(Protocols.HTTP.Server.Port) ports = (<>);
 Thread.Queue admin_queue = Thread.Queue();
 array workers = ({});
 
+int no_virtual = 0;
 int hilfe_mode = 0;
 int go_background = 0;
 private int has_started = 0;
@@ -42,7 +43,7 @@ private int has_started = 0;
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [--session-manager=ram|file|sqlite "
-	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [--local-network=CIDR] [-d] [appdir [appdir]]\n");
+	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [--local-network=CIDR] [--no-virtual] [-d] [appdir [appdir]]\n");
 }
 
 int(0..1) started()
@@ -78,6 +79,7 @@ int main(int argc, array(string) argv)
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
     ({"app",Getopt.HAS_ARG,({"-a", "--application"}) }),    
     ({"local-network",Getopt.HAS_ARG,({"--local-network"}) }),
+    ({"no-virtual",Getopt.NO_ARG,({"--no-virtual"}) }),
     ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
@@ -131,6 +133,10 @@ int main(int argc, array(string) argv)
 		    exit(1);
 		  }
 		  session_storagetype = opt[1];
+		  break;
+
+		case "no-virtual":
+		  no_virtual = 1;
 		  break;
 		
 		case "hilfe":
@@ -206,6 +212,12 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   if(hilfe_mode && sizeof(projects) > 1)
   {
     werror("hilfe mode is only available when starting 1 application.\n");
+    exit(1);
+  }
+
+  if(no_virtual && sizeof(projects) > 1)
+  {
+    werror("virtual-less mode is only available when starting 1 application.\n");
     exit(1);
   }
 
@@ -517,8 +529,16 @@ void admin_handle_request(Protocols.HTTP.Server.Request request)
 // method and being picked up from the queue by the run_admin_worker method.
 void thread_admin_handle_request(Protocols.HTTP.Server.Request request)
 {
-  // first up, ip-less virtual hosting.
-  if(request->protocol == "HTTP/1.1" && request->request_headers["host"])
+  object|int runner;
+
+  if(no_virtual)
+  {
+    if(!nvapp)
+      nvapp = values(apps)[0];
+    nvapp->handle_request(request);
+    return 0;
+  }
+  else if(request->protocol == "HTTP/1.1" && request->request_headers["host"])
   {
     string host = lower_case(request->request_headers["host"]);
     host = (host/":")[0];

@@ -3,7 +3,7 @@
 //! Note that this class does not support the full ZIP format 
 //! specification, but rather only the most common features.
 //!
-//! Storing and Deflating are supported storage methods are supported.
+//! Storing and Deflating are supported storage methods.
 //!
 //! Notably, UTF8 filenames, large files, encryption and passwords are not 
 //! supported.

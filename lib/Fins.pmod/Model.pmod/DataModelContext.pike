@@ -90,7 +90,7 @@ object get_repository()
 
   if(!definition_module)
   {
-    Tools.throw(Error.Generic, "No model definition module specified. Cannot configure model.");
+    Tools.throw(Error.Generic, "No model definition module specified. Cannot configure model (default=%O, config=%O).", is_default, config);
   }
 
   string mn = definition_module + "." + defaults->data_mapping_module_name;

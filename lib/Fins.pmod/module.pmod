@@ -20,7 +20,7 @@ int ts;
 static void create()
 {
   ts = time();
-  //werror("bootstrap!\n");
+  werror("bootstrap!\n");
 
 #ifdef FINS_MULTI_TENANT
   // we don't want to do this if it's already been done.
@@ -29,7 +29,7 @@ static void create()
         object m = my_master();
     //werror("got master!\n");
     m->do_replace_master();
-    //werror("replaced master.\n");
+    werror("replaced master.\n");
       } 
   else
     ; //werror("no master replacement needed!");

@@ -78,13 +78,13 @@ static void create(array(string) _args, array(string)|void _bootargs)
   if(_bootargs)
     bootargs = _bootargs;
     
-  if(search(_args, "--tools-application-backgrounder=go-background") != -1)
+  if(search(_args||({}), "--tools-application-backgrounder=go-background") != -1)
   {
     string logfile;
     in_child = 1;
     child_pid = pidlet();
     
-    foreach(_args;;string clo)
+    foreach(_args||({});;string clo)
     {
       if(has_prefix(clo, "--tools-application-backgrounder"))
       {

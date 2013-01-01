@@ -4,6 +4,10 @@ A. You don't have to "install" Fins per-se, you just need to make sure that the 
  - add the path to Fins/lib/ to the PIKE_MODULE_PATH environment variable
  - specify the path to Fins/lib using the -M command line argument to Pike
 
+Q. What other modules do I need to have installed?
+A. Tools.ConfigFiles and (optionally) IP.IPv4. 
+   If you want to use the database support found in Fins.Model, you'll need to make sure a Database support module is available.
+
 Q. How do I know if Fins is ready to go?
 A. If you start the fins tool using the following command:
 
