@@ -62,7 +62,7 @@ string get_editor_string(void|mixed value, Fins.Model.Field field, void|Fins.Mod
 
 mixed from_form(mapping value, Fins.Model.Field field, void|Fins.Model.DataObjectInstance i)
 {
-  object c = Calendar.dwim_time(sprintf("%04d-%02d-%02d", (int)value->year_no, (int)value->month_no, (int)value->month_day));
+  object c = Calendar.dwim_day(sprintf("%04d-%02d-%02d", (int)value->year_no, (int)value->month_no, (int)value->month_day));
         return c;
 }
 
