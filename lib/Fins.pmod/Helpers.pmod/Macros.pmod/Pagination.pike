@@ -199,7 +199,7 @@ string simple_macro_page_filter(Fins.Template.TemplateData data, mapping|void ar
   buf += r->not_query;
   buf += "\">";
   
-  buf += "Starts wtih: ";
+  buf += "Starts with: ";
   
   foreach(r->variables; string k; string v)
   {
