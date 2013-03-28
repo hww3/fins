@@ -10,6 +10,7 @@ void create(object _template, object _data)
 //! sets the layout file for the contained template
 void set_layout(string|object path) 
 {
+  if(!template) throw(Fins.Errors.Template("No template loaded.\n"));
   template->set_layout(path);
 }
 

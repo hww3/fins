@@ -202,6 +202,7 @@ public Template.Template low_get_template(program templateType, string templateN
     context->view = this;
   }
 
+werror("context->application: %O", context->application);
   if(!templateName || !stringp(templateName))
     throw(Error.Generic("low_get_template(): template name not specified.\n"));
 
@@ -215,7 +216,8 @@ public Template.Template low_get_template(program templateType, string templateN
  //   werror("trying for template.\n");
     mixed err = catch(
     t = templateType(templateName, context, is_layout));
-    if(err && err->is_templatecompile_error)
+    werror("err: %O\n", err);
+    if(err && (err=Error.mkerror(err)) && err->is_templatecompile_error)
     {
       log->exception("low_get_template(): error loading template " + templateName, err);
     }

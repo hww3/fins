@@ -825,7 +825,7 @@ void thread_handle_request(Protocols.HTTP.Server.Request request)
   e = catch {
     if(mappingp(r))
     {
-      app->access_logger(r);
+      app->access_logger(r + (["request": request]));
       if(!r->_is_pipe_response)
       {
         request->response_and_finish(r);

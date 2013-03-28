@@ -159,12 +159,12 @@ private class DocRunner(function req)
       view->log->exception("An error occurred while compiling the template " + request->not_args + "\n", e);	
 //      throw(e);
     }
-    else if( e && !__quiet) 
+    else if( (e || !lview)  && !__quiet) 
     {
       view->log->exception("An error occurred while loading the template " + request->not_args + "\n"
         "To turn these notices off, set the __quiet flag in your DocController instances.", e);
     }
-    else if(e && __quiet)
+    else if((e || !lview) && __quiet)
     {
       if(!__has_errors)
       {
