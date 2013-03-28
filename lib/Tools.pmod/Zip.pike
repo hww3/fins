@@ -480,7 +480,7 @@ void low_add_dir(object i, string current_dir, int recurse)
   foreach(i->get_dir();; string fn)
   {
     if(fn == "CVS") continue; // never add CVS data
-    if(i->stat(fn)->isdir())
+    if(i->stat(fn)->isdir)
     {
 //werror("adding directory " + fn + "\n");
       if(recurse) low_add_dir(i->cd(fn), current_dir + "/" + fn, recurse);
