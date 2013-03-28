@@ -39,6 +39,9 @@ Fins.Helpers.Filters.TemplateParser _templatefilter;
 //!
 object access_logger;
 
+//! optional request program to be used for HTTP(s) requests.
+program request_program;
+
 protected mapping processors = ([]);
 protected mapping controller_path_cache = ([]);
 protected mapping action_path_cache = ([]);

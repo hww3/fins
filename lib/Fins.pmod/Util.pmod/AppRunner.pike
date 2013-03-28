@@ -209,7 +209,14 @@ werror("args: %O\n", args);
 
   }  
   port->set_application(app);
-  port->request_program = Fins.HTTPRequest;
+  program prog = Fins.HTTPRequest;
+  if(app->request_program)
+  {
+    logger->info("using HTTP request program: %O", app->request_program );
+    prog = app->request_program;
+  }
+  
+  port->request_program = prog;
 
   #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
   if(bind == "*")
@@ -258,7 +265,7 @@ void register_ports()
     }
     
     mapping args = ([]);
-    
+        
     if((<"ssl", "https">)[protocol])
     {
       args->ssl = 1;  

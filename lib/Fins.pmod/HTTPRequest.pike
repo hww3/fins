@@ -4,6 +4,7 @@ inherit Protocols.HTTP.Server.Request;
 string referrer = "";
 constant low_protocol = "HTTP";
 
+
 void parse_post()
 {
   ::parse_post();
