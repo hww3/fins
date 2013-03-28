@@ -46,11 +46,11 @@ int expunge(string sessionid)
 
 void set(string sessionid, .Session data, int timeout)
 {
-  log->info("storing session, sessionid=<%s>, data=<%O>", sessionid, data);
+  log->debug("storing session, sessionid=<%s>, data=<%O>", sessionid, data);
 
   sessions[sessionid] = ({ time(), data->data });
 
-  log->info("stored session, sessionid=<%s>", sessionid);
+  log->debug("stored session, sessionid=<%s>", sessionid);
 
   return;
 }
