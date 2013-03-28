@@ -267,41 +267,35 @@ mapping low_build_logger_config(string loggername)
 
 protected mapping additize(mapping a, mapping b)
 {
-  mapping c = ([]);
-
+  mapping c = ([]) + a;
   foreach(b; string k; mixed v)
   {
     if(k != "appender")
     {
-      if(!has_index(a, k))
+      if(!has_index(c, k))
         c[k] = v;
-      else
-        c[k] = a[k];
-
       continue;
     }
     else
     {
-      if(!has_index(a, k))
+      if(!has_index(c, k))
       {
         c[k] = v;
         continue;
       }
 
-      if(!arrayp(a[k]))
-        c[k] = ({a[k]});
-      else c[k] = a[k];
+      if(!arrayp(c[k]))
+        c[k] = ({c[k]});
 
       if(!arrayp(v))
         c[k] += ({v});
       else c[k] += v; 
 
-      c[k] = Array.uniq(c[k]);
+      if(arrayp(c[k])) c[k] = Array.uniq(c[k]);
     }
   }
 
   return c;
-
 }
 
 //!
