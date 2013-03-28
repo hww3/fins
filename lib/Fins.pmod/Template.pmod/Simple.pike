@@ -117,16 +117,25 @@ void render_view(String.Buffer buf, object ct, object d)
 
 program compile_string(string code, string realfile, object|void compilecontext)
 {
-  string psp = parse_psp(code, realfile, compilecontext);
   //Stdio.write_file("/tmp/" + replace(realfile, "/", "_") + ".txt", sprintf("PSP: %s\n\n", psp));
 //  werror(sprintf("PSP: %s\n\n", psp));
+  string psp;
+  mixed err;
+  
+  err = catch(psp = parse_psp(code, realfile, compilecontext));
+
+  if(err) 
+  {
+    err = Error.mkerror(err);
+    throw(Fins.Errors.TemplateCompile(err->message(), err->backtrace()));
+  }
   program p;
 
   object e = ErrorContainer();
   master()->set_inhibit_compile_errors(e);
 
 object t =  Thread.this_thread();
-  mixed err = catch(p = predef::compile_string(psp, realfile));
+  err = catch(p = predef::compile_string(psp, realfile));
 
   if(e->has_errors)
   {
@@ -490,6 +499,8 @@ class PikeBlock
       if(sizeof(a)>1) 
         args = String.trim_all_whites(a[1]);
        cmd = a[0];
+       if(!cmd || !sizeof(cmd))
+         throw(Error.Generic("scriptlet syntax error: no command specified.\n"));
        if(cmd[0] == '/')
        {
          cmd = cmd[1..];

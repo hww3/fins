@@ -75,8 +75,6 @@ object __get_view(mixed path)
 
 object __get_layout(object request)
 {
-//werror("__get_layout(%O)\n", request);
-
   if(__layout) return __layout;
 //werror("  dont have layout yet\n");
 
@@ -110,10 +108,10 @@ object __get_layout(object request)
       break;
     else
     {
-      log->debug("Unable to load layout from \"%s\", error was %s.", p, e[0]);
+      if(e && objectp(e) && e->is_templatecompile_error)
+        view->log->exception("Unable to load layout from \"" + p + "\", error was %s.", e);
     }
   }
-
   return __layout = l;
 }
 
@@ -151,39 +149,43 @@ private class DocRunner(function req)
     Fins.Template.View lview;
 
     if(layout)
-      log->debug("Have a layout: %O\n", layout);
+      view->log->debug("Have a layout: %O\n", layout);
 
     mixed e;
     e = catch(lview = __get_view(request->not_args));
 
     if(e && objectp(e) && e->is_templatecompile_error)
     {
-      log->exception("An error occurred while compiling the template " + request->not_args + "\n", e);	
+      view->log->exception("An error occurred while compiling the template " + request->not_args + "\n", e);	
 //      throw(e);
     }
     else if( e && !__quiet) 
     {
-      log->exception("An error occurred while loading the template " + request->not_args + "\n"
+      view->log->exception("An error occurred while loading the template " + request->not_args + "\n"
         "To turn these notices off, set the __quiet flag in your DocController instances.", e);
     }
     else if(e && __quiet)
     {
       if(!__has_errors)
       {
-        log->critical("An error occurred while loading a template in controller %O; this error has been surpressed.\n"
+        view->log->critical("An error occurred while loading a template in controller %O; this error has been surpressed.\n"
 			"To enable these errors, unset the __quiet flag in your DocController instance.", get_controller());
         __has_errors++;
       }
     }
 
+werror("layout: %O lview: %O\n", layout, lview);
     if(layout && lview)
+    {
+werror("setting layout.\n");
       lview->set_layout(layout);
+    }
     if(lview)
       response->set_view(lview);
 
     populate_template(request, response, lview, args);
 
-    log->info("Running %O(%O, %O, %O, %O)", req, request, response, lview, args);
+    view->log->info("Running %O(%O, %O, %O, %O)", req, request, response, lview, args);
     
     req(request, response, lview, @args);
 

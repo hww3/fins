@@ -203,7 +203,7 @@ public Template.Template low_get_template(program templateType, string templateN
   }
 
   if(!templateName || !stringp(templateName))
-    throw(Error.Generic("get_template(): template name not specified.\n"));
+    throw(Error.Generic("low_get_template(): template name not specified.\n"));
 
   if(!templates[templateType])
   {
@@ -215,20 +215,19 @@ public Template.Template low_get_template(program templateType, string templateN
  //   werror("trying for template.\n");
     mixed err = catch(
     t = templateType(templateName, context, is_layout));
-//    if(err)
-//      log->exception("error while compiling.", err);
-//    werror("got it.\n");
-    if(!t)
+    if(err && err->is_templatecompile_error)
     {
-      throw(Error.Generic("get_template(): unable to load template " + templateName + "\n"));
+      log->exception("low_get_template(): error loading template " + templateName, err);
     }
-
-    templates[templateType][templateName] = t;
+    else if(!t)
+    {
+      throw(Error.Generic("low_get_template(): unable to load template " + templateName + ": "+ err[0] + "\n"));
+    }
+    else
+      templates[templateType][templateName] = t;
   }
 
-//  if(t) werror("success.\n");
   return t;
-
 }
 
 //!

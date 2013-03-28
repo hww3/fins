@@ -126,7 +126,7 @@ protected void generate_directory_listing(string filename, .Request request, .Re
   foreach(x;int i;object st)
   {
     mapping entry = ([]);
-    if((functionp(st->isdir) && st->isdir()) || (!functionp(st->isdir) && st->isdir)) 
+    if(st && st->isdir)
     {
        entry->name = st->name;
        entry->link = (st->name + "/");
@@ -157,7 +157,7 @@ protected .Response low_static_request(.Request request, .Response response,
   if(!fs) fs = filesystem;
 
   Filesystem.Stat stat = fs->stat(filename);
-  if(stat && ((functionp(stat->isdir) && stat->isdir()) || (!functionp(stat->isdir) && stat->isdir) ))
+  if(stat && stat->isdir)
   {
     if(allow_directory_listings)
     {
