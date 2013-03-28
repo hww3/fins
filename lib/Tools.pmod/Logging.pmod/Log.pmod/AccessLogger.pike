@@ -34,7 +34,7 @@ static void do_msg(object r /*response*/)
   lt["remote_host"] = r->request?r->request->get_client_addr():"-";
   lt["protocol"] = r->request->protocol;
   lt["method"] = r->request->request_type;
-  lt["request"] = r->request->not_query + (sizeof(r->request->query)?("?" + r->request->query):"");
+  lt["request"] = r->request->not_query + (r->request->query && sizeof(r->request->query)?("?" + r->request->query):"");
   lt["user"] = "-";
   lt["code"] = r->error;
   object st;
