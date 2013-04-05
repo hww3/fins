@@ -216,7 +216,7 @@ werror("context->application: %O", context->application);
  //   werror("trying for template.\n");
     mixed err = catch(
     t = templateType(templateName, context, is_layout));
-    werror("err: %O\n", err);
+//    werror("err: %O\n", err);
     if(err && (err=Error.mkerror(err)) && err->is_templatecompile_error)
     {
       log->exception("low_get_template(): error loading template " + templateName, err);

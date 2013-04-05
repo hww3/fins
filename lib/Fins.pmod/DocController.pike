@@ -168,7 +168,7 @@ private class DocRunner(function req)
     {
       if(!__has_errors)
       {
-        view->log->critical("An error occurred while loading a template in controller %O; this error has been surpressed.\n"
+        view->log->debug("An error occurred while loading a template in controller %O; this error has been surpressed.\n"
 			"To enable these errors, unset the __quiet flag in your DocController instance.", get_controller());
         __has_errors++;
       }
