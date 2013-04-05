@@ -22,7 +22,7 @@ void filter_data()
 {
   if(filter_field && sizeof(filter_field) && filter_value && sizeof(filter_value))
   {
-    data = filter(rdata, lambda(mixed v){return has_prefix(v[filter_field], filter_value); });
+    data = filter(rdata, lambda(mixed v){return has_prefix(lower_case(v[filter_field]||""), filter_value); });
   }
   else data = rdata;
 }
@@ -111,7 +111,7 @@ void set_from_request(object id)
 
   if(s = id->variables["_" + key + "_filter"])
   {
-    filter_value = s;
+    filter_value = lower_case(s);
   }
 
   // filter the data, if necessary, before performing page count calculation.
