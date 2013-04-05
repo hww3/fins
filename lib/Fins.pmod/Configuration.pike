@@ -168,6 +168,26 @@ void set_value(string section, string item, mixed value)
   reparse_config_variables(section);
 }
 
+//! delete a value in the configuration
+//!
+//! @returns
+//!  the value removed from the configuration
+mixed delete_value(string section, string item)
+{
+  mixed rv;
+
+  if(!ovalues[section])
+    ovalues[section] = ([]);
+
+  rv = m_delete(ovalues[section], item);
+  
+  Public.Tools.ConfigFiles.Config.write_section(config_file, section, ovalues[section]);
+
+  reparse_config_variables(section);
+
+  return rv;
+}
+
 //! returns a string containing the first occurrance of a configuration 
 //! variable item in configuration section "section".
 string get_value(string section, string item)
