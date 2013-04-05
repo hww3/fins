@@ -221,10 +221,16 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
   return url;
 }
 
-//! args: none required, arg "mandatory" may be specified
+//! args: none required, arg "mandatory" may be specified, and args "name",
+//! "value" and "checked" enable special functionality, below.
 //!
-//! generates an input tag with any args passed along
-//!  and a value in the request's variables mapping used to fill the default value
+//! generates an input tag with any args passed along.
+//! if value in the request's variables mapping with the same name is present,
+//! it will be used to fill the default value, overriding the default passed
+//! as the "value" argument.
+//! 
+//! if field of type "checkbox" or "radio", and the argument "checked" is present
+//! with a value of "1", the input will be "activated".
 string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
 {
 //werror("******* input\n");
@@ -240,8 +246,19 @@ string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
 
   String.Buffer buf = String.Buffer();
   buf->add("<input");
+  string type = lower_case(args->type||"");
+
   foreach(args;string s;string v)
   { 
+    if((<"radio", "checkbox">)[type] && lower_case(s) == "checked")
+    {
+      if((int)v)
+      {
+        v = "1";
+      }
+      else continue;
+    }
+
     buf->add(" " + s + "=\"" + v + "\""); 
   }
   buf->add("/>");
