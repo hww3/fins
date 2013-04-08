@@ -25,6 +25,7 @@ array local_networks = ({});
 program server = Fins.Util.AppPort;
 int _ports_defaulted;
 int admin_port;
+int no_admin;
 
 string scan_loc;
 
@@ -43,7 +44,7 @@ private int has_started = 0;
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [--session-manager=ram|file|sqlite "
-	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [--local-network=CIDR] [--no-virtual] [-d] [appdir [appdir]]\n");
+	  + "[--session-storage-location=storage_path]] [-C|--default-config configname][-c|--config configname] [-d] [--logfile|-l logfilename] [--scan scandir] [--local-network=CIDR] [--no-admin (implies --no-virtual)] [--no-virtual] [-d] [appdir [appdir]]\n");
 }
 
 int(0..1) started()
@@ -80,6 +81,7 @@ int main(int argc, array(string) argv)
     ({"app",Getopt.HAS_ARG,({"-a", "--application"}) }),    
     ({"local-network",Getopt.HAS_ARG,({"--local-network"}) }),
     ({"no-virtual",Getopt.NO_ARG,({"--no-virtual"}) }),
+    ({"no-admin",Getopt.NO_ARG,({"--no-admin"}) }),
     ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
@@ -136,6 +138,11 @@ int main(int argc, array(string) argv)
 		  break;
 
 		case "no-virtual":
+		  no_virtual = 1;
+		  break;
+
+		case "no-admin":
+		  no_admin = 1;
 		  no_virtual = 1;
 		  break;
 		
@@ -237,7 +244,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   }
   else
   {
-    if(start_admin(((int)my_port))) return 0;
+    if(!no_admin && start_admin(((int)my_port))) return 0;
     if(master()->old_call_out)
       master()->old_call_out(schedule_start_app, 1, projects, config_name);
     else
