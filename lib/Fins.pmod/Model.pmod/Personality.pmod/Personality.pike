@@ -373,12 +373,11 @@ mapping unmap_field(mapping t, string table)
 
     case "binary_string":
       field->length = t->length;
-      string tx = get_type_for_size(t->type, (int)t->length);
+      field->type = get_type_for_size(t->type, (int)t->length);
       if(!field->type)
       {
         Tools.throw(Error.Generic, "Unable to determine native db type for %s with len %d.", t->type, t->length);
       }
-      tx = field->type;
       break;
 
     default:

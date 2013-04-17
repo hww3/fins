@@ -70,3 +70,8 @@ object get_context_quiet(string model_id)
 {
 	 return contexts[model_id];
 }
+
+array(string) get_context_ids()
+{
+  return indices(contexts);
+}

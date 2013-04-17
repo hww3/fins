@@ -85,11 +85,30 @@ void run(int|void direction)
   {
     if(context->transaction_supported())
       context->commit_transaction();
+      
+    record_status(direction);
   }  
   ntime = gethrtime() - ntime;
   
   float t = ntime / 1000000.0;  
   announce(dir + " in %0.2f sec, %0.2f cpu", t, g);
+}
+
+void record_status(int direction)
+{
+  // TODO need to make accomodations for non-SQL datastores.
+  if(context->sql)
+  {
+    array x = context->sql->query(sprintf("SELECT * FROM %s WHERE name='%s'", Fins.Util.Migrator.MIGRATION_STATUS_TABLE, id + "_" + name));
+    if(!sizeof(x))
+    {
+      context->sql->query(sprintf("INSERT INTO %s (name, status, applied) VALUES('%s',%d,CURRENT_TIMESTAMP)", Fins.Util.Migrator.MIGRATION_STATUS_TABLE, id + "_" +  name, !direction));
+    }
+    else
+    {
+      context->sql->query(sprintf("UPDATE %s set status=%d, applied=CURRENT_TIMESTAMP WHERE name='%s'", Fins.Util.Migrator.MIGRATION_STATUS_TABLE, !direction, id + "_" + name));
+    }
+  }
 }
 
 //! perform a migration; should be overridden by the migration task.

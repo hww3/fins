@@ -150,6 +150,13 @@ int in_transaction()
 }
 
 //!
+int table_exists(string table)
+{
+  array t = sql->list_tables(table);
+  return (search(t, table) != -1);
+}
+
+//!
 //! @param opts
 //!   mapping containing the following elements: name, order, unique
 int create_index(string table, string name, array fields, mapping opts, int|void dry_run)

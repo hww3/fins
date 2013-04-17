@@ -42,6 +42,9 @@ int run()
      		 case "app":
    		     appname = opt[1];
    		     break;
+   		   case "help":
+   		     print_help();
+   		     return 0;
        }
      }
 
@@ -150,7 +153,7 @@ int do_run(string... args)
   
   object migrator = Fins.Util.Migrator(app);
   
-  array migrations = migrator->get_migrations();
+  array migrations = migrator->get_migrations(dir);
 
   if(sizeof(run_migrations))
   {
@@ -184,7 +187,7 @@ int do_create(string migration)
     Log.error("Migration name must be specified.");
     return 1;
   }
-
+  
   load_app();
 
   string dir = Stdio.append_path(appname, Fins.Util.Migrator.MIGRATION_DIR);
