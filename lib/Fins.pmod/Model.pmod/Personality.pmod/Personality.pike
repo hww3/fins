@@ -388,7 +388,8 @@ mapping unmap_field(mapping t, string table)
   field->flags->unique = t->unique;
   field->flags->not_null = t->not_null;
   field->flags->primary_key = t->primary_key;
-
+  field->flags->autoincrement = t->auto_increment;
+  
   log->debug("unmapped to %O\n", field);
 
   return field;

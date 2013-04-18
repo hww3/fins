@@ -341,17 +341,20 @@ string get_field_definition(string table, string field, int|void include_index)
 
 protected string low_get_field_definition(mapping fd, int|void include_index)  
 {
+  werror("low_get_field_definition(%O)\n", fd);
+
   log->debug("low_get_field_definition(%O)\n", fd);
   string type = fd->type;
   if(dbtype_ranges[fd->type] && dbtype_ranges[fd->type]->include_size)
     type = sprintf("%s(%s%s}", type, fd->length, (fd->decimals?(", " + fd->decimals):""));
 
-  string def = sprintf("%s %s %s %s", 
+  string def = sprintf("%s %s %s %s %s", 
     upper_case(type),
     (has_index(fd, "default")?(sprintf("DEFAULT %s", format_literal(fd->default))):""), 
     ((int)fd->flags->not_null?"NOT NULL":""), 
-    ((include_index && (int)fd->flags->primary_key)?"PRIMARY KEY":0) || ((include_index && (int)fd->flags->unique)?"UNIQUE":""));
-
+    ((include_index && (int)fd->flags->primary_key)?"PRIMARY KEY":0) || ((include_index && (int)fd->flags->unique)?"UNIQUE":""),
+    ((int)fd->flags->autoincrement?"AUTOINCREMENT":""));
+    werror("def: %O\n", def);
   return String.trim_whites(def);
 }
 

@@ -169,6 +169,9 @@ protected string low_get_field_definition(mapping fd, int|void include_index)
     else if(fd->Key == "PRI")
       def += " PRIMARY KEY";
   }
+
+  if(fd->flags->autoincrement) def+=" AUTO_INCREMENT";
+
   return def;
 }
 
