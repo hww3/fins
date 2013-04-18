@@ -308,8 +308,12 @@ static void reflect_definition(.DataModelContext context)
   {
     instance = (instance / "/")[-1];
   }
-  else
-    instance = (instance /".")[-1];
+  else if(has_suffix(instance, ".pike"))
+  {
+    instance = instance[0..sizeof(instance)-6];
+  }
+
+  instance = (instance /".")[-1];
 
   instance = basename(instance);
 
