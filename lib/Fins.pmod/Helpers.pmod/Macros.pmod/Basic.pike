@@ -230,7 +230,9 @@ string simple_macro_action_url(Fins.Template.TemplateData data, mapping|void arg
 //! as the "value" argument.
 //! 
 //! if field of type "checkbox" or "radio", and the argument "checked" is present
-//! with a value of "1", the input will be "activated".
+//! with a value of "1", the input will be "activated". "data_supplied" is a value that,
+//! if present disables the checked argument for checkboxes (since unchecked boxes don't
+//!  provide a value when submitted, it appears to this control as if no value were provided)
 string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
 {
 //werror("******* input\n");
@@ -238,29 +240,38 @@ string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
   string event = args->action;
 //  if(!event) throw(Error.Generic("action_link: event name must be provided.\n"));
   mixed v;
-
+  int checked; 
+  
   if(!args) args = ([]);
 
-  if(args->name && (v = request->variables[args->name]))
+  string type = lower_case(args->type||"");
+  
+  if(!(<"radio", "checkbox">)[type] && args->name && (v = request->variables[args->name]))
     args->value = v;
 
   String.Buffer buf = String.Buffer();
   buf->add("<input");
-  string type = lower_case(args->type||"");
 
   foreach(args;string s;string v)
   { 
-    if((<"radio", "checkbox">)[type] && lower_case(s) == "checked")
+    if((<"radio", "checkbox">)[type])
     {
-      if((int)v)
+      if(lower_case(s) == "checked")
       {
-        v = "1";
+        checked = 1;
+        continue;      
       }
-      else continue;
+      if(lower_case(s) == "data_supplied")
+        continue;
     }
-
     buf->add(" " + s + "=\"" + v + "\""); 
   }
+  
+  if((<"radio", "checkbox">)[type] && request->variables[args->name] == args->value || (checked &&  !args->data_supplied))
+  {
+      buf->add(" checked=\"1\"");
+  }
+  
   buf->add("/>");
 
   if(args->mandatory && lower_case(args->mandatory) != "false")
@@ -319,6 +330,8 @@ string simple_macro_select(Fins.Template.TemplateData data, mapping|void args)
     {
       vn = vo;
       dn = vo;
+    }  
+      
       buf->add("<option value=\"" + vn + "\"");
 
       if(vn == value)
@@ -327,7 +340,7 @@ string simple_macro_select(Fins.Template.TemplateData data, mapping|void args)
       buf->add(">");
       buf->add(dn);
       buf->add("</option>\n");
-    }  
+     
   }
   
 
