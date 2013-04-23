@@ -1,3 +1,6 @@
+//! field definition for id field.
+constant ID = ({"id", "integer", (["primary_key": 1, "auto_increment": 1])});
+
 object context;
 string table;
 object migration;
