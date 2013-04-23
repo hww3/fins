@@ -285,16 +285,17 @@ void initialize_links()
 
   foreach(builder->has_many;; mapping a)
   {
-    if(!a->my_name) a->my_name = Tools.Language.Inflect.pluralize(a->other_type);
-    if(!a->other_field) a->other_field = repository->get_object(a->other_type)->primary_key->name	;    
+    object other_type = repository->get_object(a->other_type);
+    if(!a->my_name) a->my_name = other_type->instance_name_plural;
+    if(!a->other_field) a->other_field = other_type->primary_key->name;    
 
-	string my_name = a->my_name;
-	string other_field = a->other_field;
+	  string my_name = a->my_name;
+	  string other_field = a->other_field;
 
-	if(lower_case_link_names)
-	{
-	  my_name = lower_case(my_name);
-	}
+	  if(lower_case_link_names)
+	  {
+	    my_name = lower_case(my_name);
+	  }
 
     a->obj->add_field(this, master()->resolv("Fins.Model.InverseForeignKeyReference")(my_name, 
                         /*Tools.Language.Inflect.singularize*/(a->other_type),  other_field, a->criteria));
@@ -304,10 +305,10 @@ void initialize_links()
 
   foreach(builder->has_many_index;; mapping a)
   {
-    if(!a->my_name) a->my_name = Tools.Language.Inflect.pluralize(a->other_type);
+    object other_type = repository->get_object(a->other_type);
+    if(!a->my_name) a->my_name = other_type->instance_name_plural;
 
 //    werror("we'll call the field " + a->my_name + "\n");
-    object other_type = repository->get_object(a->other_type);
     if(!other_type) Tools.throw(Error.Generic, "has_many_by_index: type %O does not exist.", a->other_type);
     if(!a->other_field) a->other_field = a->obj->instance_name;
 
@@ -392,7 +393,8 @@ void initialize_links()
 
   foreach(repository->object_definitions; string on; object od)
   {
-    table_components += ({ (["tn": lower_case(Tools.Language.Inflect.pluralize(on)), "od": od ]) });  
+  //  werror("name: %O => %O\n", on, Tools.Language.Inflect.pluralize(lower_case(on)));
+    table_components += ({ (["tn": lower_case(od->instance_name_plural), "od": od ]) });  
   }
     
   // Now, we check for link-tables, that is, tables which represent a many-to-many relationship
@@ -428,13 +430,13 @@ void initialize_links()
 		  that_name = lower_case(that_name);
 		}
 
-          o->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(o->od, Tools.Language.Inflect.pluralize(this_name),
+          o->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(o->od, q->od->instance_name_plural,
             o->tn + "_" + q->tn, 
             lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name), 
             lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name),
              q->od->instance_name, q->od->primary_key->name, 0, 1));
 
-          q->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(q->od, Tools.Language.Inflect.pluralize(that_name),
+          q->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(q->od, o->od->instance_name_plural,
             o->tn + "_" + q->tn, 
             lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name), 
             lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name),

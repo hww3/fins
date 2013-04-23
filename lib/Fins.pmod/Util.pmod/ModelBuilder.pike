@@ -210,7 +210,7 @@ array scan()
         {
           // TODO: standardize this method similar to map_table_to_type().
           // found one possible part, see if it has a properly formatted id field.
-          string fn = lower_case(Tools.Language.Inflect.singularize(pt)) + "_id";
+          string fn = Tools.Language.Inflect.singularize(lower_case(pt)) + "_id";
           array jf = context->sql->list_fields(table, fn);
           int foundit;
           foreach(jf;; mapping jfd) if(jfd->name == fn) foundit++;

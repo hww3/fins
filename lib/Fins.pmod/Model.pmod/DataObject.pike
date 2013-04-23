@@ -90,10 +90,16 @@ string insert_query = "INSERT INTO %s %s VALUES %s";
 
 int autosave = 1;
 
-//!  May be left blank if auto-configuring.
+//!  The name of this object; required if manually configuring. May be specified if auto-configuration
+//!  is unable to predict the proper name.
 string instance_name = "";
 
-//!  May be left blank if auto-configuring.
+//!  The plural name of this object; required if manually configuring. May be specified if auto-configuration
+//!  is unable to predict the proper name. Used by scaffolding and for naming references to this object type 
+//! from other object types.
+string instance_name_plural = "";
+
+//!  Somewhat self explanatory; mandatory if manually configuring, may be left blank if auto-configuring.
 string table_name = "";
 
 //! used by @[Fins.ScaffoldController] to determine the order fields are displayed in generated forms.
@@ -317,19 +323,24 @@ static void reflect_definition(.DataModelContext context)
 
   instance = basename(instance);
 
-  if(!get_table_name() || !sizeof(get_table_name()))
-  {
-    table = Tools.Language.Inflect.pluralize(lower_case(instance));
-	log->info("reflect_definition: table name for %s is %s.", instance, table);
-    set_table_name(table);
-  }
   if(!instance_name || !sizeof(instance_name))
   {
     set_instance_name(instance);
   }  
+  
+  if(!instance_name_plural || !sizeof(instance_name_plural))
+  {
+    set_instance_name_plural(Tools.Language.Inflect.pluralize(instance_name));
+  }
+
+  table = get_table_name();
+  
+  if(!table || !sizeof(table))
+    throw(Error.Generic("No table name defined.\n"));
+  else
+  	log->info("reflect_definition: table name for %s is %s.", instance, table);
 
   // load from the object
-  table = table_name;
   instance = instance_name;
     
   if(!get_manual_config())
@@ -528,10 +539,18 @@ void set_instance_name(string _name)
   instance_name = _name;
 }
 
+//! sets the plural instance name of this data mapping (typically the class name)
+void set_instance_name_plural(string _name)
+{
+  instance_name_plural = _name;
+}
+
 //! @returns
 //!  the name of the database table this data type maps to.
 string get_table_name()
 {
+  if(!table_name)
+    table_name = Tools.Language.Inflect.pluralize(lower_case(instance_name));
   return table_name;
 }
 
@@ -647,11 +666,11 @@ mixed gen_inherits(object definition)
 
      foreach(fields;; .Field f)
      {
-       string mfn = (f->get_table?f->get_table():table_name) + "__" + f->field_name;
+       string mfn = (f->get_table?f->get_table():get_table_name()) + "__" + f->field_name;
        if(f->field_name)
        {
          _fieldnames[f] = mfn;
-         _fields += ({ (f->get_table?f->get_table():table_name) + "." + f->field_name + " AS " + mfn});
+         _fields += ({ (f->get_table?f->get_table():get_table_name()) + "." + f->field_name + " AS " + mfn});
          fn = mfn;
        }
 
@@ -659,7 +678,7 @@ mixed gen_inherits(object definition)
         if(f->get_table)
           fn = f->get_table()  + "." + f->field_name;
         else 
-          fn = table_name + "." + f->field_name;
+          fn = get_table_name() + "." + f->field_name;
       }
 
       _fieldnames_low[f->name] = fn;
@@ -686,7 +705,7 @@ array find(.DataModelContext context, mapping qualifiers, .Criteria|void criteri
   array(object(.DataObjectInstance)) results = ({});
 
   array _where = ({});
-  array _tables = ({table_name});
+  array _tables = ({get_table_name()});
 
   //werror("%O via %O (%O, %O, %O)", Tools.Function.this_function(), backtrace()[-4][2], qualifiers, criteria, i);
 
@@ -726,7 +745,7 @@ array find(.DataModelContext context, mapping qualifiers, .Criteria|void criteri
 
   else
     query = sprintf(multi_select_nowhere_query, _fields_string, 
-      table_name);
+      get_table_name());
 
   // criteria always overrides default sorting.
   if(criteria)
@@ -763,7 +782,7 @@ array find(.DataModelContext context, mapping qualifiers, .Criteria|void criteri
 
   foreach(qr;; mapping row)
   {
-    string fn = table_name + "__" + primary_key->field_name;
+    string fn = get_table_name() + "__" + primary_key->field_name;
     object item = object_program(i)(UNDEFINED, context);
     item->set_id(primary_key->decode(row[fn]));
     item->set_new_object(0);
@@ -825,7 +844,7 @@ int(0..1) load(.DataModelContext context, mixed id, .DataObjectInstance i, int|v
   else // guess we need this here, also.
   {
     string query = sprintf(single_select_query, (_fields_string), 
-      table_name, primary_key->field_name, primary_key->encode(id, i));
+      get_table_name(), primary_key->field_name, primary_key->encode(id, i));
 
     querylog->debug("%O: %O", Tools.Function.this_function(), query);
 
@@ -876,7 +895,7 @@ else
      log->debug("load_alternate(%O, %O): loading from database.", id, i);
 
      string query = sprintf(single_select_query, (_fields_string), 
-       table_name, alternate_key->field_name, alternate_key->encode(id, i));
+       get_table_name(), alternate_key->field_name, alternate_key->encode(id, i));
 
     querylog->debug("%O: %O", Tools.Function.this_function(), query);
 
@@ -1007,7 +1026,7 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
   }
 
 /*
-   string query = sprintf(single_select_query, fields[field]->field_name, table_name, 
+   string query = sprintf(single_select_query, fields[field]->field_name, get_table_name(), 
      primary_key->field_name, primary_key->encode(id, i));
 
    querylog->debug("%O(): %O", Tools.Function.this_function(), query);
@@ -1030,6 +1049,7 @@ int set_atomic(.DataModelContext context, mapping values, int|void no_validation
 {
    mapping object_data = ([]);
    multiset fields_set = (<>);
+   multiset shadows_set = (<>);
 
    foreach(values; string field; mixed value)
    {
@@ -1041,11 +1061,17 @@ int set_atomic(.DataModelContext context, mapping values, int|void no_validation
 		{
 			continue;
 		}
-      if(fields[field]->is_shadow)
+      if(fields[field]->is_shadow && !fields[field]->set_atomic)
       {
-         throw(Error.Generic("Cannot set shadow field " + field + ".\n"));   
+         throw(Error.Generic("Cannot set shadow field " + field + ".\n")); 
+      }  
+      else if(fields[field]->is_shadow && fields[field]->set_atomic)
+      {
+        mixed q = fields[field]->set_atomic(value, i);
+        shadows_set[q] = 1;
+        continue;
       }
-
+      
        object_data[field] = fields[field]->validate(value);
        fields_set[field] = 1;      
    }
@@ -1053,19 +1079,24 @@ int set_atomic(.DataModelContext context, mapping values, int|void no_validation
    if(i->is_new_object())
    {
       mixed key;
-      commit_changes(context, fields_set, object_data, no_validation, 0, i);
+      commit_changes(context, fields_set, shadows_set, object_data, no_validation, 0, i);
       key = primary_key->get_id(i);
 
       log->debug("%O: created new object with id=%O\n", Tools.Function.this_function(), key);
       i->set_id(key);
+
+      foreach(shadows_set; object fld;)
+        if(fld->save) fld->save(i);
+
       i->set_new_object(0);
       i->set_saved(1);
       i->object_data = ([]);
       i->fields_set = (<>);      
+      i->shadows_set = (<>);      
       //add_ref(i);
    }
    else
-     commit_changes(context, fields_set, object_data, no_validation, i->get_id(), i);
+     commit_changes(context, fields_set, shadows_set, object_data, no_validation, i->get_id(), i);
    load(context, i->get_id(), i, 1);
 }
 
@@ -1125,7 +1156,7 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
 
      string update_query;
 
-     update_query = sprintf(single_update_query, table_name, fields[field]->field_name, new_value, primary_key->name, key_value);
+     update_query = sprintf(single_update_query, get_table_name(), fields[field]->field_name, new_value, primary_key->name, key_value);
 
 //     querylog->debug("%O: %O", Tools.Function.this_function(), update_query);
      context->execute(update_query);
@@ -1198,7 +1229,7 @@ mapping objs, objs_by_alt;
    
 //   return 0;
 
-   string delete_query = sprintf(single_delete_query, table_name, primary_key->name, key_value);
+   string delete_query = sprintf(single_delete_query, get_table_name(), primary_key->name, key_value);
 
    querylog->debug("%O: %O", Tools.Function.this_function(), delete_query);
    context->execute(delete_query);
@@ -1283,7 +1314,7 @@ Fins.Errors.Validation valid(object i)
    else return 0;
 }
 
-static int commit_changes(.DataModelContext context, multiset fields_set, mapping object_data, int|void no_validation, mixed update_id, object i)
+static int commit_changes(.DataModelContext context, multiset fields_set, multiset shadows_set, mapping object_data, int|void no_validation, mixed update_id, object i)
 {
    string query;
    array qfields = ({});
@@ -1392,7 +1423,7 @@ static int commit_changes(.DataModelContext context, multiset fields_set, mappin
          string fields_clause = "(" + (qfields * ", ") + ")";
          string values_clause = "(" + (qvalues * ", ") + ")";
 
-         query = sprintf(insert_query, table_name, fields_clause, values_clause);
+         query = sprintf(insert_query, get_table_name(), fields_clause, values_clause);
 	 querylog->debug("%O: %O", Tools.Function.this_function(), query);
       }
       else
@@ -1407,10 +1438,13 @@ static int commit_changes(.DataModelContext context, multiset fields_set, mappin
 
          set_clause = (set * ", ");
          
-         query = sprintf(multi_update_query, table_name, set_clause, primary_key->field_name, primary_key->encode(update_id, i));
+         query = sprintf(multi_update_query, get_table_name(), set_clause, primary_key->field_name, primary_key->encode(update_id, i));
 	 querylog->debug("%O: %O", Tools.Function.this_function(), query);
       }
       context->execute(query);
+      foreach(shadows_set; object fld;)
+        if(fld->save) fld->save(i);
+      
 }
 
 int save(.DataModelContext context, int|void no_validation, .DataObjectInstance i)
@@ -1418,7 +1452,7 @@ int save(.DataModelContext context, int|void no_validation, .DataObjectInstance 
    if(i->is_new_object())
    {
       mixed key;
-      commit_changes(context, i->fields_set, i->object_data, no_validation, 0, i);
+      commit_changes(context, i->fields_set, i->shadows_set, i->object_data, no_validation, 0, i);
       key = primary_key->get_id(i);
       log->debug("%O: created new object with id=%O\n", Tools.Function.this_function(), key);
 
@@ -1431,7 +1465,7 @@ int save(.DataModelContext context, int|void no_validation, .DataObjectInstance 
    }
    else if(autosave == 0)
    {
-      commit_changes(context, i->fields_set, i->object_data, no_validation, i->get_id(), i);
+      commit_changes(context, i->fields_set, i->shadows_set, i->object_data, no_validation, i->get_id(), i);
       i->set_id(primary_key->get_id(i));
       i->set_saved(1);
       i->object_data = ([]);

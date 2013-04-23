@@ -37,15 +37,25 @@ static void create(object p, string _name, string _mappingtable, string _my_mapp
 // value will be null in a foreign key, as we're not in an object where that's a real field. 
 mixed decode(string value, void|.DataObjectInstance i) 
 { 
+//  werror("decode: %O\n", value);
     return .MultiObjectArray(this, i, i->context);
 }
 
 // value should be a dataobject instance of the type we're looking to set.
 string encode(.DataObjectInstance value, void|.DataObjectInstance i)
 {
+  
+//  werror("encode: %O\n", value);
   return "";
 }
 
+object set_atomic(array x, .DataObjectInstance i)
+{
+  werror("atomic set: %O\n", x);
+  object ma = decode(0, i);
+  ma->set_atomic(x);
+  return ma;
+}
 
 mixed validate(mixed value, void|.DataObjectInstance i)
 {

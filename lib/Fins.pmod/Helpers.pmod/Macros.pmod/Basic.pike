@@ -246,8 +246,8 @@ string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
 
   string type = lower_case(args->type||"");
   
-  if(!(<"radio", "checkbox">)[type] && args->name && (v = request->variables[args->name]))
-    args->value = v;
+  if(!(<"radio", "checkbox">)[type] && args->name && ((v = request->variables[args->name]) && !arrayp(v)))
+    args->value = (string)v;
 
   String.Buffer buf = String.Buffer();
   buf->add("<input");
@@ -267,7 +267,11 @@ string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
     buf->add(" " + s + "=\"" + v + "\""); 
   }
   
-  if((<"radio", "checkbox">)[type] && request->variables[args->name] == args->value || (checked &&  !args->data_supplied))
+  werror("is %O(%O) == %O?", args->name, args->value, request->variables[args->name]);
+  if((<"radio", "checkbox">)[type] && 
+    ((request->variables[args->name] == (string)args->value) ||
+        (arrayp(request->variables[args->name]) && search(request->variables[args->name], (string)args->value)!=-1)) 
+    || (checked &&  !args->data_supplied))
   {
       buf->add(" checked=\"1\"");
   }

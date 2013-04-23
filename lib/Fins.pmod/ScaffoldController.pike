@@ -182,7 +182,7 @@ string new_template_string =
      <input type=\"submit\" name=\"__select\" value=\"Select\">
      <p/>
      <%foreach var=\"$values\" ind=\"key\" val=\"value\"%>
-       <input type=\"checkbox\" name=\"selected_id\" value=\"<%$value._id%>\"> <%describe_object var=\"$value\"%><br/>
+       <%input type=\"checkbox\" name=\"selected_id\" value=\"$value._id\" data_supplied=\"$for\"%><%describe_object var=\"$value\"%><br/>
      <%end%>
     <input type=\"hidden\" name=\"old_data\" value=\"<%$old_data%>\">
     <input type=\"hidden\" name=\"selected_field\" value=\"<%$selected_field%>\">
@@ -234,15 +234,15 @@ public void list(Fins.Request request, Fins.Response response, Fins.Template.Vie
 {
 //  object v = get_view(list, list_template_string);
 
-  v->add("type", Tools.Language.Inflect.pluralize(model_object->instance_name));
+  v->add("type", lower_case(model_object->instance_name_plural));
 
   object items = model_context->_find(model_object, ([]));
 
   if(!sizeof(items))
   {
     response->flash("msg", "No " + 
-      Tools.Language.Inflect.pluralize(model_object->instance_name) + 
-         " found.<p>\n");
+      lower_case(model_object->instance_name_plural)
+      + " found.<p>\n");
   }
   else
   {
@@ -297,14 +297,17 @@ public void do_pick(Request id, Response response, Fins.Template.View v, mixed .
   
   werror("var: %O\n", id->variables);
     
-  if(id->variables->__select && !(int)id->variables->selected_id)
+  // why do we assume that a value must be selected? why can't it be empty?
+  /*
+  if(id->variables->__select && !(arrayp(id->variables->selected_id) || (int)id->variables->selected_id))
   {
     response->flash("msg", "No " + make_nice(model_object->instance_name) + " selected.");
     response->redirect_temp(action_url(pick_one, ({}), (["old_data": id->variables->old_data, "selected_field": id->variables->selected_field, 
                 "for": id->variables["for"], "for_id": id->variables["for_id"]])));
     return;
   }
-
+  */
+  
   id->variables->id = id->variables->for_id;
   m_delete(id->variables, "for_id");
   m_delete(id->variables, "for");
@@ -322,7 +325,7 @@ public void pick_many(Request id, Response response, Fins.Template.View v, mixed
 
   id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
 
-  v->add("type", make_nice(Tools.Language.Inflect.pluralize(model_object->instance_name)));
+  v->add("type", make_nice(lower_case(model_object->instance_name_plural)));
   v->add("nicefor", make_nice(id->variables["for"]));
 
   array x = model_context->find_all(model_component);
@@ -348,10 +351,14 @@ public void pick_one(Request id, Response response, Fins.Template.View v, mixed 
   v->add("nicefor", make_nice(id->variables["for"]));
 
   array x = model_context->find_all(model_component);
-  object obj = model_context->find_by_id(id->variables["for"], (int)id->variables["for_id"]);
+
+  if((int)id->variables["for_id"])
+  {
+    object obj = model_context->find_by_id(id->variables["for"], (int)id->variables["for_id"]);
+    v->add("previous_selection", (obj?obj[id->variables->selected_field]->get_id():0));
+  }
   
   v->add("values", x);
-  v->add("previous_selection", obj[id->variables->selected_field]->get_id());
   v->add("old_data", id->variables->old_data);
   v->add("selected_field", id->variables->selected_field);
   v->add("for", id->variables["for"]);
@@ -433,7 +440,19 @@ public void decode_old_values(mapping variables, mapping orig)
     mixed inv = decode_value(in);
     decode_from_form(inv, orig);
     if(variables->selected_field)
-      orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
+    {
+      if(arrayp(variables->selected_id))
+      {
+        array x = allocate(sizeof(variables->selected_id));
+        foreach(variables->selected_id;int i; mixed v)
+         x[i] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)v);
+        orig[variables->selected_field] = x;
+      }
+      else
+      {
+        orig[variables->selected_field] = model_context->find_by_id(model_object->fields[variables->selected_field]->otherobject, (int)variables->selected_id);
+      }
+    }
   }
 
 }
@@ -442,7 +461,7 @@ public void update(Fins.Request request, Fins.Response response, Fins.Template.V
 {
 //  object v = get_view(update, update_template_string);
 
-  v->add("type", Tools.Language.Inflect.pluralize(model_object->instance_name));
+  v->add("type", lower_case(model_object->instance_name_plural));
   
   mapping orig = ([]);
 
@@ -554,12 +573,13 @@ e=catch{
 			{
 				werror("field: %O\n", item->master_object->fields[field]);
 				Log.debug("Scaffold: " + field + " in " + model_object->instance_name + " changed.");
-		        if(item->master_object->fields[field]->is_shadow) continue;
+		    if(item->master_object->fields[field]->is_shadow && !model_object->fields[field]->get_renderer()->from_form) continue;
 				should_update = 1;
 				mapping x = ([]);
 				foreach(elements;; string e)
 				  x[e[(sizeof(field)+3)..]] = request->variables[e];
-				v[field] = model_object->fields[field]->get_renderer()->from_form(x, model_object->fields[field], item);
+  			mixed field_vals = model_object->fields[field]->get_renderer()->from_form(x, model_object->fields[field], item);
+				  v[field] = field_vals;
 				break;
 			}
 		}
@@ -608,10 +628,14 @@ static void decode_from_form(mapping variables, mapping v)
         {
                 foreach(elements;; string e)
                 {
+                  object field_object;
                   mapping x = ([]);
                   foreach(elements;; string e)
                     x[e[(sizeof(field)+3)..]] = variables[e];
-                  v[field] = model_object->fields[field]->from_form(x);
+                  field_object = model_object->fields[field];
+                  werror("decoding %O from %O with value %O = %O\n", field, model_object, x, field_object);
+          				v[field] = field_object->get_renderer()->from_form(x, field_object);
+//                  v[field] = model_object->fields[field]->from_form(x);
                   break;
                 }
         }
@@ -669,12 +693,14 @@ e=catch{
 		{
 				Log.debug("Scaffold: " + field + " in " + model_object->instance_name + " changed.");
 				werror("%O\n", item->master_object->fields[field]);
-		        if(item->master_object->fields[field]->is_shadow) continue;
+		    if(item->master_object->fields[field]->is_shadow && !model_object->fields[field]->get_renderer()->from_form) continue;
 				should_update = 1;
 				mapping x = ([]);
 				foreach(elements;; string e)
 				  x[e[(sizeof(field)+3)..]] = request->variables[e];
-				v[field] = model_object->fields[field]->get_renderer()->from_form(x, item);
+				mixed field_val = model_object->fields[field]->get_renderer()->from_form(x, model_object->fields[field], item);
+				
+				v[field] = field_val;
 				break;
 		}
 	}
@@ -692,7 +718,8 @@ werror("setting: %O\n", v);
 //item->set_atomic(v);
   e = catch(item->set_atomic(v));
   if(e)
-  {  
+  { 
+    Log.exception("Record creation failed.", e); 
     response->flash("msg", "Record creation failed: " + (Error.mkerror(e)->message()));
     response->redirect_temp(action_url(new, 0, v));
   }
@@ -715,7 +742,7 @@ public void new(Fins.Request request, Fins.Response response, Fins.Template.View
 
 //  object v = get_view(new, new_template_string);
 
-  v->add("type", Tools.Language.Inflect.pluralize(model_object->instance_name));
+  v->add("type", lower_case(model_object->instance_name_plural));
 
   object no = model_context->new(model_object->instance_name);
 

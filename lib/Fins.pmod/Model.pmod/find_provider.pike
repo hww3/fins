@@ -55,7 +55,7 @@ static program get_model_component(string ot)
 //      werror()
    }
 //   mixed m = context->repository->get_model_module();
-mixed m = context->repository->object_definitions;
+  mixed m = context->repository->object_definitions;
   array x = indices(m);
   array y = values(m);
   
@@ -83,6 +83,17 @@ static object get_object_component(string ot)
   return m[ot];
 }
 
+program type_from_query(string q, string f)
+{
+  string ot;
+  
+  if(!has_suffix(q, f))
+    return 0;
+  ot = string_without_suffix(q, f);
+  ot = Tools.Language.Inflect.singularize(ot);
+
+  return get_model_component(ot);
+}
 
 static function get_func(mixed k)
 {
@@ -100,82 +111,45 @@ static function get_func(mixed k)
   // we only like strings.
   if(!stringp(k)) return 0;
 
-  if(has_suffix(k, "_by_id"))
+  if(p = type_from_query(k, "_by_id"))
   {
-
-    ot = string_without_suffix(k, "_by_id");
-    ot = Tools.Language.Inflect.singularize(ot);
-//    ot = String.capitalize(ot);
-    if(p=get_model_component(ot))
-	{
 		log->debug("%O found %s component %O", this, k, p);
-
-      return lambda(mixed ... args){ return context->find_by_id(p, @args);};
-	}
+    return lambda(mixed ... args){ return context->find_by_id(p, @args);};
   }
-  if(has_suffix(k, "_by_query"))
+  else if(p = type_from_query(k, "_by_query"))
   {
-    ot = string_without_suffix(k, "_by_query");
-    ot = Tools.Language.Inflect.singularize(ot);
-//    ot = String.capitalize(ot);
-    if(p=get_model_component(ot))
-	{
 		log->debug("%O found %s component %O", this, k, p);
-      return lambda(mixed ... args){ return context->find_by_query(p, @args);};
-    }
+    return lambda(mixed ... args){ return context->find_by_query(p, @args);};
   }
-  else if(has_suffix(k, "_by_alternate"))
+  else if(p = type_from_query(k, "_by_alternate"))
   {
-    ot = string_without_suffix(k, "_by_alternate");
-    ot = Tools.Language.Inflect.singularize(ot);
-//    ot = String.capitalize(ot);
-    if(p=get_model_component(ot))
-	{
 	  log->debug("%O found %s component %O", this, k, p);
-      return lambda(mixed ... args){ return context->find_by_alternate(p, @args);};
-    }
+    return lambda(mixed ... args){ return context->find_by_alternate(p, @args);};
   }
-  else if(has_suffix(k, "_by_alt"))
+  else if(p = type_from_query(k, "_by_alt"))
   {
-    ot = string_without_suffix(k, "_by_alt");
-    ot = Tools.Language.Inflect.singularize(ot);
-//    ot = String.capitalize(ot);
-    if(p=get_model_component(ot))
-	{
-   	  log->debug("%O found %s component %O", this, k, p);
-      return lambda(mixed ... args){ return context->find_by_alternate(p, @args);};
-    }
+	  log->debug("%O found %s component %O", this, k, p);
+    return lambda(mixed ... args){ return context->find_by_alternate(p, @args);};
   }
-
   else if((i = search(k, "_by_")) != -1)
   {
     ot = k[0..(i-1)];
     ot = Tools.Language.Inflect.singularize(ot);
-//werror("ot: %O, %O, %O, %O\n", ot, get_model_component(ot), k[(i+4)..], get_model_component(ot)->alternate_key);
     if((p = get_model_component(ot)) && p->alternate_key && (k[(i+4) ..] == lower_case(p->alternate_key->name)))
       return lambda(mixed ... args){ return context->find_by_alternate(p, @args);};
-
   }
-
-  else if(has_suffix(k, "_all"))
-  {
-    ot = string_without_suffix(k, "_all");
-    ot = Tools.Language.Inflect.singularize(ot);
-//    ot = String.capitalize(ot);
-    if(p=get_model_component(ot))
+  if(p = type_from_query(k, "_all"))
 	{
 	  log->debug("%O found %s component %O", this, k, p);
-      return lambda(mixed ... args){ return context->old_find(p, ([]), @args);};
-    }
+    return lambda(mixed ... args){ return context->old_find(p, ([]), @args);};
   }
   else
   {
     ot = Tools.Language.Inflect.singularize(k);
-//    ot = String.capitalize(ot);
-	if(!ot) return 0;
+	  if(!ot) return 0;
     if(p=get_model_component(ot))
-	{
-	  log->debug("%O found %s component %O", this, k, p);
+	  {
+	    log->debug("%O found %s component %O", this, k, p);
       return lambda(mixed ... args){ return context->old_find(p, @args);};
     }    
   }

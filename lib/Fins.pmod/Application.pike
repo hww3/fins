@@ -737,8 +737,18 @@ public string add_variables_to_path(string path, mapping vars)
   if(vars)
   {
     array e = ({});
-    foreach(vars; string k;string v)
-      e += ({(k + "=" + v)});
+    foreach(vars; string k;mixed v)
+    {
+      if(arrayp(v))
+      {
+        foreach(v;;string value)
+          e += ({(k + "=" + value)});        
+      }
+      else
+      {
+        e += ({(k + "=" + v)});        
+      }
+    }
     path += "?" + (e*"&");
   }
   return path;

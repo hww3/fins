@@ -16,6 +16,7 @@
 
 string object_type;
 multiset fields_set = (<>);
+multiset shadows_set = (<>);
 
 // storage location of changed values local to this instance
 mapping object_data = ([]);

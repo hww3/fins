@@ -1,5 +1,9 @@
 inherit .ObjectArray;
 
+int clearfirst;
+
+private array deferred_adds = ({});
+
 void get_contents()
 {
   contents = context->old_find(otherobject, ([ field : parentobject]));
@@ -7,9 +11,34 @@ void get_contents()
   changed = 0;
 }
 
+void save(object instance)
+{
+  werror("%O->save()\n", this);
+  foreach(deferred_adds;; mixed id)
+  {
+    werror("committing %O\n", id);
+    commit_add(instance, id);
+  }
+}
+
+void set_atomic(array x)
+{
+  clearfirst = 1;
+
+  if(!arrayp(x))
+    x = ({x});
+  
+  foreach(x;; mixed v) add(v);
+}
+
 mixed `+(mixed arg)
 {
-//werror("`+(%O)\n", arg);
+  return add(arg);
+}
+
+mixed add(mixed arg)
+{
+werror("`+(%O)\n", arg);
 
 // werror("otherobject: %O\n", otherobject);
 
@@ -22,11 +51,14 @@ mixed `+(mixed arg)
   // ok, we have the right kind of object, now we need to get the id.
   int id = parentobject->get_id();  
 
-  arg->context->execute("INSERT INTO " + field->mappingtable + 
-	 "(" + field->my_mappingfield + "," + field->other_mappingfield + ") VALUES(" + 
-	 parentobject->master_object->primary_key->encode(parentobject->get_id()) + "," + 
-	 arg->master_object->primary_key->encode(arg->get_id()) + ")");
-
+  if(!id)
+  {
+    deferred_adds += ({arg->get_id()});
+  }
+  else
+  {
+    commit_add(arg, arg->get_id());
+  }
   /*
   werror("INSERT INTO " + field->mappingtable + 
 	 "(" + field->my_mappingfield + "," + field->other_mappingfield + ") VALUES(" + 
@@ -64,4 +96,18 @@ mixed `-(mixed arg)
 */
   changed = 1;
   return this;
+}
+
+void commit_add(object arg, mixed id)
+{
+  if(clearfirst)
+  {
+    arg->context->execute("DELETE FROM " + field->mappingtable + " WHERE " + field->my_mappingfield + "="
+      + parentobject->master_object->primary_key->encode(parentobject->get_id()));
+    clearfirst = 0;
+  }
+  arg->context->execute("INSERT INTO " + field->mappingtable + 
+    "(" + field->my_mappingfield + "," + field->other_mappingfield + ") VALUES(" + 
+    parentobject->master_object->primary_key->encode(parentobject->get_id()) + "," + 
+    arg->master_object->primary_key->encode(id) + ")");
 }
