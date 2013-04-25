@@ -9,11 +9,11 @@ string serialize(mapping|array data, object|void filter_context)
 {
   if(mappingp(data))
   {
-    return (string).JSONObject(data, filter_context);
+    return string_to_utf8((string).JSONObject(data, filter_context));
   }
   else if(arrayp(data))
   {
-    return (string).JSONArray(data, filter_context);
+    return string_to_utf8((string).JSONArray(data, filter_context));
   }
   else throw(Error.Generic("invalid dataset to serialize.\n"));
 
@@ -25,7 +25,7 @@ function serialise = serialize;
 //!
 mixed deserialize(string json)
 {
-  return (mapping).JSONObject(json);
+  return (mapping).JSONObject(utf8_to_string(json));
 }
 function deserialise = deserialize;
 
