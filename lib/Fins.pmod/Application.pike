@@ -178,6 +178,7 @@ void start()
   logger->info("Application URL is %s", get_my_url());
 }
 
+
 mixed do_method(string method, mixed ... args)
 {
   function m;
@@ -188,6 +189,13 @@ mixed do_method(string method, mixed ... args)
     throw(Error.Generic("Method " + method + " not available.\n"));
   }
 
+  return do_generic_method(m, @args);
+}
+
+mixed do_generic_method(function m, mixed ... args)
+{
+  mixed rv;
+
   Thread.Thread t = Thread.this_thread();
   string key = (app_runner||([]))->handler_key;
 // TODO 
@@ -197,6 +205,7 @@ mixed do_method(string method, mixed ... args)
   {
     t = Thread.Thread(key, m, @args);
     rv = t->wait();
+    return rv;
   }
   else
     return m(@args);
