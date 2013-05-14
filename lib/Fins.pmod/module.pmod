@@ -1,13 +1,14 @@
 constant __author = "Bill Welliver <hww3@riverweb.com>";
 constant __version = "0.9.5";
 
+#ifdef SINGLE_TENANT
+#undef FINS_MULTI_TENANT
+#else
 #if __VERSION__ >= 7.8.5
 #define FINS_MULTI_TENANT 1
 #endif
-
-#ifdef SINGLE_TENANT
-#undef FINS_MULTI_TENANT
 #endif
+
 
 //!
 string version()
