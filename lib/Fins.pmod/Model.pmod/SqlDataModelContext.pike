@@ -339,20 +339,22 @@ void initialize_links()
 	string this_name = a->this_name;
 	string that_name = a->that_name;
 
+        this_name = Tools.Language.Inflect.pluralize(this_name),
+        that_name = Tools.Language.Inflect.pluralize(that_name),
+
 	if(lower_case_link_names)
 	{
 	  this_name = lower_case(this_name);
 	  that_name = lower_case(that_name);
 	}
 
-     this_type->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(this_type, 
-            Tools.Language.Inflect.pluralize(that_name),
+     this_type->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(this_type, that_name,
             a->join_table,
             lower_case(this_type->instance_name + "_" + this_type->primary_key->field_name),
             lower_case(that_type->instance_name + "_" + that_type->primary_key->field_name),
              that_type->instance_name, that_type->primary_key->name, 0, 1));
 
-     that_type->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(that_type, Tools.Language.Inflect.pluralize(this_name),
+     that_type->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(that_type, this_name,
             a->join_table,
             lower_case(that_type->instance_name + "_" + that_type->primary_key->field_name),
             lower_case(this_type->instance_name + "_" + this_type->primary_key->field_name),
@@ -376,6 +378,8 @@ void initialize_links()
 		string this_name = od->instance_name;
 		string that_name = pl->obj->instance_name;
 
+        that_name = Tools.Language.Inflect.pluralize(that_name),
+
 		if(lower_case_link_names)
 		{
 		  this_name = lower_case(this_name);
@@ -383,7 +387,7 @@ void initialize_links()
 		}
 
         pl->obj->add_field(this, master()->resolv("Fins.Model.KeyReference")(this_name, pl->field->name, od->instance_name, 0, !(pl->field->not_null)));
-        od->add_field(this, master()->resolv("Fins.Model.InverseForeignKeyReference")(Tools.Language.Inflect.pluralize(that_name), pl->obj->instance_name, this_name));
+        od->add_field(this, master()->resolv("Fins.Model.InverseForeignKeyReference")(that_name, pl->obj->instance_name, this_name));
         builder->possible_links -= ({pl});
       }
     }
