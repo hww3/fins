@@ -339,13 +339,14 @@ void initialize_links()
 	string this_name = a->this_name;
 	string that_name = a->that_name;
 
-        this_name = Tools.Language.Inflect.pluralize(this_name),
-        that_name = Tools.Language.Inflect.pluralize(that_name),
+        this_name = Tools.Language.Inflect.pluralize(this_name);
+        that_name = Tools.Language.Inflect.pluralize(that_name);
 
 	if(lower_case_link_names)
 	{
 	  this_name = lower_case(this_name);
 	  that_name = lower_case(that_name);
+werror("Lower1: %O=>%O\n", this_name, that_name);
 	}
 
      this_type->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(this_type, that_name,
@@ -378,12 +379,13 @@ void initialize_links()
 		string this_name = od->instance_name;
 		string that_name = pl->obj->instance_name;
 
-        that_name = Tools.Language.Inflect.pluralize(that_name),
+        that_name = Tools.Language.Inflect.pluralize(that_name);
 
 		if(lower_case_link_names)
 		{
 		  this_name = lower_case(this_name);
 		  that_name = lower_case(that_name);
+werror("Lower2: %O=>%O\n", this_name, that_name);
 		}
 
         pl->obj->add_field(this, master()->resolv("Fins.Model.KeyReference")(this_name, pl->field->name, od->instance_name, 0, !(pl->field->not_null)));
@@ -425,22 +427,23 @@ void initialize_links()
       {
         log->debug("  - have a mlr on %s", o->tn + "_" + q->tn);
 
-		string this_name = q->od->instance_name;
-		string that_name = o->od->instance_name;
+		string this_name = q->od->instance_name_plural;
+		string that_name = o->od->instance_name_plural;
 
 		if(lower_case_link_names)
 		{
 		  this_name = lower_case(this_name);
 		  that_name = lower_case(that_name);
+werror("Lower: %O=>%O\n", this_name, that_name);
 		}
 
-          o->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(o->od, q->od->instance_name_plural,
+          o->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(o->od, this_name,
             o->tn + "_" + q->tn, 
             lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name), 
             lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name),
              q->od->instance_name, q->od->primary_key->name, 0, 1));
 
-          q->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(q->od, o->od->instance_name_plural,
+          q->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(q->od, that_name,
             o->tn + "_" + q->tn, 
             lower_case(q->od->instance_name + "_" + q->od->primary_key->field_name), 
             lower_case(o->od->instance_name + "_" + o->od->primary_key->field_name),

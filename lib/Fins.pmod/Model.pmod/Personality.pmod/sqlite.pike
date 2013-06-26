@@ -11,6 +11,7 @@ mapping indexes = ([]);
 mapping dbtype_to_finstype = ::dbtype_to_finstype +
 ([
     "blob": "binary_string",
+    "longblob": "binary_string",
     "string": "string",
     "integer": "integer",
     "int": "integer",

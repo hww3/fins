@@ -100,7 +100,7 @@ string instance_name = "";
 string instance_name_plural = "";
 
 //!  Somewhat self explanatory; mandatory if manually configuring, may be left blank if auto-configuring.
-string table_name = "";
+string table_name;
 
 //! used by @[Fins.ScaffoldController] to determine the order fields are displayed in generated forms.
 array(string) field_order = ({});
@@ -623,7 +623,7 @@ void add_field(.DataModelContext context, .Field f, int|void force)
 	   log->info("Ignoring attempt to add already defined field " + f->name +"=%O as %O.", fields[f->name], f);
      return;	
    }
-   
+   werror("f: %O=%O\n", f->name, f);
    f->set_context(context);
    fields[f->name] = f;
    if(!_field_order_specified)
