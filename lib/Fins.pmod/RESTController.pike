@@ -81,6 +81,8 @@ protected void method_get(Fins.Request request, Fins.Response response, mixed ..
 
   if(transform_function)
     items = transform_function(items);
+  
+  string s = Tools.JSON.serialize(items, render_context);
 
-  response->set_data(Tools.JSON.serialize(items, render_context));
+  response->set_data(s);
 }

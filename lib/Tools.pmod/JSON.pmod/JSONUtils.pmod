@@ -44,6 +44,7 @@ import Tools.JSON;
 			{
 				return "\"\"";
 			}
+
 			int         c;
 			int          i;
 			int          len = sizeof(s);
@@ -81,5 +82,5 @@ import Tools.JSON;
 				}
 			}
 			sb+=("\"");
-			return sb->get();
+			return string_to_utf8(sb->get());
 		}

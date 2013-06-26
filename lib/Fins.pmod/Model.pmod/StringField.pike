@@ -60,7 +60,7 @@ string encode(mixed value, void|object/*.DataObjectInstance*/ i)
   if(value == 0 || value == .Undefined)
     return "NULL";
   else
-    return "'" + context->quote(string_to_utf8(value)) + "'";
+    return "'" + context->quote(/*string_to_utf8*/(value)) + "'";
 }
 
 
