@@ -346,7 +346,6 @@ void initialize_links()
 	{
 	  this_name = lower_case(this_name);
 	  that_name = lower_case(that_name);
-werror("Lower1: %O=>%O\n", this_name, that_name);
 	}
 
      this_type->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(this_type, that_name,
@@ -385,7 +384,6 @@ werror("Lower1: %O=>%O\n", this_name, that_name);
 		{
 		  this_name = lower_case(this_name);
 		  that_name = lower_case(that_name);
-werror("Lower2: %O=>%O\n", this_name, that_name);
 		}
 
         pl->obj->add_field(this, master()->resolv("Fins.Model.KeyReference")(this_name, pl->field->name, od->instance_name, 0, !(pl->field->not_null)));
@@ -434,7 +432,6 @@ werror("Lower2: %O=>%O\n", this_name, that_name);
 		{
 		  this_name = lower_case(this_name);
 		  that_name = lower_case(that_name);
-werror("Lower: %O=>%O\n", this_name, that_name);
 		}
 
           o->od->add_field(this, master()->resolv("Fins.Model.MultiKeyReference")(o->od, this_name,

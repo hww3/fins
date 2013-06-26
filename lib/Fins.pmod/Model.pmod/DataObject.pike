@@ -623,7 +623,6 @@ void add_field(.DataModelContext context, .Field f, int|void force)
 	   log->info("Ignoring attempt to add already defined field " + f->name +"=%O as %O.", fields[f->name], f);
      return;	
    }
-   werror("f: %O=%O\n", f->name, f);
    f->set_context(context);
    fields[f->name] = f;
    if(!_field_order_specified)
