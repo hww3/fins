@@ -305,6 +305,21 @@ void validate_on_update(mapping changes, Fins.Errors.Validation errors, .DataObj
 //!
 void validate_on_create(mapping changes, Fins.Errors.Validation errors, .DataObjectInstance i);
 
+//! transforms the data being set
+//!
+//!@note
+//!  removing an entry from the changes mapping will cause the field to not
+//!  be included in the update. for single field updates, this means that the change will not be made and the object will still be marked "dirty".
+//! @param changes
+//!  a mapping containing the field-value pairs changed.
+//! @param errors
+//!  a @[Fins.Errors.Validation] object that can be used to aggregate error messages
+//!  by using the add() method.
+//! @param i
+//!  the @[DataInstanceObject] being created or updated.
+//!
+void transform(mapping changes, Fins.Errors.Validation errors, .DataObjectInstance i);
+
 static void reflect_definition(.DataModelContext context)
 {  
   string table;
@@ -1123,9 +1138,6 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
    
    if(!i->is_new_object() && autosave)
    {
-     string new_value = fields[field]->encode(value, i);
-     string key_value = primary_key->encode(i->get_id(), i);
-
      if(!no_validation)
      {
        Fins.Errors.Validation er;
@@ -1151,14 +1163,40 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
        }
      }
 
-     i->set_saved(1);
+     if(transform && functionp(transform))
+     {  
+       object er = Fins.Errors.Validation("Data Transformation Error\n");
+       mapping trr = ([field: value]);
+       transform(trr, er, i);
+
+       if(er && sizeof(er->validation_errors()))
+       {
+          throw(er);
+       }
+       else
+       {
+          if(has_index(trr, field))
+          {
+            value = trr[field];
+          }
+          else
+          {
+             log->debug("transform deleted field " + field + " from update.");
+             return 0;
+          }
+       }
+     }     
 
      string update_query;
+
+     string new_value = fields[field]->encode(value, i);
+     string key_value = primary_key->encode(i->get_id(), i);
 
      update_query = sprintf(single_update_query, get_table_name(), fields[field]->field_name, new_value, primary_key->name, key_value);
 
 //     querylog->debug("%O: %O", Tools.Function.this_function(), update_query);
      context->execute(update_query);
+     i->set_saved(1);
      load(context, i->get_id(), i, 1);   
    }
    
@@ -1359,6 +1397,21 @@ static int commit_changes(.DataModelContext context, multiset fields_set, multis
      }
    }
 
+     mapping transform_fields;
+
+     if(transform && functionp(transform))
+     {  
+       object er = Fins.Errors.Validation("Data Transformation Error\n");
+       transform_fields = mk_validate_fields(i, fields_set, object_data);
+
+       transform(transform_fields, er, i);
+
+       if(er && sizeof(er->validation_errors()))
+       {
+          throw(er);
+       }
+     }     
+
       foreach(fields;; .Field f)
       {
          if(f->is_shadow) continue;  // We just skip right over "shadow" fields.
@@ -1370,6 +1423,22 @@ static int commit_changes(.DataModelContext context, multiset fields_set, multis
          else if(update_id && f == primary_key)
          {
             // we can skip the primary key for existing objects.
+         }
+         else if(transform_fields && has_index(transform_fields, f->name))
+         {
+            string ev = f->encode(transform_fields[f->name], i);
+            if(ev)
+            {
+            //if(context->debug)
+            //  log->debug("encode field %s value %O to %O\n", f->name, object_data[f->name], f->encode(object_data[f->name]));
+              qfields += ({f->field_name});
+              qvalues += ({ev});
+            }
+         }
+         // we set it originally, but was removed during transform == don't include it.
+         else if(transform_fields && has_index(fields_set, f->name) && !has_index(transform_fields, f->name))
+         {
+           log->debug("transform deleted field " + f->name + " from update.");
          }
          else if(!has_index(fields_set, f->name) && default_values[f->name])
          {
@@ -1406,8 +1475,8 @@ static int commit_changes(.DataModelContext context, multiset fields_set, multis
          }
          else
          {
-			string ev = f->encode(object_data[f->name], i);
-			if(ev)
+        string ev = f->encode(object_data[f->name], i);
+        if(ev)
 			{
 	      //if(context->debug)
 		  //	log->debug("encode field %s value %O to %O\n", f->name, object_data[f->name], f->encode(object_data[f->name]));
