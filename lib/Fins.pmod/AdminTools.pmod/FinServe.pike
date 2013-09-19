@@ -245,11 +245,22 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   }
   else
   {
-    if(!no_admin && start_admin(((int)my_port))) return 0;
-    if(master()->old_call_out)
-      master()->old_call_out(schedule_start_app, 1, projects, config_name);
-    else
-      call_out(schedule_start_app, 1, projects, config_name);
+    mixed err;
+    err = catch {
+      if(!no_admin && start_admin(((int)my_port))) return 0;
+      if(master()->old_call_out)
+        master()->old_call_out(schedule_start_app, 1, projects, config_name);
+      else
+        call_out(schedule_start_app, 1, projects, config_name);
+    };
+    if(err && failure_callback)
+    {
+      if(master()->old_call_out)
+        master()->old_call_out(failure_callback, 1, err);
+      else
+        call_out(failure_callback, 1, err);
+
+    }
   }
 
   return -1;
@@ -284,9 +295,9 @@ void schedule_start_app(array projects, array config_name)
       if(failure_callback)
       {
         if(master()->old_call_out)
-          master()->old_call_out(ready_callback, 0, this);
+          master()->old_call_out(failure_callback, 0, err);
         else
-          call_out(ready_callback, 0, this);
+          call_out(failure_callback, 0, err);
       }
     }
     if(master()->old_call_out)
