@@ -61,6 +61,7 @@ static mixed `[](mixed a)
     if(objectp(v)) return v;
     else if(functionp(v))
       return (__vc[a] = DocRunner(v));
+    else return v;
   }
   else 
   {
