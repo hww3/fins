@@ -7,6 +7,7 @@ object logger;
 constant is_fins_serve = 1;
 
 function(object:void) ready_callback;
+function(object:void) failure_callback;
 
 constant default_port = 8080;
 constant my_version = "0.2";
@@ -275,7 +276,19 @@ void schedule_start_app(array projects, array config_name)
 {
   if(start_current_position < sizeof(projects))
   {
-    int res = start_app(projects[start_current_position], config_name[start_current_position]);
+    int res;
+    mixed err;
+    err = catch(res = start_app(projects[start_current_position], config_name[start_current_position]));
+    if(err) 
+    {
+      if(failure_callback)
+      {
+        if(master()->old_call_out)
+          master()->old_call_out(ready_callback, 0, this);
+        else
+          call_out(ready_callback, 0, this);
+      }
+    }
     if(master()->old_call_out)
       master()->old_call_out(schedule_start_app, 0.5, projects, config_name);
     else
