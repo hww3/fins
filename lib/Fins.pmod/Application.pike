@@ -597,11 +597,11 @@ string get_path_for_action(function|object action, int|void nocontextroot)
 Standards.URI get_my_url(string|void host_header)
 {
   
- // werror("runner: %O, container: %O\n", app_runner, app_runner->get_container());
+ werror("runner: %O, container: %O, host_header: %O, port: %O\n", app_runner, app_runner->get_container(), host_header, my_port);
   string url;
   string protocol = "http";
 
-  if(my_url) return Standards.URI(my_url);
+  if(my_url && !host_header) return Standards.URI(my_url);
   
   if(my_port == 0)
   {
@@ -620,8 +620,12 @@ Standards.URI get_my_url(string|void host_header)
       }
       logger->debug("get_my_url: host=%O, port=%O, protocol=%O\n", my_ip, my_port, protocol);
     }
-    else
-      my_port = -1;
+    else if(app_runner->get_container()->admin_port)
+      my_port = app_runner->get_container()->admin_port;
+    else my_port = -1;
+    
+    werror("get_my_url: host=%O, port=%O, protocol=%O\n", my_ip, my_port, protocol);
+    
   }
   
   if(config["web"] && (url = config["web"]["url"]))
@@ -629,9 +633,9 @@ Standards.URI get_my_url(string|void host_header)
     logger->debug("Using url specified in config file.");
     my_url = Standards.URI(url);
 
-    if(0 && host_header)
+    if(host_header)
     {
-       my_url->host = host_header;
+      my_url->host = (host_header/":")[0];
     }
 
     return Standards.URI(my_url);
@@ -639,12 +643,17 @@ Standards.URI get_my_url(string|void host_header)
   else if(my_port > 0)
   {
     logger->debug("Using url calculated from port specified in config file.");
+
+    if(host_header && !my_ip)
+    {
+       my_ip = (host_header/":")[0];
+    }
     
     my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
 
-    if(0 && host_header)
+    if(host_header)
     {
-       my_url->host = host_header;
+       my_url->host = (host_header/":")[0];
     }
 
     return Standards.URI(my_url);    
@@ -654,24 +663,37 @@ Standards.URI get_my_url(string|void host_header)
     logger->debug("Using xip.io url.");
     my_url = Fins.Util.get_xip_io_url(this);
     
-    if(0 && host_header)
+    if(host_header)
     {
-       my_url->host = host_header;
+      my_url->host = (host_header/":")[0];
     }
     
     return Standards.URI(my_url);    
   }
   else if(app_runner->get_container()->is_fins_serve)
   {
-    if(config->config_name == "dev")
+    if(app_runner->get_container()->no_virtual)
+    {
+      string my_ip = gethostname();
+      my_port = app_runner->get_container()->admin_port || 80;
+      my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
+
+      if(host_header)
+      {
+        my_url->host = (host_header/":")[0];
+      }
+      return Standards.URI(my_url);
+      
+    }
+    else if(config->config_name == "dev")
     {
       logger->debug("Using FinServe but no URL specified. Since config is dev, we'll use xip.io.");
       logger->debug("Using xip.io url.");
       my_url = Fins.Util.get_xip_io_url(this);
     
-      if(0 && host_header)
+      if(host_header)
       {
-         my_url->host = host_header;
+        my_url->host = (host_header/":")[0];
       }
     
       return Standards.URI(my_url);    
@@ -687,9 +709,9 @@ Standards.URI get_my_url(string|void host_header)
     string my_ip = gethostname();
     my_url = Standards.URI(protocol + "://" + my_ip + "/");
     
-    if(0 && host_header)
+    if( host_header)
     {
-       my_url->host = host_header;
+      my_url->host = (host_header/":")[0];
     }
 
     return Standards.URI(my_url);
