@@ -147,6 +147,23 @@ protected void generate_directory_listing(string filename, .Request request, .Re
   view->add("entries", entries);
 }
 
+int _is_dir_method = 0;
+
+int is_dir(object stat)
+{
+  if(!_is_dir_method)
+  {
+    if(has_index(stat, "isdir") && functionp(stat->isdir))
+      _is_dir_method = 1;
+    else if(has_index(stat, "isdir"))
+      _is_dir_method = -1;      
+  }
+  
+  if(_is_dir_method == 1)
+    return stat->isdir();
+  else return stat->isdir;
+}
+
 //! @param filename
 //!  the object to fetch, an absolute path rooted at the static directory,
 //!  for instance to fetch /etc/hosts from a static directory of /etc, 
@@ -157,7 +174,7 @@ protected .Response low_static_request(.Request request, .Response response,
   if(!fs) fs = filesystem;
 
   Filesystem.Stat stat = fs->stat(filename);
-  if(stat && stat->isdir)
+  if(stat && is_dir(stat))
   {
     if(allow_directory_listings)
     {
