@@ -23,9 +23,9 @@ object load_app(string app_dir, string config_name)
 {
   object handler;
   string key;
-  
-  if(!app_dir || app_dir[0] != '/')
-    throw(Error.Generic("Application directory must be absolute path.\n"));
+  app_dir = combine_path(getcwd(), app_dir);
+//  if(!app_dir || app_dir[0] != '/')
+//    throw(Error.Generic("Application directory must be absolute path.\n"));
       
   if(!file_stat(app_dir)) 
     throw(Error.Generic("Application directory " + app_dir + " does not exist.\n"));
