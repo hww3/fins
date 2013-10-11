@@ -202,7 +202,7 @@ public Template.Template low_get_template(program templateType, string templateN
     context->view = this;
   }
 
-werror("context->application: %O", context->application);
+//werror("context->application: %O", context->application);
   if(!templateName || !stringp(templateName))
     throw(Error.Generic("low_get_template(): template name not specified.\n"));
 
