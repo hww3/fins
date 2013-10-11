@@ -214,7 +214,6 @@
     if(to[0] == '/')
     {
       object u;
-      
       if(catch(u = request->fins_app->get_my_url(request->request_headers->host)))
         werror("an error occurred while getting the application's url."); // this is a poor effort, but it's better than nothing.
             
