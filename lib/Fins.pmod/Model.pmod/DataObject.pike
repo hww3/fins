@@ -847,13 +847,16 @@ int(0..1) load(.DataModelContext context, mixed id, .DataObjectInstance i, int|v
 
   log->debug("%O: must ask db? %O\n", Tools.Function.this_function(), force || !(id && objs[id]));
 
+  mapping object_data;
   // not a new object, so there might be an opportunity to load from cache.
-  if(!force && has_index(objs, id))
+  if(!force && (object_data = objs[id]) && mappingp(object_data))
   {
+    // we might be fetching by alternate (TODO: confirm they're both in the same mapping), in which case
     i->set_initialized(1);
-    i->set_id(primary_key->decode(objs[id][primary_key->field_name]));
+    i->set_id(primary_key->decode(object_data[primary_key->field_name]));
     i->set_new_object(0);
-    i->object_data_cache = objs[i->get_id()];
+    // TODO: is this safe? can we have other values besides primary key?
+    i->object_data_cache = object_data;
   }
   else // guess we need this here, also.
   {
