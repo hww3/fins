@@ -201,14 +201,16 @@ mixed do_generic_method(function m, mixed ... args)
 // TODO 
 // should we really get the handler key for the app from the runner?
 // that seems odd, really.
-  if(key && t->handler != key)
+  if((key && t->handler) && t->handler != key)
   {
     t = Thread.Thread(key, m, @args);
     rv = t->wait();
     return rv;
   }
   else
+{
     return m(@args);
+}
 }
 
 void do_start()

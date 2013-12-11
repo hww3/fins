@@ -68,11 +68,11 @@ void attach_fd(Stdio.File _fd, Port server,
 	       function(this_program:void) _request_callback,
 	       void|string already_data)
 {
-  if(server)
+  if(server && server->get_application)
   {
     fins_app = server->get_application();
   }
-  else 
+  else if(!server) 
   {
     throw(Error.Generic("No server object present!\n"));
   }

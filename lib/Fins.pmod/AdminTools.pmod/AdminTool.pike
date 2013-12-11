@@ -26,6 +26,10 @@ int main(int argc, array argv)
        meth = Fins.AdminTools.FinServe;       
        break;
 
+     case "simple_start":
+       meth = Fins.AdminTools.SimpleFinServe;
+       break;
+
      case "migration":
        meth = Fins.AdminTools.Migration;       
        break;
