@@ -7,6 +7,7 @@ function access_logger;
 object logger;
 
 function(object:void) ready_callback;
+function(object:void) failure_callback;
 
 constant default_port = 8080;
 constant my_version = "0.1";
@@ -128,7 +129,14 @@ int main(int argc, array(string) argv)
 
   if(argc>=2) project = argv[1];
 
-  int x = do_startup();
+  int x;
+  mixed e;
+  if(e = catch(x = do_startup()))
+  {
+    if(failure_callback)
+      call_out(failure_callback, 0, this);
+    Log.exception("Failure during startup.", e);
+  }
 
   return x;
 }
