@@ -635,12 +635,14 @@ Standards.URI get_my_url(string|void host_header)
     logger->debug("Using url specified in config file.");
     my_url = Standards.URI(url);
 
-    if(host_header)
-    {
-      my_url->host = (host_header/":")[0];
-    }
-
-    return Standards.URI(my_url);
+      if( host_header)
+      {
+        array h = host_header/":";
+        my_url->host = h[0];
+        if(sizeof(h) > 1)
+          my_url->port = h[1];
+      }
+      return Standards.URI((string)my_url);
   }
   else if(my_port > 0)
   {
@@ -653,24 +655,21 @@ Standards.URI get_my_url(string|void host_header)
     
     my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
 
-    if(host_header)
-    {
-       my_url->host = (host_header/":")[0];
-    }
-
-    return Standards.URI(my_url);    
+    return Standards.URI((string)my_url);
   }
   else if(config["web"] && config["web"]["use_xip_io"])
   {
     logger->debug("Using xip.io url.");
     my_url = Fins.Util.get_xip_io_url(this);
     
-    if(host_header)
-    {
-      my_url->host = (host_header/":")[0];
-    }
-    
-    return Standards.URI(my_url);    
+      if( host_header)
+      {
+        array h = host_header/":";
+        my_url->host = h[0];
+        if(sizeof(h) > 1)
+          my_url->port = h[1];
+      }
+      return Standards.URI((string)my_url);
   }
   else if(app_runner->get_container()->is_fins_serve)
   {
@@ -680,11 +679,14 @@ Standards.URI get_my_url(string|void host_header)
       my_port = app_runner->get_container()->admin_port || 80;
       my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
 
-      if(host_header)
+      if( host_header)
       {
-        my_url->host = (host_header/":")[0];
+        array h = host_header/":";
+        my_url->host = h[0];
+        if(sizeof(h) > 1)
+          my_url->port = h[1];
       }
-      return Standards.URI(my_url);
+      return Standards.URI((string)my_url);
       
     }
     else if(config->config_name == "dev")
@@ -695,10 +697,13 @@ Standards.URI get_my_url(string|void host_header)
     
       if(host_header)
       {
-        my_url->host = (host_header/":")[0];
+        array h = host_header/":";
+        my_url->host = h[0];
+        if(sizeof(h) > 1)
+          my_url->port = h[1];
       }
     
-      return Standards.URI(my_url);    
+      return Standards.URI((string)my_url);    
     }
     else
     {
@@ -711,12 +716,15 @@ Standards.URI get_my_url(string|void host_header)
     string my_ip = gethostname();
     my_url = Standards.URI(protocol + "://" + my_ip + "/");
     
-    if( host_header)
+    if(host_header)
     {
-      my_url->host = (host_header/":")[0];
+      array h = host_header/":";
+      my_url->host = h[0];
+      if(sizeof(h) > 1)
+        my_url->port = h[1];
     }
 
-    return Standards.URI(my_url);
+    return Standards.URI((string)my_url);
   }
 }
 
