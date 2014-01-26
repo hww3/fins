@@ -24,6 +24,7 @@ static void create()
   werror("bootstrap!\n");
 
 #ifdef FINS_MULTI_TENANT
+werror("multi-tenant!\n");
   // we don't want to do this if it's already been done.
   if(!master()->fins_master)
   {

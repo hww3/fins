@@ -1,13 +1,13 @@
 
 static Fins.Model.DataModelContext `[](mixed model_id)
 {
-   werror("contexts: %O => %O\n", Thread.this_thread(), Fins.Model.get_context_ids());
+//   werror("contexts: %O => %O\n", Thread.this_thread(), Fins.Model.get_context_ids());
    return Fins.Model.get_context((string)model_id);
 }
 
 static object `->(mixed model_id)
 {
-   werror("contexts: %O => %O\n", Thread.this_thread(), Fins.Model.get_context_ids());
+//   werror("contexts: %O => %O\n", Thread.this_thread(), Fins.Model.get_context_ids());
   return get(model_id);
 }
 

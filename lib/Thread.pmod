@@ -31,7 +31,7 @@ class Thread
     {
       if(!handler)
         handler = master()->handlers_for_thread[this_thread()];
-      set_handler(handler);
+      set_handler(handler || default_handler_key);
       ::create(splice(setup_thread, f), handler, @args);
     }
     else
