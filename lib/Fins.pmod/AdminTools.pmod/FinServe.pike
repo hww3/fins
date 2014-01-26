@@ -7,7 +7,7 @@ object logger;
 constant is_fins_serve = 1;
 
 function(object:void) ready_callback;
-function(object:void) failure_callback;
+function(object:void) failure_callback = hilfe_failure_callback;
 
 constant default_port = 8080;
 constant my_version = "0.2";
@@ -237,17 +237,13 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
   if(hilfe_mode)
   {
-    foreach(projects; i; project)
-    {
-      int res = start_app(project, config_name[i]);
-      if(res == 0) return 0;
-    }
+    failure_callback = hilfe_failure_callback;
   }
-  else
+
   {
     mixed err;
     err = catch {
-      if(!no_admin && start_admin(((int)my_port))) return 0;
+      if(!hilfe_mode && !no_admin && start_admin(((int)my_port))) return 0;
       if(master()->old_call_out)
         master()->old_call_out(schedule_start_app, 1, projects, config_name);
       else
@@ -264,6 +260,12 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
   }
 
   return -1;
+}
+
+void hilfe_failure_callback(mixed ob)
+{
+  werror("failed to start up: %O.\n", ob->message());
+  exit(1);
 }
 
 void run_hilfe(object app)
@@ -412,8 +414,9 @@ int start_app(string project, string config_name, int|void solo)
     // apps typically have deferred startup for things like controllers
     // and such. Running the back end once or twice will allow deferred actions
     // to run so that we hopefully have things like controllers started up.
-    Pike.DefaultBackend(0.0);
-    Pike.DefaultBackend(0.0);
+    Pike.DefaultBackend(0.1);
+    Pike.DefaultBackend(0.1);
+    Pike.DefaultBackend(0.1);
 
     Thread.Thread(runner->get_application()->config->handler_name, run_hilfe, runner->get_application());
 

@@ -46,7 +46,7 @@ void load_model()
   object context = get_context(config["model"], Fins.Model.DEFAULT_MODEL);
 
   Fins.Model.set_context(Fins.Model.DEFAULT_MODEL, context);
-
+  log->warn("added context!\n");
   if(config["model"]["id"])
     Fins.Model.set_context(config["model"]["id"], context);     
 
