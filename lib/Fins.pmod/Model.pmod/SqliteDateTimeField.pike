@@ -59,6 +59,10 @@ mixed validate(mixed value, void|.DataObjectInstance i)
      return value;
    }
 
+   if(objectp(value) && Program.implements(object_program(value), Calendar.Fraction))
+   {
+     return value;
+   }
    else
    {
       throw(Error.Generic("Cannot set " + name + " using " + basetype(value) + ".\n"));
