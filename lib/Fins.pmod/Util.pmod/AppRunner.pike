@@ -1,4 +1,4 @@
-//! This class serves as to encapsulate the ports, worker thread pool and associated machinery for running a Fins application.
+//! This class serves to encapsulate the ports, worker thread pool and associated machinery for running a Fins application.
 
 string status = "STOPPED";
 object status_last_change = Calendar.now();
@@ -31,6 +31,7 @@ static object container;
 static int keep_running = 1;
 static int worker_number;
 
+static object reload_scanner;
 //!
 static void create(string _project, string _config)
 {
@@ -39,6 +40,54 @@ static void create(string _project, string _config)
   config = _config;
   ident = sprintf("%s/%s", project, config);
   handler_key = combine_path(getcwd(), project) + "#" + config;
+}
+
+class ReloadScanner
+{
+  inherit Filesystem.Monitor.basic : mon;
+  
+  static object runner;
+  static void create(object _runner)
+  {
+    runner = _runner;
+    
+    object config = runner->get_application()->config;
+    mon::create(0,0,0);
+      
+    monitor(combine_path(config->app_dir, "classes"), MF_RECURSE);
+    monitor(combine_path(config->app_dir, "templates"), MF_RECURSE);
+    monitor(combine_path(config->app_dir, "modules"), MF_RECURSE);    
+  
+    set_nonblocking(10);
+#if constant(Pike.DefaultBackend.HAVE_CORE_FOUNDATION)
+    Pike.DefaultBackend.enable_core_foundation(1);
+#endif
+    call_out(check, 5.0);
+  }
+    
+  void stable_data_change(string path, object st){
+    reload_app();
+  }
+
+  void data_changed(string path, object st){
+    reload_app();
+  }
+
+  void file_created(string path){
+    reload_app();
+  }
+
+  void file_deleted(string path){
+    reload_app();
+  }
+
+  void reload_app()
+  {
+    werror("Restarting application\n");
+    catch(runner->get_appication()->shutdown());
+    runner->load_application();
+    runner->start_application();
+  }  
 }
 
 //!
@@ -159,6 +208,12 @@ void load_application()
   set_application(application);
 //write("key: %O\n", get_application()->app_runner->handler_key);
   logger->info("Application %s loaded.", ident);
+  
+  if(!reload_scanner && get_application()->config->get_boolean("devel", "auto_reload"))
+  {
+    reload_scanner = ReloadScanner(this);
+  }
+  
 }
 
 void unregister_ports()
@@ -379,6 +434,6 @@ void stop()
   
   unregister_ports();
   worker_number = 0;
-  gc();
+  catch(gc());
   set_status("STOPPED");
 }

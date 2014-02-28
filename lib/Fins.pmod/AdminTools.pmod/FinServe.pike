@@ -264,7 +264,7 @@ int do_startup(array(string) projects, array(string) config_name, int my_port)
 
 void hilfe_failure_callback(mixed ob)
 {
-  werror("failed to start up: %O.\n", ob->message());
+  werror("failed to start up: %s.\n", ob[0]);
   exit(1);
 }
 
