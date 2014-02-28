@@ -16,7 +16,7 @@ string module_root;
 //! the path to the configuration file in use, such as /path/to/config/dev.cfg
 string config_file;
 
-//! the name of the configuration in use, such as dev
+//! the name of the configuration in use, such as dev  
 string config_name;
 
 //! the name of the multi-tenant handler, if present
@@ -186,6 +186,15 @@ mixed delete_value(string section, string item)
   reparse_config_variables(section);
 
   return rv;
+}
+
+int(0..1) get_boolean(string section, string item)
+{
+  mixed val;
+  catch(val = get_value(section, item));
+  if(!val) return 0;
+  
+  return Tools.Boolean.fromString(val);
 }
 
 //! returns a string containing the first occurrance of a configuration 
