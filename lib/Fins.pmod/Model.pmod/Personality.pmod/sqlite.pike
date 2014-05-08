@@ -390,9 +390,9 @@ mapping low_regenerate_ddl(string table, array columns, array newnames, int newt
   mapping ind = ([]);
 
   array x = context->execute(sprintf("PRAGMA index_list (%s)", table));
-  //  werror("%O\n", x);
+    werror("%O\n", x);
 
-  foreach(x;; mapping i)
+  foreach(x||({});; mapping i)
   {
     mapping def = (["name": i->name, "columns": ({})]);
     if((int)i->unique) def->unique = 1;
