@@ -74,6 +74,28 @@
 		return sizeof(vals);
 	}
 	
+	static array _indices()
+	{
+	  return indices(vals);  
+	}
+	
+	static array _values()
+	{
+	  return values(vals)[*][1];
+	}
+	
+	// this is a grossly inefficient approach, we must think of a better way to handle this.
+	mixed _search(mixed needle, mixed|void start)
+	{
+	  mapping x = ([]);
+	  foreach(vals; mixed k; mixed v)
+	    x[k] = v[1];
+
+    if(zero_type(start))
+  	  return search(x, needle);  
+    else return search(x, needle, start);
+	}
+	
 	void cleanup()
 	{
 	  int ct = time();
