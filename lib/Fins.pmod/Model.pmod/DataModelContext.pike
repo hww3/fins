@@ -250,24 +250,30 @@ void register_types()
     log->warn("Using automatic model registration, but no datatype_definition_module set. Skipping.");
     return 0;
   }
-  object im = repository->get_object_module();
   object mm = repository->get_model_module();
 
-   log->debug("Data mapping module: %O", mm);
-  foreach(mkmapping(indices(mm), values(mm));string n; program c)
-  {
-    object d = c(this);
-    program di;
-    if(im && im[n])
-    {
-	  di = im[n];
-          if(di && !di->type_name) {/*werror("%O\n", di);di->type_name = n;*/}
-    }
-    else
-    {
-		throw(Fins.Errors.ModelError("No Data Instance class defined for data type " + n + " in model id " + context_id + "."));
-    }
-    log->info("Registering data type %s", d->instance_name);
-    repository->add_object_type(d, di);
+  log->debug("Data mapping module: %O", mm);
+  foreach(mkmapping(indices(mm), values(mm));string name; program definition)
+  { 
+    register_type(name, definition);
   }
+}
+
+void register_type(string name, program definition)
+{
+  object repository = get_repository();
+  object im = repository->get_object_module();
+  object d = definition(this);
+  program di;
+  if(im && im[name])
+  {
+    di = im[name];
+    if(di && !di->type_name) {/*werror("%O\n", di);di->type_name = n;*/}
+  }
+  else
+  {
+    throw(Fins.Errors.ModelError("No Data Instance class defined for data type " + name + " in model id " + context_id + "."));
+  }
+  log->info("Registering data type %s", d->instance_name);
+  repository->add_object_type(d, di);
 }
