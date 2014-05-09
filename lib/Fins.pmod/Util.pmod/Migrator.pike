@@ -104,7 +104,7 @@ void announce(string message, mixed ... args)
 
 
 //! default direction is @[Fins.Util.MigrationTask.UP].
-array(Fins.Util.MigrationTask) get_migrations(int|void dir)
+array(Fins.Util.MigrationTask) get_migrations(int|void dir, string|void through)
 {
   array f = glob("*.pike", get_dir(migration_dir));
 
@@ -171,9 +171,25 @@ array(Fins.Util.MigrationTask) get_migrations(int|void dir)
   
   migrations = sort(migrations);
 
-  if(dir = Fins.Util.MigrationTask.DOWN)
+  if(dir == Fins.Util.MigrationTask.DOWN)
     migrations = reverse(migrations);
 
+  if(through)
+  {
+    int stopat;
+    stopat = search(migrations->name, through);
+    if(stopat == -1)
+      stopat = search(migrations->id, through);
+
+    if(stopat != -1)
+    {
+      migrations = migrations[0..stopat];
+    }
+    else
+    {
+      throw(Error.Generic("get_migrations: unable to find stopping point <" + through + ">.\n"));
+    }
+  }
   return migrations;
 }
 

@@ -13,7 +13,7 @@ void create(array(string) argv)
 
 void print_help()
 {
-  Log.error("Usage: pike -x fins migration -a appname -c configname [create \"migration description\"]|[run [-up | -down][migration1 [migrationN]]]\n");
+  Log.error("Usage: pike -x fins migration -a appname -c configname [create \"migration description\"]|[run [-up | -down] [throughMigration]]\n");
   exit(1);
 }
 int run()
@@ -27,7 +27,6 @@ int run()
   }
  
   array a2 = ({""}) + args;
-
   foreach(Getopt.find_all_options(a2,aggregate(
      ({"config",Getopt.HAS_ARG,({"-c", "--config"}) }),
      ({"app",Getopt.HAS_ARG,({"-a", "--application"}) }),
@@ -63,7 +62,6 @@ int run()
     Log.error("No command specified.");
     exit(4);
   }
-  
   [command, args] = Array.shift(args);
 
   switch(command)
@@ -121,6 +119,7 @@ void load_app()
 
 int do_run(string... args)
 {
+  string through;
   int dir = Fins.Util.MigrationTask.UP;
 
   load_app();
@@ -131,8 +130,8 @@ int do_run(string... args)
 
   foreach(Getopt.find_all_options(a2,aggregate(
      ({"migration",Getopt.HAS_ARG,({"-m", "--migration"}) }),
-     ({"up",Getopt.NO_ARG,({"-u", "--up"}) }),
-     ({"down",Getopt.NO_ARG,({"-d", "--down"}) }),
+     ({"up",Getopt.NO_ARG,({"-u", "-up", "--up"}) }),
+     ({"down",Getopt.NO_ARG,({"-d","-down", "--down"}) }),
      )),array opt)
      {    
        switch(opt[0])
@@ -152,8 +151,15 @@ int do_run(string... args)
   args = a2[1..] - ({0});
   
   object migrator = Fins.Util.Migrator(app);
-  
-  array migrations = migrator->get_migrations(dir);
+
+  array migrations;
+  if(args && sizeof(args))
+  {
+    through = args[0];
+    migrations = migrator->get_migrations(dir, through);
+  }
+  else
+    migrations = migrator->get_migrations(dir);
 
   if(sizeof(run_migrations))
   {
@@ -166,11 +172,14 @@ int do_run(string... args)
   }
   
   migrations -= ({0});
-
+  string msg;
   if(dir == Fins.Util.MigrationTask.UP)
-    migrator->announce("Applying migrations: ");
+    msg = "Applying unapplied migrations";
   else
-  migrator->announce("Reverting migrations: ");
+    msg = "Reverting applied migrations";
+  if(through) msg += (" through <" + through + ">");
+  msg += ":";
+  migrator->announce(msg);
   migrator->write_func("%{" + (" "*3) + "- %s\n%}", migrations->name); 
   
   
