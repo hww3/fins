@@ -123,6 +123,8 @@ int initialize()
     cache = app->cache;
   else
     cache = Fins.FinsCache();
+
+  repository = get_repository();
 }
 
 array execute(mixed ... args)
@@ -243,8 +245,6 @@ object /*.DataObjectInstance*/ new(string|program|object ot)
 
 void register_types()
 {
-  repository = get_repository();
-
   if(!repository->get_object_module())
   {
     log->warn("Using automatic model registration, but no datatype_definition_module set. Skipping.");
@@ -261,7 +261,6 @@ void register_types()
 
 void register_type(string name, program definition)
 {
-  object repository = get_repository();
   object im = repository->get_object_module();
   object d = definition(this);
   program di;
