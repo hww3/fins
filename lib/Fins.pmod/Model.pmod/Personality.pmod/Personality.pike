@@ -333,8 +333,10 @@ mapping unmap_field(mapping t, string table)
   if(!field->flags)
     field->flags = ([]);
 
-  if(has_index(t, "default"))
+  if(has_index(t, "default")){
+werror("default: %O\n", t->default);
     field->default = t->default;
+}
   if(t->type_class)
     field->type_class = t->type_class;
 

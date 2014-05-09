@@ -320,6 +320,8 @@ array get_columns(string table, array columns_to_exclude)
   
   foreach(x;; mapping column)
   {
+    // in sqlite, default values are literals.
+    if(column->default) column->default=Fins.Model.SqlLiteral(column->default);
     if(search(columns_to_exclude, column->name) == -1)
     columns += ({column});
   }
