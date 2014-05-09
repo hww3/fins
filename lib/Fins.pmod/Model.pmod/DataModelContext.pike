@@ -259,12 +259,17 @@ void register_types()
   }
 }
 
-void register_type(string name, program definition)
+//! register a type with the runtime.
+void register_type(string name, program definition, program|void instance_class)
 {
   object im = repository->get_object_module();
   object d = definition(this);
   program di;
-  if(im && im[name])
+  if(instance_class)
+  {
+    di = instance_class;
+  }
+  else if(im && im[name])
   {
     di = im[name];
     if(di && !di->type_name) {/*werror("%O\n", di);di->type_name = n;*/}
