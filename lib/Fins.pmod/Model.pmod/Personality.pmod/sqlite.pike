@@ -171,41 +171,31 @@ int drop_column(string table, string|array columns, int dry_run)
    
    mapping ddl = regenerate_ddl(table, columns, 1);
    
+   return low_modify_table(table, ddl, dry_run, columns_left->name);
+}
 
-   string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (columns_left->name)*", ", (columns_left->name) *", ", table);
-   string drop_query = sprintf("DROP TABLE %s", table);
-   string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
+//! the alter table command in sqlite places restrictions on the types of
+//! changes that may be made to tables.
+//! in order to simulate full functionality, we create a new table with the  
+//! new field and then pull the data from the original table
+//! before dropping the old table and renaming the new one. it's a technique
+//! fraught with problems, because, for example, not all index definitions 
+//! can be reconstructed. please be careful with this function, and 
+//! always, always, ALWAYS have a good database backup before use.
+int add_column(string table, string name, mapping fd, int dry_run)
+{
+   array columns = get_columns(table, ({}));
+   foreach(columns; int i; mapping def)
+    if(def->name == name)
+      throw(Error.Generic("Column " + name + " already exists in table " + table + ".\n"));
 
-   if(!dry_run)
-   {
-//     context->begin_transaction();
-     mixed e;
+   fd = unmap_field(fd, table);
+   fd->name = name;
+   columns += ({fd});
 
-     e = catch
-     {
-       context->execute(ddl->table);
-       context->execute(copy_query);
-       context->execute(drop_query);
-       context->execute(rename_query);
+   mapping ddl = low_regenerate_ddl(table, columns, columns->name, 1);
 
-       string q;
-     
-       foreach(ddl->indexes;; q)
-         context->execute(q);
-
-         foreach(ddl->triggers;; q)
-           context->execute(q);
-     };
-     if(e)  
-     {
-//       context->rollback_transaction();
-       throw(e);
-     }
-//     else
-//       context->commit_transaction();
-   }
-   
-   return 1; 
+   return low_modify_table(table, ddl, dry_run, (columns->name - ({name})));
 }
 
 //!
@@ -224,40 +214,7 @@ int change_column(string table, string name, mapping fd, int dry_run)
 
   mapping ddl = low_regenerate_ddl(table, columns_left, newnames, 1);
 
-  string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (newnames * ", "), (oldnames * ", "), table);
-  string drop_query = sprintf("DROP TABLE %s", table);
-  string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
-
-  if(!dry_run)
-  {
-//    context->begin_transaction();
-    mixed e;
-
-    e = catch
-    {
-      context->execute(ddl->table);
-      context->execute(copy_query);
-      context->execute(drop_query);
-      context->execute(rename_query);
-
-      string q;
-  
-      foreach(ddl->indexes;; q)
-        context->execute(q);
-
-        foreach(ddl->triggers;; q)
-          context->execute(q);
-    };
-    if(e)  
-    {  
-//      context->rollback_transaction();
-      throw(e);
-    }
-//    else
-//      context->commit_transaction();
-  }
-  
-  return 1; 
+  return low_modify_table(table, ddl, dry_run, oldnames, newnames);
 }
 
 int rename_column(string table, string name, string newname, int dry_run)
@@ -272,18 +229,25 @@ int rename_column(string table, string name, string newname, int dry_run)
    newnames[i] = newname;
    
    mapping ddl = low_regenerate_ddl(table, columns_left, newnames, 1);
-   
-//   context->begin_transaction();
-   mixed e;
 
-   string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, newnames*", ", (columns_left->name) *", ", table);
+  return low_modify_table(table, ddl, dry_run, columns_left->name, newnames);
+}
+
+int low_modify_table(string table, mapping ddl, int dry_run, array columns, array|void to_columns)
+{  
+   if(!to_columns) to_columns = columns;
+   string copy_query = sprintf("INSERT INTO new_%s (%s) SELECT %s FROM %s", table, (to_columns)*", ", (columns) *", ", table);
    string drop_query = sprintf("DROP TABLE %s", table);
    string rename_query = sprintf("ALTER TABLE new_%s RENAME TO %s", table, table);
 
    if(!dry_run)
    {
+//     context->begin_transaction();
+     mixed e;
+
      e = catch
      {
+       werror("ddl: %O\n", ddl->table);
        context->execute(ddl->table);
        context->execute(copy_query);
        context->execute(drop_query);
@@ -297,7 +261,6 @@ int rename_column(string table, string name, string newname, int dry_run)
          foreach(ddl->triggers;; q)
            context->execute(q);
      };
-
      if(e)  
      {
 //       context->rollback_transaction();
@@ -309,7 +272,7 @@ int rename_column(string table, string name, string newname, int dry_run)
    
    return 1; 
 }
-
+   
 array get_columns(string table, array columns_to_exclude)
 {
   array x = context->sql->list_fields(table);
