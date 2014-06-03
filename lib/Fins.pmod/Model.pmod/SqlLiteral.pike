@@ -12,7 +12,7 @@ string get_literal()
   return literal;
 }
 
-static string _sprintf(string t)
+static string _sprintf(int x, void|mapping y)
 {
   return "SqlLiteral(" + literal + ")";
 }
