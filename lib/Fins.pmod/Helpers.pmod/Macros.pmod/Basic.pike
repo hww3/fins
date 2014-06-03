@@ -267,7 +267,7 @@ string simple_macro_input(Fins.Template.TemplateData data, mapping|void args)
     buf->add(" " + s + "=\"" + v + "\""); 
   }
   
-  werror("is %O(%O) == %O?", args->name, args->value, request->variables[args->name]);
+//  werror("is %O(%O) == %O?", args->name, args->value, request->variables[args->name]);
   if((<"radio", "checkbox">)[type] && 
     ((request->variables[args->name] == (string)args->value) ||
         (arrayp(request->variables[args->name]) && search(request->variables[args->name], (string)args->value)!=-1)) 
