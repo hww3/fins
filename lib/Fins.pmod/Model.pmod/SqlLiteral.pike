@@ -11,3 +11,8 @@ string get_literal()
 {
   return literal;
 }
+
+static string _sprintf(string t)
+{
+  return "SqlLiteral(" + literal + ")";
+}
