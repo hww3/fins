@@ -334,3 +334,24 @@ int create_index(string table, string name, array|string columns, int|void uniqu
   
   return context->create_index(table, columns, opts, dry_run);
 }
+
+static int `==(mixed arg1)
+{
+   if(arg1)
+    return Array.oid_sort_func(id, arg1->id||"") == 0;
+   else return 0;
+}
+
+static int `>(mixed arg1)
+{
+  if(arg1)
+    return Array.oid_sort_func(id, arg1->id||"") == 1;
+   else return 0;
+}
+
+static int `<(mixed arg1)
+{
+  if(arg1)
+    return Array.oid_sort_func(id, arg1->id||"") == -1;
+   else return 0;
+}
