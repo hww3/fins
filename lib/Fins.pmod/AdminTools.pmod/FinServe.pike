@@ -27,6 +27,7 @@ program server = Fins.Util.AppPort;
 int _ports_defaulted;
 int admin_port;
 int no_admin;
+int run_as_user;
 
 string scan_loc;
 
@@ -84,6 +85,7 @@ int main(int argc, array(string) argv)
     ({"no-virtual",Getopt.NO_ARG,({"--no-virtual"}) }),
     ({"no-admin",Getopt.NO_ARG,({"--no-admin"}) }),
     ({"logfile",Getopt.HAS_ARG,({"-l", "--logfile"}) }),
+    ({"run-as",Getopt.HAS_ARG,({"-u", "--run-as"}) }),
     ({"hilfe",Getopt.NO_ARG,({"--hilfe"}) }),
     ({"help",Getopt.NO_ARG,({"--help"}) }),
     )),array opt)
@@ -127,6 +129,10 @@ int main(int argc, array(string) argv)
 
 		case "sessionloc":
 		  session_storagedir = opt[1];
+                  break;
+
+		case "run-as":
+		  run_as_user = (opt[1]/":")[0];
                   break;
 
 		case "sessionmgr":
