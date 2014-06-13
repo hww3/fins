@@ -28,7 +28,7 @@ void add_index(array fields, mapping opts)
   indexes += ({ ({fields, opts }) });  
 }
 
-//!
+//! creates the table.
 void go()
 {
   if(migration)
