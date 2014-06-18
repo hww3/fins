@@ -60,6 +60,7 @@ int run()
   if(!sizeof(args))
   {
     Log.error("No command specified.");
+    print_help();
     exit(4);
   }
   [command, args] = Array.shift(args);
