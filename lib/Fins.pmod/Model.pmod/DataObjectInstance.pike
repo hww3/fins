@@ -296,6 +296,14 @@ int set(string name, mixed value, int|void no_validation, void|.DataModelContext
    return master_object->set(c||context, name, value, no_validation, this);
 }
 
+object clone()
+{
+  object n = new();
+  object id = render_xml_node((<>), 1);
+  n->decode_xml_node(id, 0, 1);
+  return n;
+}
+
 //!
 mixed get_atomic(int(0..1)|void norecurse, void|.DataModelContext c)
 {
@@ -381,7 +389,7 @@ string render_xml(multiset filter_fields)
   return root->render_xml();
 }
 
-void decode_xml_node(Parser.XML.Tree.Node node, void|int(0..1)save_object)
+void decode_xml_node(Parser.XML.Tree.Node node, void|int(0..1)save_object, void|int(0..1) no_id)
 {
   if(node->get_full_name() != master_object->instance_name)
   {
@@ -399,6 +407,7 @@ void decode_xml_node(Parser.XML.Tree.Node node, void|int(0..1)save_object)
 
    if(attr["key"] && lower_case(attr["key"]) == "true")
    {
+     if(no_id) continue;
      // TODO make this not be "primary key as int" specific.
      if(master_object->primary_key->name != field)
        throw(Error.Generic("Cannot decode XML Node: declared key field is not our key field.\n"));

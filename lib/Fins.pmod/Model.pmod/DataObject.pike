@@ -1124,26 +1124,26 @@ int set(.DataModelContext context, string field, mixed value, int|void no_valida
       throw(Error.Generic("Field " + field + " does not exist in object " + instance_name + ".\n"));   
    }
    
-	if(Program.inherits(object_program(fields[field]), .Relationship) && fields[field]->is_shadow)
-	{
-		return 0;
-	}
+  if(Program.inherits(object_program(fields[field]), .Relationship) && fields[field]->is_shadow)
+  {
+    return 0;
+  }
 	
-   if(fields[field]->is_shadow)
-   {
-     throw(Error.Generic("Cannot set shadow field " + field + ".\n"));   
-   }
+  if(fields[field]->is_shadow)
+  {
+    throw(Error.Generic("Cannot set shadow field " + field + ".\n"));   
+  }
 
-   if(!i->is_new_object() && fields[field] == primary_key)
-   {
-      throw(Error.Generic("Cannot modify primary key field " + field + ".\n"));
-   }
+  if(!i->is_new_object() && fields[field] == primary_key)
+  {
+    throw(Error.Generic("Cannot modify primary key field " + field + ".\n"));
+  }
    
-   if(!i->is_new_object() && autosave)
-   {
-     if(!no_validation)
-     {
-       Fins.Errors.Validation er;
+  if(!i->is_new_object() && autosave)
+  {
+    if(!no_validation)
+    {
+      Fins.Errors.Validation er;
 
        // we need to validate against validates and validates_on_update
        if(validate && functionp(validate))
