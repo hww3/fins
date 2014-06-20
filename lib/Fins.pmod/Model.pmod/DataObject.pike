@@ -1016,17 +1016,27 @@ mixed get(.DataModelContext context, string field, .DataObjectInstance i)
     objs = _objs;
   }
 
-  if(objs[id] && has_index(objs[id], field))
+  // autosave and not new
+  if(autosave && objs[id] && has_index(objs[id], field))
   {
-//	 if(context->debug) log->debug("%O: have field in cache: %O.", Tools.Function.this_function(), objs[id][field]);
-    return fields[field]->decode(objs[id][field], i);
+  //	 if(context->debug) log->debug("%O: have field in cache: %O.", Tools.Function.this_function(), objs[id][field]);
+      return fields[field]->decode(objs[id][field], i);
   }     
-
-  else if(i->is_new_object())
+  
+  // new or non-autosave and field is changed from database
+  if(i->is_new_object() || (!autosave && i->fields_set[field]))
   {
-//	 if(context->debug) log->debug("%O(): have field in new object cache.", Tools.Function.this_function());
+  //	 if(context->debug) log->debug("%O(): have field in new object cache.", Tools.Function.this_function());
     return fields[field]->decode(i->object_data[field], i);
   }
+
+  //non-autosave using db value.
+  if(!autosave && objs[id] && has_index(objs[id], field))
+  {
+  //	 if(context->debug) log->debug("%O: have field in cache: %O.", Tools.Function.this_function(), objs[id][field]);
+      return fields[field]->decode(objs[id][field], i);
+  }     
+
 
   log->debug("%O(): loading data from db.", Tools.Function.this_function());
     load(context, id, i, 0);

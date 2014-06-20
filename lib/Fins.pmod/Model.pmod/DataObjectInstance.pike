@@ -709,7 +709,10 @@ array _values()
 //!
 int `==(mixed a)
 {
-  if(objectp(a) && (object_program(this) == object_program(a)) && (a->get_id() == this->get_id()) && (a->get_type() == this->get_type()))
+  werror("%O`==%O\n", this, a);
+  if(objectp(a) && 
+    (Program.inherits(object_program(a), this_program) || Program.inherits(object_program(a), Fins.Model.DataObjectInstance)) 
+    && (a->get_id() == this->get_id()) && (a->get_type() == this->get_type()))
     return 1;
   else return 0;
 }
