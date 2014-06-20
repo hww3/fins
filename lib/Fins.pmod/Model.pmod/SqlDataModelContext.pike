@@ -466,7 +466,7 @@ void create_table(string table, array fields, array indexes, int|void dry_run)
   personality->create_table(table, fields, indexes, dry_run);
 }
 
-object get_table_builder(string table, object|void migration)
+object get_table_builder(string table, object|void migration, int|void dry_run)
 {
-  return .TableBuilder(table, this, migration);
+  return .TableBuilder(table, this, migration, dry_run);
 }

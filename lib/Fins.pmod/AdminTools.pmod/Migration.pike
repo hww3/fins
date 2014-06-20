@@ -4,6 +4,7 @@ string appname;
 string config_name = "dev";
 array args;
 object app;
+int dryrun;
 
 void create(array(string) argv)
 {
@@ -13,7 +14,7 @@ void create(array(string) argv)
 
 void print_help()
 {
-  Log.error("Usage: pike -x fins migration -a appname -c configname [create \"migration description\"]|[run [-up | -down] [throughMigration]]\n");
+  Log.error("Usage: pike -x fins migration -a appname -c configname [-n|--dry-run] [create \"migration description\"]|[list]|[run [--up | --down] [throughMigration]]\n");
   exit(1);
 }
 int run()
@@ -48,7 +49,7 @@ int run()
      }
 
   string command;
-
+werror("%O\n", a2);
   args = a2[1..] - ({0});
   object st;
   if(!(st = file_stat(appname)) || !st->isdir)
@@ -72,6 +73,9 @@ int run()
       break;
       case "run":
         return do_run(@args);
+        break;
+      case "list":
+        return do_list(@args);
         break;
     default:
       Log.error("Unknown command %O.", command);
@@ -118,21 +122,39 @@ void load_app()
 
 }
 
+int do_list(string ... args)
+{
+  load_app();
+  
+  object migrator = Fins.Util.Migrator(app);
+
+  array migrations;
+  migrations = migrator->list_migrations();
+
+  migrator->announce("All migrations in " + app->config->app_name);
+  migrator->write_func(" Applied?    Name\n");
+
+  foreach(migrations;; object m)
+  {
+    migrator->write_func("       %s     %s\n", (m->is_applied?"*":" "), m->name); 
+  }
+}
+
 int do_run(string... args)
 {
   string through;
   int dir = Fins.Util.MigrationTask.UP;
 
   load_app();
-
+  
   array run_migrations = ({});
 
   array a2 = ({" "}) + args;
-
   foreach(Getopt.find_all_options(a2,aggregate(
      ({"migration",Getopt.HAS_ARG,({"-m", "--migration"}) }),
-     ({"up",Getopt.NO_ARG,({"-u", "-up", "--up"}) }),
-     ({"down",Getopt.NO_ARG,({"-d","-down", "--down"}) }),
+     ({"up",Getopt.NO_ARG,({"-u", "--up"}) }),
+     ({"dryrun", Getopt.NO_ARG, ({"-n", "--dry-run"})}),
+     ({"down",Getopt.NO_ARG,({"-d", "--down"}) }),
      )),array opt)
      {    
        switch(opt[0])
@@ -146,6 +168,9 @@ int do_run(string... args)
          case "down":
            dir = Fins.Util.MigrationTask.DOWN;
            break;
+     		 case "dryrun":
+     	     dryrun = 1;
+     	     break;
        }
      }
 
@@ -179,15 +204,24 @@ int do_run(string... args)
   else
     msg = "Reverting applied migrations";
   if(through) msg += (" through <" + through + ">");
-  msg += ":";
+  if(dryrun)
+    msg += (" (dry run)");
   migrator->announce(msg);
   migrator->write_func("%{" + (" "*3) + "- %s\n%}", migrations->name); 
   
   
   foreach(migrations;; object m)
   {
+    if(dryrun)
+      m->dry_run = 1;
     m->run(dir);
   }
+
+  msg = "Migration Complete";
+  if(dryrun)
+    msg += (" (dry run)");
+  msg += ".";
+  migrator->announce(msg);
 }
 
 int do_create(string migration)

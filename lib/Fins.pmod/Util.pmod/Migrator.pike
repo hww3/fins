@@ -103,8 +103,7 @@ void announce(string message, mixed ... args)
 }
 
 
-//! default direction is @[Fins.Util.MigrationTask.UP].
-array(Fins.Util.MigrationTask) get_migrations(int|void dir, string|void through)
+array(Fins.Util.MigrationTask) list_migrations()
 {
   array f = glob("*.pike", get_dir(migration_dir));
 
@@ -117,7 +116,7 @@ array(Fins.Util.MigrationTask) get_migrations(int|void dir, string|void through)
     
     if(!(st = file_stat(taskpath)) || st->isdir)
     {
-      werror("skipping %s\n", taskpath);
+      werror("  skipping %s\n", taskpath);
       continue;
     } 
 
@@ -136,41 +135,30 @@ array(Fins.Util.MigrationTask) get_migrations(int|void dir, string|void through)
         log->error("Unable to get registered model context with id=%s", mp->model_id);
         continue;
       }
+
+      migrations+=({migration});
       
       // TODO: possibility of non-SQL datastores needs to be considered.
-      int needs_migration;
       
       if(context->sql)
       {
         array x = context->sql->query(sprintf("SELECT * FROM %s WHERE name='%s'", MIGRATION_STATUS_TABLE, migration->id + "_" + migration->name));
 
-        if(!sizeof(x))
-        {
-          if(dir == Fins.Util.MigrationTask.UP)
-            needs_migration = 1;
-        }
-        else
-        {
-          if((int)x[0]->status == 1 && dir == Fins.Util.MigrationTask.UP)
-            needs_migration = 0;
-          else if((int)x[0]->status == 1 && dir == Fins.Util.MigrationTask.DOWN)
-            needs_migration = 1;
-          else if((int)x[0]->status == 0 && dir == Fins.Util.MigrationTask.UP)
-            needs_migration = 1;
-          else if((int)x[0]->status == 0 && dir == Fins.Util.MigrationTask.DOWN)
-            needs_migration = 0;
-          // what if status not in {0, 1}? 
-            
-        }
-        if(needs_migration)
-          migrations += ({migration});
+        if(x && sizeof(x) && (int)x[0]->status == 1)
+          migration->is_applied = 1;
       }
-
+      
     }
   }
   
-  migrations = sort(migrations);
+  return sort(migrations);
+}
 
+//! default direction is @[Fins.Util.MigrationTask.UP].
+array(Fins.Util.MigrationTask) get_migrations(int|void dir, string|void through)
+{
+  array migrations = list_migrations();
+  
   if(dir == Fins.Util.MigrationTask.DOWN)
     migrations = reverse(migrations);
 
@@ -190,6 +178,20 @@ array(Fins.Util.MigrationTask) get_migrations(int|void dir, string|void through)
       throw(Error.Generic("get_migrations: unable to find stopping point <" + through + ">.\n"));
     }
   }
+
+  migrations = filter(migrations, lambda(object migration)
+  {
+    if(migration->is_applied && dir == Fins.Util.MigrationTask.UP)
+      return 0;
+    else if(migration->is_applied && dir == Fins.Util.MigrationTask.DOWN)
+      return 1;
+    else if(!migration->is_applied && dir == Fins.Util.MigrationTask.UP)
+      return 1;
+    else if(!migration->is_applied && dir == Fins.Util.MigrationTask.DOWN)
+      return 0;
+        // what if status not in {0, 1}? 
+    });
+  
   return migrations;
 }
 

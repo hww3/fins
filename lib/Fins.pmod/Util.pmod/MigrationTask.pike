@@ -15,6 +15,7 @@ constant id = "";
 constant model_id = Fins.Model.DEFAULT_MODEL;
 
 int dry_run = 0;
+int is_applied = 0;
 
 int verbose;
 
@@ -86,7 +87,8 @@ void run(int|void direction)
     if(context->transaction_supported())
       context->commit_transaction();
       
-    record_status(direction);
+    if(!dry_run)
+      record_status(direction);
   }  
   ntime = gethrtime() - ntime;
   
@@ -312,10 +314,18 @@ int drop_index_for_column(string table, array|string columns)
   return context->drop_index(table, (stringp(columns)?({columns}):columns), dry_run);        
 }
 
-//
+//!
+int create_table(Fins.Model.TableBuilder tb)
+{
+  tb->go(dry_run);
+}
+
+//!
 Fins.Model.TableBuilder get_table_builder(string table)
 {
-  return context->get_table_builder(table, this);
+  object tb =  context->get_table_builder(table, this, dry_run);
+  tb->dry_run = dry_run;
+  return tb;
 }
 
 //!
@@ -337,7 +347,7 @@ int create_index(string table, string name, array|string columns, int|void uniqu
 
 static int `==(mixed arg1)
 {
-   if(arg1)
+   if(objectp(arg1))
     return Array.oid_sort_func(id, arg1->id||"") == 0;
    else return 0;
 }
