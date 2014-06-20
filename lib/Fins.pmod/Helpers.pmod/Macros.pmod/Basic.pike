@@ -172,12 +172,14 @@ string simple_macro_action_form(Fins.Template.TemplateData data, mapping|void ar
 
   if(args->method) other += " method=\"" + args->method + "\"";
   if(args->enctype) other += " method=\"" + args->enctype + "\"";
+  if(args->id) other += " id=\"" + args->id + "\"";
 
   m_delete(args, "controller");
   m_delete(args, "action");
   m_delete(args, "args");
   m_delete(args, "method");
   m_delete(args, "enctype");
+  m_delete(args, "id");
 
   string url = app->url_for_action(action, uargs, args);
 
