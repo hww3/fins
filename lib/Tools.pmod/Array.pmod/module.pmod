@@ -6,7 +6,7 @@
 //!   and "count".  If a template is not specified, a default will 
 //!   be provided.
 //! 
-public array consolidate(array(string) input, string|void template)
+public array consolidate(array(string) items, string|void template)
 {
   array out = ({});
   string last;
@@ -20,7 +20,7 @@ public array consolidate(array(string) input, string|void template)
       count++;
     else if(last && last != i)
     {
-      out += ({(Tools.String.named_sprintf(template, last, count)});
+      out += ({Tools.String.named_sprintf(template, (["message": last, "count": count]))});
       last = i;
       count = 1;
     }
@@ -33,7 +33,7 @@ public array consolidate(array(string) input, string|void template)
   {
     string msg = last;
     if(count>1)
-      msg = Tools.String.named_sprintf(msg, last, count);
+      msg = Tools.String.named_sprintf(template, (["message": msg, "count": count]));
     out+=({msg});
   }
   return out;
