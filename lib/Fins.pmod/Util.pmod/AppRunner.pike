@@ -43,6 +43,7 @@ static void create(string _project, string _config)
   handler_key = combine_path(getcwd(), project) + "#" + config;
 }
 
+#if constant(Filesystem.Monitor.basic)
 class ReloadScanner
 {
   inherit Filesystem.Monitor.basic : mon;
@@ -90,6 +91,15 @@ class ReloadScanner
     runner->start_application();
   }  
 }
+#else
+class ReloadScanner
+{
+  static void create(object _runner)
+  {
+    logger->warning("No support for Filesystem.Monitor found. NOT enabling automatic application reload.");
+  }
+}
+#endif /* constant(Filesystem.Monitor.basic) */
 
 //!
 int has_ports()
@@ -277,10 +287,13 @@ werror("args: %O\n", args);
   #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
   if(bind == "*")
   {
-    port->set_bonjour(Protocols.DNS_SD.Service("Fins Application (" + ident + ")",
-                     (args->ssl?"_https._tcp":"_http._tcp"), "", p));
-
     logger->info("Advertising this application via Bonjour.");
+    mixed err = catch {
+      port->set_bonjour(p, "Fins Application (" + ident + ")",
+                     (args->ssl?"_https._tcp":"_http._tcp"));
+    };
+    if(err)
+      logger->warn("Unable to advertise application via Bonjour. Message: %s", err[0]);
   }
 #endif
     

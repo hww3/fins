@@ -7,11 +7,11 @@ mapping conns = set_weak_flag(([]), Pike.WEAK_INDICES);
 
 // why we need both ifs i don't know
 #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
-protected Protocols.DNS_SD.Service bonjour;
+protected Tools.Network.Bonjour bonjour;
 
-public void set_bonjour(object _bonjour)
+public void set_bonjour(int port, string name, string protocol)
 {
-  bonjour = _bonjour;
+  bonjour = Tools.Network.Bonjour(port, name, protocol);
 }
 
 public object get_bonjour()
