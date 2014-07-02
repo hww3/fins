@@ -2,7 +2,7 @@
 
   Fins.Template.Template template;
   Fins.Template.TemplateData template_data;
-
+  
   static Fins.Request request;  
   static int low_response = 0;
   static int __rendered = 0;
@@ -303,9 +303,14 @@
   {
     if(objectp(data)) data = (string)data;
     if(args && sizeof(args))
-      response->data = sprintf(data, @args); 
-    else  
-      response->data = data;
+      data = sprintf(data, @args); 
+    if(String.width(data) > 8) 
+    {
+      data = string_to_utf8(data); // TODO: this is probably not the wisest assumption to make.
+      set_charset("utf-8");
+    }
+
+    response->data = data;
     if(!response->error) response->error = 200;
     template = 0;
     response->file = 0;
@@ -353,12 +358,12 @@
         response->data = template->render(template_data);
         if(stringp(response->data) && has_prefix(template->get_type(), "text"))
         {
-            // TODO: do we need to figure out how to encode things? Is utf8 sufficient?
-            response->data = string_to_utf8(response->data);
-            response["extra_heads"]["content-type"] = template->get_type() + "; charset=utf-8";
+          // TODO: do we need to figure out how to encode things? Is utf8 sufficient?
+          response->data = string_to_utf8(response->data);
+          set_charset("utf-8");
         }
-        else
-           response["extra_heads"]["content-type"] = template->get_type();
+
+        set_type(template->get_type());
 
         response->file = 0;
         __rendered = 1;
@@ -405,6 +410,7 @@
        response->extra_heads["set-cookie"] = _cookies * " ";
      }
  
+    response["extra_heads"]["content-type"] = response->type;
     response->request = request;
 
     return response;
