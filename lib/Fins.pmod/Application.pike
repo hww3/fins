@@ -604,6 +604,8 @@ Standards.URI get_my_url(string|void host_header)
   string url;
   string protocol = "http";
 
+  // get_my_url() should be called during application startup (without host header), so my_url should
+  // be primed by the time this is called with a host header. this is probably running with scissors...
   if(my_url && (!host_header || Tools.Boolean.fromString(config["web"]["force_url"]))) return Standards.URI(my_url);
   
   if(my_port == 0)
