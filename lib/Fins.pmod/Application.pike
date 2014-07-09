@@ -604,7 +604,7 @@ Standards.URI get_my_url(string|void host_header)
   string url;
   string protocol = "http";
 
-  if(my_url && !host_header) return Standards.URI(my_url);
+  if(my_url && (!host_header || Tools.Boolean.fromString(config["web"]["force_url"]))) return Standards.URI(my_url);
   
   if(my_port == 0)
   {

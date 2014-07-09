@@ -2,7 +2,7 @@
 
 int(0..1) fromString(string bool)
 {
-  bool = String.trim_whites(bool);
+  bool = String.trim_whites(bool||"");
   bool = lower_case(bool);
   switch(bool)
   { 
@@ -13,6 +13,7 @@ int(0..1) fromString(string bool)
     case "no":
     case "false":
     case "0":
+    default:
       return 0;
   }
 }
