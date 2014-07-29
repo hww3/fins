@@ -11,7 +11,12 @@ protected Tools.Network.Bonjour bonjour;
 
 public void set_bonjour(int port, string name, string protocol)
 {
-  bonjour = Tools.Network.Bonjour(port, name, protocol);
+  mixed e = catch
+  {
+    bonjour = Tools.Network.Bonjour(port, name, protocol);
+  };
+  if(e)
+    werror("Error starting bonjour: %s", e[0]);
 }
 
 public object get_bonjour()

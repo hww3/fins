@@ -340,9 +340,11 @@ int start_admin(int my_port)
   ports += (<port>);
 
 #if constant(_Protocols_DNS_SD) && constant(Protocols.DNS_SD.Service);
+  mixed e = catch{
     port->set_bonjour(Protocols.DNS_SD.Service("FinServe Admin",
                      "_http._tcp", "", my_port));
-
+  };
+  if(e) logger->warn(e[0]);
     logger->info("Advertising main port via Bonjour.");
 #endif
 
