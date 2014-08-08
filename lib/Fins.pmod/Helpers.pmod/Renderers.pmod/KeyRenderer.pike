@@ -32,5 +32,7 @@ werror("value for keyreference is %O, scaffold controller is %O\n", value, sc);
   
 optional mixed from_form(mapping value, Fins.Model.Field field, void|Fins.Model.DataObjectInstance i)
 { 
-  return field->context->find_by_id(field->otherobject, (int)value->id);
+  if((int)value->id)
+    return field->context->find_by_id(field->otherobject, (int)value->id);
+  else return 0;
 }

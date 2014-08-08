@@ -647,19 +647,6 @@ Standards.URI get_my_url(string|void host_header)
       }
       return Standards.URI((string)my_url);
   }
-  else if(my_port > 0)
-  {
-    logger->debug("Using url calculated from port specified in config file.");
-
-    if(host_header && !my_ip)
-    {
-       my_ip = (host_header/":")[0];
-    }
-    
-    my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
-
-    return Standards.URI((string)my_url);
-  }
   else if(config["web"] && config["web"]["use_xip_io"])
   {
     logger->debug("Using xip.io url.");
@@ -708,6 +695,22 @@ Standards.URI get_my_url(string|void host_header)
     
       return Standards.URI((string)my_url);    
     }
+  else if(my_port > 0)
+  {
+    logger->debug("Using url calculated from port specified in config file.");
+
+    if(host_header && !my_ip)
+    {
+       my_ip = (host_header/":")[0];
+    }
+    else if (!host_header)
+    {
+      my_ip = gethostname();
+    }    
+    my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
+
+    return Standards.URI((string)my_url);
+  }
     else
     {
       throw(Error.Generic("Must be able to determine URL of application " + config->app_name + "-" + config->config_name + " when using FinServe. Either specify one in the configuration file or enable use_xip_io.\n"));
@@ -787,6 +790,10 @@ public string add_variables_to_path(string path, mapping vars)
       {
         foreach(v;;string value)
           e += ({(k + "=" + value)});        
+      }
+      else if(objectp(v))
+      {
+	logger->warn("Received an object value: %O.", v);        
       }
       else
       {

@@ -7,7 +7,6 @@ string name;
 
 constant type = "Float";
 
-
 void create(string _name, int _len, int(0..1) _null, float|void _default)
 {
    name = _name;

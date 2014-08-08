@@ -2,7 +2,7 @@ inherit .Renderer;
 
 string get_editor_string(void|string value, Fins.Model.Field field, void|Fins.Model.DataObjectInstance i)
 {
-  if(!value && zero_type(value)) value = "";
+  if(!value && zero_type(value)) value = "0.0";
 
   if(i)
   {
@@ -12,4 +12,10 @@ string get_editor_string(void|string value, Fins.Model.Field field, void|Fins.Mo
   {
     return ("<input type=\"text\" size=\"" + field->len + "\" name=\"" + field->name + "\" value = \"\">"); 
   }
+}
+
+mixed from_form(mapping value, Fins.Model.Field field, void|Fins.Model.DataObjectInstance i)
+{
+  werror("value: %O\n", value->value);
+  return (float)value->value;
 }

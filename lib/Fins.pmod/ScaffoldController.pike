@@ -219,8 +219,11 @@ void start()
 {
   if(model_component)
   {
-	model_context = Fins.Model.get_context(model_id);
+    model_context = Fins.Model.get_context(model_id);
+    werror("model_component: %O\n", model_component);
+    werror("model_context: %O\n", model_context);
     model_object = model_context->repository->get_object(model_component);
+    werror("model_object: %O\n", model_object);
     model_context->repository->set_scaffold_controller("html", model_object, this);
   }
 }
@@ -322,7 +325,6 @@ public void pick_many(Request id, Response response, Fins.Template.View v, mixed
     response->set_data("error: invalid data.");
     return;	
   }
-
   id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
 
   v->add("type", make_nice(lower_case(model_object->instance_name_plural)));
@@ -344,6 +346,7 @@ public void pick_one(Request id, Response response, Fins.Template.View v, mixed 
     response->set_data("error: invalid data.");
     return;	
   }
+werror("old data: %O\n", id->variables);
 
   id->variables->old_data = Protocols.HTTP.percent_encode(MIME.encode_base64(encode_value(id->variables), 1));
 
@@ -355,7 +358,8 @@ public void pick_one(Request id, Response response, Fins.Template.View v, mixed 
   if((int)id->variables["for_id"])
   {
     object obj = model_context->find_by_id(id->variables["for"], (int)id->variables["for_id"]);
-    v->add("previous_selection", (obj?obj[id->variables->selected_field]->get_id():0));
+    object field = obj[id->variables->selected_field];
+    v->add("previous_selection", (field?field->get_id():0));
   }
   
   v->add("values", x);
@@ -623,12 +627,12 @@ static void decode_from_form(mapping variables, mapping v)
      if(model_object->get_primary_key()->name == field) continue;
 
         array elements = glob( "_" + field + "__*", inds);
+        object field_object;
 
         if(sizeof(elements))
         {
                 foreach(elements;; string e)
                 {
-                  object field_object;
                   mapping x = ([]);
                   foreach(elements;; string e)
                     x[e[(sizeof(field)+3)..]] = variables[e];
@@ -641,9 +645,17 @@ static void decode_from_form(mapping variables, mapping v)
         }
         else
           {
-                v[field] = variables[field];
+                field_object = model_object->fields[field];
+                object renderer = field_object->get_renderer();
+//                werror("decoding %O from %O with value %O = %O\n", field, model_object, variables[field]);
+                if(renderer && renderer->from_form)
+                  v[field] = renderer->from_form((["value": variables[field]]), field_object);
+                else
+                  v[field] = variables[field];
           }
   }
+  werror("variables in: %O, variables out: %O\n", variables, v);
+
 }
 
 public void donew(Fins.Request request, Fins.Response response, Fins.Template.View vt, mixed ... args)
@@ -706,11 +718,18 @@ e=catch{
 	}
         else	
 	  {
-			werror("%O\n", item->master_object->fields[field]);
 	        if(item->master_object->fields[field]->is_shadow) continue;
 		Log.debug("Scaffold: " + field + " in " + model_object->instance_name + " changed.");
 		should_update = 1;
-		v[field] = request->variables[field];
+
+                object field_object = model_object->fields[field];
+                object renderer = field_object->get_renderer();
+                if(renderer && renderer->from_form)
+                  v[field] = renderer->from_form((["value": request->variables[field]]), field_object);
+                else
+                  v[field] = request->variables[field];
+
+
 	  }
   }
 werror("setting: %O\n", v);
