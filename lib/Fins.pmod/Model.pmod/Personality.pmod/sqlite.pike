@@ -21,7 +21,7 @@ mapping dbtype_to_finstype = ::dbtype_to_finstype +
 mapping dbtype_ranges =
 ([
   "blob": (["min": 0, "max": 4294967295]),
-  "string": (["min": 0, "max": 4294967295]),
+  "string": (["min": 0, "max": 4294967295, "include_size": 1]),
   "integer": (["min": -9223372036854775808, "max": 9223372036854775807]),
   "float": (["min": -9223372036854775808, "max": 9223372036854775807]),
 ]);
@@ -202,12 +202,15 @@ int add_column(string table, string name, mapping fd, int dry_run)
 int change_column(string table, string name, mapping fd, int dry_run)
 {
   array columns_left = get_columns(table, ({}));
-
-  int i = search(columns_left->names, name);
+  int i = search(columns_left->name, name);
   if(i == -1)
     Tools.throw(Error.Generic, "field %s does not exist in table %s", name, table);
 
   array oldnames = columns_left->name;
+
+//   fd = unmap_field(fd, table);
+  fd->name = name;
+
   columns_left[i] = fd;
 
   array newnames = columns_left->name;
@@ -308,11 +311,11 @@ string get_field_definition(string table, string field, int|void include_index)
 protected string low_get_field_definition(mapping fd, int|void include_index)  
 {
   werror("low_get_field_definition(%O)\n", fd);
-
+  if(!fd->flags) fd->flags = ([]);
   log->debug("low_get_field_definition(%O)\n", fd);
   string type = fd->type;
   if(dbtype_ranges[fd->type] && dbtype_ranges[fd->type]->include_size)
-    type = sprintf("%s(%s%s}", type, fd->length, (fd->decimals?(", " + fd->decimals):""));
+    type = sprintf("%s(%s%s)", type, (string)fd->length, (fd->decimals?(", " + fd->decimals):""));
 
   string def = sprintf("%s %s %s %s %s", 
     upper_case(type),
@@ -341,8 +344,8 @@ mapping low_regenerate_ddl(string table, array columns, array newnames, int newt
   foreach(columns; int i;mapping c)
   {
     c->newname = newnames[i];
-      
-    if((int)c->flags->primary_key) primary_key = c->name;
+      werror("newname: %O\n", c->newname);
+    if(c->flags && (int)c->flags->primary_key) primary_key = c->name;
 
     string def = sprintf("%s %s",  
       c->newname, 

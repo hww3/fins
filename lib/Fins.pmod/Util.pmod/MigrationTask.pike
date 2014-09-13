@@ -301,6 +301,13 @@ int add_column(string table, string name, mapping fd)
 }
 
 //!
+int change_column(string table, string name, mapping fd)
+{
+  announce("changing column %s in %s.", name, table);
+  return context->change_column(table, name, fd, dry_run);    
+}
+
+//!
 int drop_index(string table, string index)
 {
   announce("dropping index %s for table %s.", index, table);

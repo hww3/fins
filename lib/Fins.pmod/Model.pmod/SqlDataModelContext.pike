@@ -211,6 +211,12 @@ int add_column(string table, string name, mapping fd, int|void dry_run)
 }
 
 //!
+int change_column(string table, string name, mapping fd, int dry_run)
+{
+  return personality->change_column(table, name, fd, dry_run);
+}
+
+//!
 int rename_table(string table, string newname, int|void dry_run)
 {
   return personality->rename_table(table, newname, dry_run);
