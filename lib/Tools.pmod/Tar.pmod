@@ -285,7 +285,7 @@ class _TarFS
   {
     Filesystem.Stat st = stat(directory);
     if(!st) return 0;
-    if(st->isdir()) // stay in this filesystem
+    if(st->isdir) // stay in this filesystem
     {
       object new = _TarFS(tar, st->fullpath, root, parent);
       return new;

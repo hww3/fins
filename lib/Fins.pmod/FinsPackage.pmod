@@ -116,7 +116,7 @@ int untar(string source, string path, void|string cwd) {
     // Get the actual filename
     fname = ((fname / "/") - ({""}))[-1];
     object stat = t->cd(cwd)->stat(fname);
-    if (stat->isdir()) { 
+    if (stat->isdir) { 
       string dir = Stdio.append_path(path, fname);
       c++;
       cc++;
@@ -126,7 +126,7 @@ int untar(string source, string path, void|string cwd) {
       mkdir(dir);
       c += untar(source, dir, Stdio.append_path(cwd, fname));
     }
-    else if (stat->isreg()) {
+    else if (stat->isreg) {
       string file = Stdio.append_path(path, fname);
       object f;
       if (mixed err = catch{
@@ -215,13 +215,17 @@ static mixed prompt(string description, int type, void|mixed defval, void|array 
 }
 
 static class Standalone {
-  inherit Fins.AdminTools.FinServe;
+  inherit Fins.AdminTools.SimpleFinServe;
 
   static void create() {}
 
   int main(string appdir, int port, string config) {
 
-    return do_startup(({appdir}), ({config}), port);
+   //({appdir}), ({config}), port);
+    my_port = port;
+    config_name = config;
+    project = appdir;
+    return do_startup();
   }
   
 }
