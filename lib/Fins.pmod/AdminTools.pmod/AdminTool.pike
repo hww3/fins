@@ -1,7 +1,23 @@
 constant description = "Administrative Tool for Fins.";
 
+mapping populate_commands()
+{
+  mapping commands = ([]);
+
+  foreach(values(Fins.AdminTools);; program p)
+  {
+    if(p->fins_command)
+      commands[p->fins_command] = p;
+  }
+  return commands;
+}
+
 int main(int argc, array argv)
 {
+   mapping commands;
+
+   commands = populate_commands();
+
    if(!argv || sizeof(argv) < 2)
    {
      werror("invalid arguments. usage: pike -x fins [command]\n");
@@ -12,41 +28,13 @@ int main(int argc, array argv)
 
    string command = argv[1];
 
-   switch(command)
+   if(commands[command])
+     meth = commands[command];
+   else
    {
-     case "create":
-       meth = Fins.AdminTools.CreateApplication;       
-       break;
-
-     case "install":
-       meth = Fins.AdminTools.InstallApplication;       
-       break;
-
-     case "start":
-       meth = Fins.AdminTools.FinServe;       
-       break;
-
-     case "simple_start":
-       meth = Fins.AdminTools.SimpleFinServe;
-       break;
-
-     case "migration":
-       meth = Fins.AdminTools.Migration;       
-       break;
-
-     case "extract_locale":
-       meth = Fins.AdminTools.LocaleExtractor;       
-       break;
-
-     case "model":
-       meth = Fins.AdminTools.ModelBuilder;       
-       break;
-
-     default:
-       werror("unknown command \"%s\".\n", command);
-       werror("valid commands include: create, install, start, model, migration, extract_locale\n");
-       return 1;
-       break;
+     werror("unknown command \"%s\".\n", command);
+     werror("valid commands include: %s\n", sort(indices(commands)) * ", ");
+     return 1;
    }
 
    array newargs = ({});

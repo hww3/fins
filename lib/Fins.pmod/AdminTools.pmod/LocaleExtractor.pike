@@ -1,5 +1,7 @@
 inherit Tools.Standalone.extract_locale;
 
+constant fins_command = "extract_locale";
+
 void update_xml_sourcefiles(array filelist) {
   // Extracts strings from html/xml files in filelist
   // Updates ids, r_ids, id_xml_order with ids and strings

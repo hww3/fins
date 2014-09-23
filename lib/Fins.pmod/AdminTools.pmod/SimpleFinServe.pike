@@ -1,5 +1,6 @@
 #!/usr/local/bin/pike -Mlib -DLOCALE_DEBUG
 
+constant fins_command = "simple_start";
 //import Fins;
 import Tools.Logging;
 

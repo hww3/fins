@@ -1,5 +1,7 @@
 import Tools.Logging;
 
+constant fins_command = "install";
+
 array args;
 
 void create(array _args)

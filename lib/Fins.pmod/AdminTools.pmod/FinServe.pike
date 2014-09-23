@@ -1,5 +1,7 @@
 inherit Tools.Application.Backgrounder;
 
+constant fins_command = "start";
+
 #define _DEFAULT_CONFIG_NAME "dev"
 string DEFAULT_CONFIG_NAME = _DEFAULT_CONFIG_NAME;
 

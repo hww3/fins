@@ -1,5 +1,7 @@
 import Tools.Logging;
 
+constant fins_command = "model";
+
 object app;
 //Fins.Application app;
 string appname;

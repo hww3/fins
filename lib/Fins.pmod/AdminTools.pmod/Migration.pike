@@ -1,5 +1,7 @@
 import Tools.Logging;
 
+constant fins_command = "migration";
+
 string appname;
 string config_name = "dev";
 array args;

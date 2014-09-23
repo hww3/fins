@@ -1,5 +1,7 @@
 import Tools.Logging;
 
+constant fins_command = "create";
+
 string newappname;
 
 string locale_contents = 
