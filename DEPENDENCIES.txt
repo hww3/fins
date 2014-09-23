@@ -1,5 +1,5 @@
 Fins Dependencies:
 
 Public.Tools.ConfigFiles
-IP.v4 (only if you want to use FinServe)
+IP.v4 (only if you want to use IP based security in FinServe)
 Public.Parser.XML2 (only if you want to use XSLT templates.)
