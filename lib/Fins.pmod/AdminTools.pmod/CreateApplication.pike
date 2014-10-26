@@ -52,7 +52,7 @@ string fins_contents = script_base +
     exit 1
   fi
   shift 1
-
+  PIKE_ARGS=\"$PIKE_ARGS -DSINGLE_TENANT\"
   exec pike $PIKE_ARGS -x fins $ARG0 \"$@\"
 ";
 

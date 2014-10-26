@@ -182,7 +182,6 @@ void start()
 mixed do_method(string method, mixed ... args)
 {
   function m;
-  mixed rv;
 
   if(!(m = ::`[](method, 1)))
   {
