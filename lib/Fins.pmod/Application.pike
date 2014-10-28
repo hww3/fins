@@ -175,7 +175,7 @@ void resume_startup()
 //! performs housekeeping functions related to multi-tenancy. 
 void start()
 {
-  logger->info("Application URL is %s", get_my_url());
+  logger->warn("Application URL is %s", get_my_url());
 }
 
 
