@@ -13,6 +13,8 @@ int includetime=0;
 program unit_program = Calendar.Day;
 function unit_parse = Calendar.ISO.dwim_day;
 string output_unit_format = "%Y-%M-%D";
+string timezone_offset = Calendar.now()->tzname_utc_offset();
+
 int null;
 mixed default_value;
 string name;
@@ -60,8 +62,7 @@ string encode(mixed value, void|object/*.DataObjectInstance*/ i)
   }
 
   if(stringp(value)) return sprintf("'%s'", value);
-
-  return "'" + value->format_ymd() + "'";
+  return "'" + value->set_timezone(timezone_offset)->format_ymd() + "'";
 }
 
 string encode_xml(mixed value, void|object/*.DataObjectInstance*/ i)
@@ -79,7 +80,7 @@ string encode_xml(mixed value, void|object/*.DataObjectInstance*/ i)
 
 string describe(mixed v, void|object/*.DataObjectInstance*/ i)
 {
-  v->format_ymd();
+  v->set_timezone(timezone_offset)->format_ymd();
 }
 
 mixed validate(mixed value, void|object/*.DataObjectInstance*/ i)

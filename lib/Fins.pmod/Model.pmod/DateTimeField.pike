@@ -41,7 +41,7 @@ string encode(mixed value, void|object/*.DataObjectInstance*/ i)
   }
 
   if(stringp(value)) return sprintf("'%s'", value);
-  return "'" + value->format_time() + "'";
+  return "'" + value->set_timezone(timezone_offset)->format_time() + "'";
 }
 
 string describe(mixed v, void|object/*.DataObjectInstance*/ i)

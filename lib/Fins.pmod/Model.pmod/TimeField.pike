@@ -26,5 +26,5 @@ string encode(mixed value, void|object/*.DataObjectInstance*/ i)
 
   if(stringp(value)) return sprintf("'%s'", value);
 
-  return "'" + value->format_tod() + "'";
+  return "'" + value->set_timezone(timezone_offset)->format_tod() + "'";
 }
