@@ -304,7 +304,7 @@
     if(objectp(data)) data = (string)data;
     if(args && sizeof(args))
       data = sprintf(data, @args); 
-    if(String.width(data) > 8) 
+    if(data && String.width(data) > 8) 
     {
       data = string_to_utf8(data); // TODO: this is probably not the wisest assumption to make.
       set_charset("utf-8");
