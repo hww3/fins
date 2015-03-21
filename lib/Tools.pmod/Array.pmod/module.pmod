@@ -6,7 +6,7 @@
 //!   and "count".  If a template is not specified, a default will 
 //!   be provided.
 //! 
-public array consolidate(array(string) input, string|void template)
+public array consolidate(mixed input, string|void template)
 {
   array out = ({});
   string last;
