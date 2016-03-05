@@ -224,7 +224,7 @@
       
       u->path = combine_path(u->path, to);
       if(args && sizeof(args))
-        u = Standards.URI(combine_path(u->path, args*"/"), to);
+        u->path = combine_path(u->path, args*"/");
         to = (string)u;
     }
 
