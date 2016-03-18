@@ -46,6 +46,7 @@ protected mapping processors = ([]);
 protected mapping controller_path_cache = ([]);
 protected mapping action_path_cache = ([]);
 protected mapping event_cache = ([]);
+protected mapping event_routes = ([]);
 
 // breakpointing support
 Stdio.Port breakpoint_port;
@@ -443,6 +444,20 @@ void reload_controllers()
   load_controller();
   action_path_cache = ([]);
   controller_path_cache = ([]);
+}
+
+//! add a path and event mapping.
+//!
+//! @param path
+//!   a path prefix that will trigger the event when requested.
+//! @param action
+//!   a standard Fins event callback function/object
+//! 
+//!   add_route("/foo/bar", lambda(object req, object resp, mixed ... args) { resp->set_data("hit /foo/bar!\n"); });
+void add_route(string path, object|function action)
+{
+   path = ((path/"/") - ({""})) * "/";
+   event_routes [path] = action;
 }
 
 //! gets the controller object which will handle a given path,  not
@@ -1030,6 +1045,32 @@ array get_event(.Request request)
 		}
 	  }
 	//#endif	
+  }
+
+  // simple event routing (/some/path/to/event -> somefunc())
+  if(sizeof(event_routes))
+  {
+    for(int x = sizeof(r)-1; x >= 0; x--)
+	  {
+		mixed e,ev;
+		req = r[0..x] * "/";
+		if(e = event_routes[req])
+		{
+			array args = r[x+1..];
+			
+			request->not_args = (r[0..x]) * "/";
+			request->controller_path = r[0..(x>0?x-1:0)] * "/";
+			request->controller = controller; 
+			request->event_name = r[x];
+			request->event = ev = e;
+			request->controller_name = request->controller->__controller_name;
+			
+			if(sizeof(args))
+	  	      return ({ ev, @args });
+			else return ({ ev });
+		}
+	  }
+	
   }
 
   cc = controller;
