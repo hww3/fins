@@ -49,7 +49,7 @@ static string string_without_suffix(string k, string s)
 
 static program get_model_component(string ot)
 {
-  if(!ot)
+   if(!ot)
    {
      throw(Error.Generic("no model component\n"));
 //      werror()
@@ -90,7 +90,7 @@ program type_from_query(string q, string f)
   if(!has_suffix(q, f))
     return 0;
   ot = string_without_suffix(q, f);
-  ot = Tools.Language.Inflect.singularize(ot);
+  ot = (Tools.Language.Inflect.singularize(ot) || ot);
 
   return get_model_component(ot);
 }
@@ -134,7 +134,7 @@ static function get_func(mixed k)
   else if((i = search(k, "_by_")) != -1)
   {
     ot = k[0..(i-1)];
-    ot = Tools.Language.Inflect.singularize(ot);
+    ot = Tools.Language.Inflect.singularize(ot) || ot;
     if((p = get_model_component(ot)) && p->alternate_key && (k[(i+4) ..] == lower_case(p->alternate_key->name)))
       return lambda(mixed ... args){ return context->find_by_alternate(p, @args);};
   }
