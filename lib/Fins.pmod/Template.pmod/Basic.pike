@@ -14,7 +14,7 @@ array contents = ({});
 RegexReplacer s = RegexReplacer();
 
 //!
-static void create(string template, object|void context_obj)
+protected void create(string template, object|void context_obj)
 {
    if(!context_obj)
      context = .TemplateContext();
@@ -37,7 +37,7 @@ werror("COMPILE_TIME: %O\n", x);
 // }
 // 
 
-static array compile_template(array contents)
+protected array compile_template(array contents)
 {
    // TODO: we should be more thorough here.
 
@@ -61,10 +61,10 @@ public string render(.TemplateData data)
    return buf->get();
 }
 
-static class RegexReplacer{
+protected class RegexReplacer{
 
-  static object regexp;
-  static function split_fun;
+  protected object regexp;
+  protected function split_fun;
   int max_iterations = 10;
   string match = "(:?{foreach:(?P<loopname>[a-zA-Z\\-_0-9]+)}(?:((?s).*?){end:(?P=loopname)}))"
        "|(:?{include:(?P<file>[a-zA-Z\\-_0-9/\\.]+)})"
@@ -211,7 +211,7 @@ static class RegexReplacer{
 
 }
 
-static class Block
+protected class Block
 {
    
    void render(String.Buffer buf, .TemplateData data)
@@ -220,14 +220,14 @@ static class Block
    }
 }
 
-static class Include
+protected class Include
 {
    inherit Block;
 
    string templateName;
    .Template included_template;
 
-   static void create(string template, void|object context)
+   protected void create(string template, void|object context)
    {
      templateName = template;
      included_template = .get_template(context->type || .Simple, template, context);
@@ -245,7 +245,7 @@ static class Include
 
 }
 
-static class TextString(string contents)
+protected class TextString(string contents)
 {
    inherit Block;
 
@@ -262,7 +262,7 @@ static class TextString(string contents)
 }
 
 
-static class ReplaceField(string scope, string name)
+protected class ReplaceField(string scope, string name)
 {
    inherit Block;
 
@@ -321,7 +321,7 @@ static class ReplaceField(string scope, string name)
    }
 }
 
-static class MacroField(string name, function func, string arguments)
+protected class MacroField(string name, function func, string arguments)
 {
    inherit Block;
    
@@ -338,7 +338,7 @@ static class MacroField(string name, function func, string arguments)
    }
 }
 
-static class Foreach(string scope, array contents)
+protected class Foreach(string scope, array contents)
 {
    inherit Block;
    
@@ -385,7 +385,7 @@ werror("looping through : %O\n", d[scope]);
 }
 
 
-static class If(string test, array ifval, array|void elseval)
+protected class If(string test, array ifval, array|void elseval)
 {
    inherit Block;
 

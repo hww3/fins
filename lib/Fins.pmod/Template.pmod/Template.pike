@@ -1,12 +1,12 @@
 import Tools.Logging;
 
-static .TemplateContext context;
+protected .TemplateContext context;
 
 //! template extension, including any dot or other separator character.
 constant TEMPLATE_EXTENSION = "";
 
 //!
-static void create(string template, .TemplateContext c)
+protected void create(string template, .TemplateContext c)
 {
    context = c;
    context->type = object_program(this);
@@ -15,7 +15,7 @@ static void create(string template, .TemplateContext c)
 //!
 public string render(.TemplateData d);
 
-static int template_updated(string templatename, int last_update)
+protected int template_updated(string templatename, int last_update)
 {
    string template =
                           combine_path(context->application->config->app_dir, 
@@ -30,7 +30,7 @@ static int template_updated(string templatename, int last_update)
 }
 
 //! we should really do more here...
-static string load_template(string templatename, void|object compilecontext)
+protected string load_template(string templatename, void|object compilecontext)
 {
   string template;
   string int_templatename;

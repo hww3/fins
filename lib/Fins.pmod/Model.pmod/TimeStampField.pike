@@ -15,7 +15,7 @@ string output_unit_format = "%Y-%M-%D %h:%m:%s";
 
 function validate_get = ::validate;
 
-static void create(string _name, int(0..1) _null)
+protected void create(string _name, int(0..1) _null)
 {
    name = _name;
    null = _null;

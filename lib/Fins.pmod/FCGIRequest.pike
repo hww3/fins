@@ -10,13 +10,13 @@ mapping (string:string) variables = ([ ]);
 mapping (string:mixed) misc = ([ ]);
 
 string query, not_query, rest_query;
-static string data;
+protected string data;
 
 mapping request_headers = ([]);
 
-static object fast_cgi_request;
+protected object fast_cgi_request;
 
-static string not_query_field = "REQUEST_URI";
+protected string not_query_field = "REQUEST_URI";
 
 multiset   (string) prestate     = (< >);
 multiset   (string) config       = (< >);
@@ -34,7 +34,7 @@ mapping (string:string) cookies = ([ ]);
 string prot;
 string method;
 
-static string _sprintf(mixed ... args)
+protected string _sprintf(mixed ... args)
 {
   return "FCGIRequest(" + method + " " + not_query + query + ")";
 }
@@ -62,7 +62,7 @@ void response_write_and_finish(mixed ... args)
 
 }
 
-static private void decode_query() {
+protected private void decode_query() {
   string v, a, b;	
   variables = ([]);
   if(!query)
@@ -86,7 +86,7 @@ static private void decode_query() {
     rest_query=replace(rest_query, "+", "\000"); /* IDIOTIC STUPID STANDARD */
 }
 
-static private void decode_cookies()
+protected private void decode_cookies()
 {
   string c;
   foreach(misc->cookies/";", c)

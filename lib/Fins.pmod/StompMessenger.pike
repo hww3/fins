@@ -1,4 +1,4 @@
-static object __stomp_processor_object;
+protected object __stomp_processor_object;
 
 int publish(string destination, string contents, void|mapping headers)
 {

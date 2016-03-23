@@ -66,7 +66,7 @@ class JMSHandler
   object destination;
   object context;
 
-	static void create(string _destination, object _context)
+	protected void create(string _destination, object _context)
 	{
 		destination = Standards.URI(_destination);
 		context = _context;
@@ -140,7 +140,7 @@ class JMSSubscriber
 	
 	object controller;
 	
-	static void create(object _controller, object _context)
+	protected void create(object _controller, object _context)
 	{
 		controller = _controller;
 		::create(_controller->subscribes_to, _context);

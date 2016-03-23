@@ -8,7 +8,7 @@ object log = Tools.Logging.get_logger("model");
 //! reference will be created using lower case (such as "user").
 int lower_case_link_names = 0;
 
-static void create(Fins.Application a)
+protected void create(Fins.Application a)
 {
   ::create(a);
   load_model();

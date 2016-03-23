@@ -53,7 +53,7 @@ import Tools.Logging;
 
 
 
-  static void create(Stdio.File client, object app, mapping state, string desc, array bt)
+  protected void create(Stdio.File client, object app, mapping state, string desc, array bt)
   {
     this->app = app;
     this->request_state = state;
@@ -77,7 +77,7 @@ import Tools.Logging;
     commands->backtrace = commands->bt;
   }
 
-static void destroy()
+protected void destroy()
 {
   object key = app->bp_lock->lock();
   app->breakpoint_cond->signal();

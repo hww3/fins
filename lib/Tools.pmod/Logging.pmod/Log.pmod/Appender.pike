@@ -14,7 +14,7 @@ function format_function;
 //! config setting
 int enable = 1;
 
-static void create(mapping config)
+protected void create(mapping config)
 {
   if(config->format)
     format = config->format;

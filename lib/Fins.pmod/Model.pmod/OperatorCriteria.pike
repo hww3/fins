@@ -3,7 +3,7 @@ inherit .Criteria;
 string operator;
 mixed value;
 
-static void create(string _operator, mixed _value)
+protected void create(string _operator, mixed _value)
 {
   operator = _operator;
   value = _value;

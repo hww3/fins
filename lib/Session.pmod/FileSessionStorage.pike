@@ -3,7 +3,7 @@ inherit .SessionStorage;
 int writing_session = 0;
 object log = Tools.Logging.get_logger("session.ramsessionstorage");
 
-static string storage_dir;
+protected string storage_dir;
 
 void create()
 {

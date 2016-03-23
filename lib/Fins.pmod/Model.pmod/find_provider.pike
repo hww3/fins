@@ -15,24 +15,24 @@ object log = Tools.Logging.get_logger("fins.model");
 
 .DataModelContext context;
 
-static void create(void|.DataModelContext c)
+protected void create(void|.DataModelContext c)
 {
   context = c;
 }
 
-static mapping funcs = ([]);
+protected mapping funcs = ([]);
 
 optional mixed `()( mixed ... args )
 {
   return context->old_find(@args);
 }
 
-static mixed `->(string k)
+protected mixed `->(string k)
 {
   return `[](k);
 }
 
-static mixed `[](mixed k)
+protected mixed `[](mixed k)
 {
   function f;
 //  if(k == "_set_model") return set_model;
@@ -41,13 +41,13 @@ static mixed `[](mixed k)
   else return 0;
 }
 
-static string string_without_suffix(string k, string s)
+protected string string_without_suffix(string k, string s)
 {
   return k[0..sizeof(k) - (sizeof(s)+1)];
 }
 
 
-static program get_model_component(string ot)
+protected program get_model_component(string ot)
 {
    if(!ot)
    {
@@ -68,7 +68,7 @@ static program get_model_component(string ot)
   return m[ot];
 }
 
-static object get_object_component(string ot)
+protected object get_object_component(string ot)
 {
   mixed m = context->repository->get_object_module();
 
@@ -95,7 +95,7 @@ program type_from_query(string q, string f)
   return get_model_component(ot);
 }
 
-static function get_func(mixed k)
+protected function get_func(mixed k)
 {
   function f;
   string ot;

@@ -29,7 +29,7 @@ mapping object_data_cache = ([]);
 // if non-zero, the id of the current transaction. not currently used.
 int transaction_id;
 
-static mixed key_value = UNDEFINED;
+protected mixed key_value = UNDEFINED;
 int new_object = 0;
 int saved = 0;
 int initialized;
@@ -165,7 +165,7 @@ void set_operator(int o)
 }
 
 //!
-static void create(mixed|void id, object _object_type, .DataModelContext context)
+protected void create(mixed|void id, object _object_type, .DataModelContext context)
 {
 //  werror("create(%O, %O, %O)\n", id, _object_type, context);
 
@@ -718,7 +718,7 @@ int `==(mixed a)
 }
 
 /*
-static void destroy()
+protected void destroy()
 {
   if(master_object) 
     master_object->sub_ref(this);

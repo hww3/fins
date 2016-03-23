@@ -12,7 +12,7 @@ string _sprintf(mixed ... args)
 }
 
 //!
-static void create(string _templatename, 
+protected void create(string _templatename, 
          .TemplateContext|void context_obj, int|void _is_layout)
 {
 	::create(_templatename, context_obj, _is_layout);
@@ -34,7 +34,7 @@ string parse_psp(string file, string realname, object|void compilecontext)
   pikescript+=(
 #"Fins.Template.TemplateContext context; 
   function get_macro;
-  static void create(Fins.Template.TemplateContext _context){
+  protected void create(Fins.Template.TemplateContext _context){
 	 context = _context; 
 	 get_macro = context->view->get_macro;
   }

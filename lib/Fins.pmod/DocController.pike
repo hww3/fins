@@ -11,7 +11,7 @@ protected program __default_template;
 //! corresponding template file.
 int __quiet;
 
-static int __has_errors;
+protected int __has_errors;
 
 //!
 //!  Implements a controller which automatically provides a view based on
@@ -49,7 +49,7 @@ void populate_template(Fins.Request request, Fins.Response response, Fins.Templa
 {
 }
 
-static mixed `[](mixed a)
+protected mixed `[](mixed a)
 {
   mixed v; 
 
@@ -120,7 +120,7 @@ private class DocRunner(function req)
 {
   inherit .Helpers.Runner;
 
-  static mixed `()(Fins.Request request, Fins.Response response, mixed ... args) 
+  protected mixed `()(Fins.Request request, Fins.Response response, mixed ... args) 
   {
     run(request, response, @args);
     return 0;
@@ -136,7 +136,7 @@ private class DocRunner(function req)
     return function_name(req);
   }
 
-  static int(0..1) _is_type(string bt)
+  protected int(0..1) _is_type(string bt)
   {
     if(bt=="function")
       return 1;

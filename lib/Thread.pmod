@@ -15,7 +15,7 @@ class Thread
   //!
   //! @param f
   //!   if string, this is the handler name and the next arg will be the function to call.
-  static void create(string|function f, mixed ... args)
+  protected void create(string|function f, mixed ... args)
   {
 #ifdef THREADS_DEBUG
     werror("Thread.Thread->create(%O, %O)\n", f, args);
@@ -56,7 +56,7 @@ class Thread
     
   class splice(function ... funcs)
   {
-    static mixed `()(mixed ... args) 
+    protected mixed `()(mixed ... args) 
     {
       mixed r;
       foreach(funcs;; function f)

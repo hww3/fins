@@ -12,7 +12,7 @@ inherit .FinsController;
 
  public object index = XMLRPCRunner(this, ::`[]);
 
-static mixed `[](mixed a, int|void a2)
+protected mixed `[](mixed a, int|void a2)
 {
   if(objectp(::`[](a, a2||2)))
   {
@@ -30,7 +30,7 @@ private class XMLRPCRunner(object obj, function indexer)
 {
   inherit .Helpers.Runner;
 
-  static mixed `()(Fins.Request request, Fins.Response response, mixed ... args) 
+  protected mixed `()(Fins.Request request, Fins.Response response, mixed ... args) 
   {
     run(request, response, @args);
     return 0;
@@ -46,7 +46,7 @@ private class XMLRPCRunner(object obj, function indexer)
     return obj;
   }
 
-  static int(0..1) _is_type(string bt)
+  protected int(0..1) _is_type(string bt)
   {
     if(bt=="function")
       return 1;

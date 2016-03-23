@@ -2,7 +2,7 @@ inherit .Criteria;
 
 .Criteria|string ncriteria;
 
-static void create(.Criteria|string c)
+protected void create(.Criteria|string c)
 {
   ncriteria = c;
 }

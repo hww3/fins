@@ -1,7 +1,7 @@
 
 //!
 
-static string criteria = "";
+protected string criteria = "";
 
 string _sprintf(mixed ...args)
 {
@@ -9,7 +9,7 @@ string _sprintf(mixed ...args)
 }
 
 //!
-static void create(array values)
+protected void create(array values)
 {
    values = values + ({});
    foreach(values;int i;string v)

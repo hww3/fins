@@ -39,7 +39,7 @@ private mixed filter_context;
 private array myArrayList;
 
 //! Construct a JSONArray, empty, from a JSON datastream, or a Pike array.
-static void create(void|JSONTokener|string|array x, void|mixed filter_context)
+protected void create(void|JSONTokener|string|array x, void|mixed filter_context)
 {
   set_filter_context(filter_context);
 
@@ -102,13 +102,13 @@ public void fromtokener(JSONTokener x)
 }
 
 //!
-static mixed `[](mixed i)
+protected mixed `[](mixed i)
 {
   return getValue(i);
 }
 
 //!
-static void `[]=(mixed key, mixed value)
+protected void `[]=(mixed key, mixed value)
 {
   put(key,value);
 }
@@ -551,7 +551,7 @@ public JSONObject toJSONObject(JSONArray names)
 //! @returns
 //! a printable, displayable, transmittable representation of the array.
 //!
-static mixed cast(string to)
+protected mixed cast(string to)
 {
   if(to == "string")
     return ToString();

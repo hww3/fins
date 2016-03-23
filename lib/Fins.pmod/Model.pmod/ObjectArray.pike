@@ -5,7 +5,7 @@ array contents;
 int changed;
 object /*.DataModelContext*/ context;
 
-static void create(object/*.Field*/ f, object parent, void|object/*.DataModelContext*/ c)
+protected void create(object/*.Field*/ f, object parent, void|object/*.DataModelContext*/ c)
 {
 //  Tools.Logging.Log.debug("%O(%O, %O, %O)", Tools.Function.this_function(), f, parent, c);
   field = f; 
@@ -18,7 +18,7 @@ static void create(object/*.Field*/ f, object parent, void|object/*.DataModelCon
   changed = 1;
 }
 
-static mixed cast(string rt)
+protected mixed cast(string rt)
 {
   switch(rt)
   {
@@ -47,7 +47,7 @@ Iterator _get_iterator()
   return Array.Iterator(contents);
 }
 
-static array _values()
+protected array _values()
 {
   if(changed)
     get_contents();
@@ -55,7 +55,7 @@ static array _values()
     return contents;
 }
 
-static array _indices()
+protected array _indices()
 {
   if(changed)
     get_contents();
@@ -63,7 +63,7 @@ static array _indices()
     return indices(contents);
 }
 
-static int _sizeof()
+protected int _sizeof()
 {
   if(changed)
     get_contents();

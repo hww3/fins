@@ -29,7 +29,7 @@ int is_shadow=1;
 int unique;
 .Criteria criteria;
 
-static void create(string _name, string _otherobject, string _otherkey, string _index_field, .Criteria|void _criteria)
+protected void create(string _name, string _otherobject, string _otherkey, string _index_field, .Criteria|void _criteria)
 {
   name = _name;
   otherobject = _otherobject;

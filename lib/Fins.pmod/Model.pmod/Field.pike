@@ -37,7 +37,7 @@ void set_context(object c)
    context = c;
 }
 
-static void create()
+protected void create()
 {
    field_name = translate_fieldname();
 }

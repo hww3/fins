@@ -2,8 +2,8 @@ inherit .SessionStorage;
 
 int writing_session = 0;
 
-static string storage_dir;
-static object sql;
+protected string storage_dir;
+protected object sql;
 
 object log = Tools.Logging.get_logger("session.sqlitesessionstorage");
 

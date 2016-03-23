@@ -2,8 +2,8 @@ inherit .TransformField;
 
 constant type = "MetaData";
 
-static mapping metadata = ([]);
-static string _metadata;
+protected mapping metadata = ([]);
+protected string _metadata;
 int is_shadow = 1;
 
 //!  provides a field that stores a mapping of data in another field 
@@ -29,7 +29,7 @@ object get_md(mixed md, object i)
   else return metadata[i->get_id()];
 }
 
-static void create(string _name, string _transformfield, mixed ... args)
+protected void create(string _name, string _transformfield, mixed ... args)
 {
   ::create(_name, _transformfield, get_md, @args);
 }
@@ -40,13 +40,13 @@ static void create(string _name, string _transformfield, mixed ... args)
      mapping metadata = ([]);
      object obj;
 
-static mixed cast(string tn)
+protected mixed cast(string tn)
 {
   if(tn == "mapping")
     return metadata + ([]);
 }
 
-     static int(0..1) _is_type(string tn)
+     protected int(0..1) _is_type(string tn)
      {
         if(tn =="mapping")
           return 1;
@@ -54,7 +54,7 @@ static mixed cast(string tn)
           return 0;
      }
 
-     static void create(mixed data, object i, string transformfield)
+     protected void create(mixed data, object i, string transformfield)
      {
        obj = i;
        fieldname = transformfield;
@@ -82,7 +82,7 @@ static mixed cast(string tn)
        return values(metadata);
      }
 
-     static mixed _m_delete(mixed arg)
+     protected mixed _m_delete(mixed arg)
      {
        if(metadata[arg] && !zero_type(metadata[arg]))
        {

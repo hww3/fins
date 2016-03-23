@@ -1,12 +1,12 @@
 
-static mapping loggers = ([]);
+protected mapping loggers = ([]);
 
 string config_file_path;
 mapping config_values = ([]);
 mapping appenders = ([]);
 mapping config_variables = ([]);
-static array _rk;
-static array _rv;
+protected array _rk;
+protected array _rv;
 
 int is_configed = 0;
 
@@ -48,7 +48,7 @@ object default_logger = Tools.Logging.Log.Logger();
 //!  the following: name, level, msg, pid, host plus any of the values from @[localtime]().
 //!
 //!  see also the note below about configuration variables, which may be inserted into your format string (values
-//!  are inserted at configuration time, and are static thereafter).
+//!  are inserted at configuration time, and are protected thereafter).
 //!
 //!  enable=true/false/yes/no <-- whether the appender should generate entries
 //!  
@@ -65,7 +65,7 @@ object default_logger = Tools.Logging.Log.Logger();
 //!  by using a config section called [default.logger].
 
 
-static void create()
+protected void create()
 {
 
 //werror("***\n*** %O -> %O\n***\n", Thread.this_thread(), master()->get_handler_for_thread(Thread.this_thread()));
@@ -74,7 +74,7 @@ static void create()
   set_config_variables(([]));
 }
 
-static void create_default_appender()
+protected void create_default_appender()
 {
   appenders->default = Tools.Logging.Log.ConsoleAppender();
 }

@@ -3,7 +3,7 @@ inherit .Simple;
 string template_string;
 
 //!
-static void create(string _templatestring,
+protected void create(string _templatestring,
          .TemplateContext|void context_obj, int|void _is_layout)
 {
    template_string = _templatestring;
@@ -11,7 +11,7 @@ static void create(string _templatestring,
 }
 
 
-static void reload_template()
+protected void reload_template()
 {
    last_update = time();
 

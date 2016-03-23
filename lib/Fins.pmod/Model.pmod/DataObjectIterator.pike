@@ -9,7 +9,7 @@ int _sizeof()
   return sizeof(order);
 }
 
-   static void create(object o)
+   protected void create(object o)
   {
     dto = o;
     order = o->master_object->field_order;
@@ -44,12 +44,12 @@ mixed x = dto[order[current_index]->name];
 return x;
 	}
 	
-static int `!()
+protected int `!()
 {
   if(current_index < sizeof(order)) return 0;
   else return 1;
 }	
-	static Iterator `+=(int steps)
+	protected Iterator `+=(int steps)
 	{
 		current_index += steps;
 		return this;

@@ -1,13 +1,13 @@
 
 
-static array acriteria = ({});
+protected array acriteria = ({});
 
 string _sprintf(mixed ...args)
 {
    return "CompoundCriteria(" + get() + ")";
 }
 
-static void create(array(.Criteria) _criteria)
+protected void create(array(.Criteria) _criteria)
 {
    acriteria = _criteria;
 }

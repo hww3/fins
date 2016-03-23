@@ -3,7 +3,7 @@ inherit .SqlField;
 string name;
 int is_primary_key = 1;
 
-static void create(string _name)
+protected void create(string _name)
 {
    name = _name;
    ::create();

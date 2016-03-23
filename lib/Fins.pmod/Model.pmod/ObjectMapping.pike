@@ -6,7 +6,7 @@ int changed;
 string index_field;
 .DataModelContext context;
 
-static void create(.Field f, object parent, void|.DataModelContext c, string index)
+protected void create(.Field f, object parent, void|.DataModelContext c, string index)
 {
   Tools.Logging.Log.debug("%O(%O, %O, %O, %O)", Tools.Function.this_function(), f, parent, c, index_field);
   field = f; 
@@ -17,7 +17,7 @@ static void create(.Field f, object parent, void|.DataModelContext c, string ind
   changed = 1;
 }
 
-static mixed cast(string rt)
+protected mixed cast(string rt)
 {
   if(rt != "mapping")
     throw(Error.Generic("Cannot cast ObjectMapping to " + rt + ".\n"));
@@ -36,7 +36,7 @@ Iterator _get_iterator()
   return get_iterator(contents);
 }
 
-static array _values()
+protected array _values()
 {
   if(changed)
     get_contents();
@@ -44,7 +44,7 @@ static array _values()
     return values(contents);
 }
 
-static array _indices()
+protected array _indices()
 {
   if(changed)
     get_contents();

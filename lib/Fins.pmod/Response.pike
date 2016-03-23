@@ -3,12 +3,12 @@
   Fins.Template.Template template;
   Fins.Template.TemplateData template_data;
   
-  static Fins.Request request;  
-  static int low_response = 0;
-  static int __rendered = 0;
+  protected Fins.Request request;  
+  protected int low_response = 0;
+  protected int __rendered = 0;
 
 //!
-  static void create(Fins.Request|void r)
+  protected void create(Fins.Request|void r)
   {
     request = r;
     
@@ -25,13 +25,13 @@
 
   }
 
-  static mapping response = (["type": "text/html",
+  protected mapping response = (["type": "text/html",
 			      "_type": "text/html",
                               "error": 0,
                               "extra_heads": ([])
                               ]);
 
-  static mapping cookies = ([ "__expiration__" : 0 ]);
+  protected mapping cookies = ([ "__expiration__" : 0 ]);
 
   //!
   public void set_type(string mimetype)

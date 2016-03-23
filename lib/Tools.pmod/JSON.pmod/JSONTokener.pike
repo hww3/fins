@@ -22,7 +22,7 @@ import Tools.JSON;
 //! 
 //! @param s
 //!  A source string.
-		static void create(string s)
+		protected void create(string s)
 		{
 			myIndex = 0;
 			mySource = s;
@@ -49,7 +49,7 @@ import Tools.JSON;
 //! 
 //! @returns
 //!  An int between 0 and 15, or -1 if c was not a hex digit.
-		public static int dehexchar(int c)
+		public protected int dehexchar(int c)
 		{
 			if (c >= '0' && c <= '9') 
 			{

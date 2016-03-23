@@ -35,7 +35,7 @@ class null
 {
   constant JSONNull = 1;
 
-  static string cast(string type)
+  protected string cast(string type)
   {
     if(type == "string")
       return "null";

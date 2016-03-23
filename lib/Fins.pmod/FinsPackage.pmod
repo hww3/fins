@@ -11,7 +11,7 @@ constant PROMPT_FILE = 4;
 constant PROMPT_ENUM = 5;
 
 int cc = 0;
-static object r;
+protected object r;
 
 int main() {
   if (!sizeof(SOURCE)) {
@@ -100,7 +100,7 @@ void get_tar(string package_filename, string tar_filename) {
   Stdio.write_file(tar_filename, MIME.decode_base64(p->SOURCE));
 }
 
-static Filesystem.System getfs(string source, string cwd) {
+protected Filesystem.System getfs(string source, string cwd) {
   // This is really nasty - we apprently need to reopen the tar file every time
   // we read from it or it randomly closes it's Fd and throws errors everywhere.
   return Tools.Tar(sprintf("%s.tar", NAME), 0, Stdio.FakeFile(source))->cd(cwd);
@@ -150,7 +150,7 @@ int untar(string source, string path, void|string cwd) {
   return c;
 }
 
-static mixed prompt(string description, int type, void|mixed defval, void|array options) {
+protected mixed prompt(string description, int type, void|mixed defval, void|array options) {
   if (description[-1] != '\n')
     description += "\n";
   r->write(description, 1);
@@ -214,10 +214,10 @@ static mixed prompt(string description, int type, void|mixed defval, void|array 
   }
 }
 
-static class Standalone {
+protected class Standalone {
   inherit Fins.AdminTools.SimpleFinServe;
 
-  static void create() {}
+  protected void create() {}
 
   int main(string appdir, int port, string config) {
 

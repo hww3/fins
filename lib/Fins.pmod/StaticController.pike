@@ -1,10 +1,10 @@
 import Fins;
 
 //!
-//! a controller that serves a directory of static content.
+//! a controller that serves a directory of protected content.
 //!
 //! @note
-//!   it's not necessary (and not very useful) to load a static controller 
+//!   it's not necessary (and not very useful) to load a protected controller 
 //!   with @[load_controller]().
 //!   
 //! @example
@@ -57,7 +57,7 @@ protected void create(Fins.Application app, string|void dir, int|void _allow_dir
 }
 
 //! override this method to provide alternate filesystem access methods. should return a 
-//! Filesystem.Base object rooted at the static directory.
+//! Filesystem.Base object rooted at the protected directory.
 protected Filesystem.Base create_filesystem()
 {
   return Filesystem.System(static_dir)->chroot(static_dir);
@@ -165,8 +165,8 @@ int is_dir(object stat)
 }
 
 //! @param filename
-//!  the object to fetch, an absolute path rooted at the static directory,
-//!  for instance to fetch /etc/hosts from a static directory of /etc, 
+//!  the object to fetch, an absolute path rooted at the protected directory,
+//!  for instance to fetch /etc/hosts from a protected directory of /etc, 
 //! filename would be /hosts.
 protected .Response low_static_request(.Request request, .Response response, 
     string filename, void|Filesystem.Base fs)

@@ -14,7 +14,7 @@ mapping iso639_2 = Tools.Language.Names.iso639_2;
 
 function get_session_by_id = _get_session_by_id;
 
-static mixed cast(string typen)
+protected mixed cast(string typen)
 {
   if(typen == "mapping")
   {
@@ -23,7 +23,7 @@ static mixed cast(string typen)
 }
 
 //!
-static mapping _get_session_by_id(string SessionID)
+protected mapping _get_session_by_id(string SessionID)
 {
   return ([]);
 }

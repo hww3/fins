@@ -5,7 +5,7 @@ inherit .MappingCache;
 
 
 //!
-	static mixed `[](mixed k)
+	protected mixed `[](mixed k)
 	{
 	  mixed q;
 	

@@ -6,9 +6,9 @@ import Tools.Logging;
 //!
 
 Log.Logger log = Tools.Logging.get_logger("fins.cache");
-static mapping(string:array) values = ([]);
+protected mapping(string:array) values = ([]);
 
-static void create()
+protected void create()
 {
   call_out(cleanup, random(60) + 60);
 }

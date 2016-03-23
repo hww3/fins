@@ -2,7 +2,7 @@
 array fields = ({});
 array direction = ({});
 
-static string criteria = "";
+protected string criteria = "";
 
 string _sprintf(mixed ...args)
 {
@@ -15,7 +15,7 @@ string _sprintf(mixed ...args)
 //! @param order
 //!   one if @[Fins.Model.SORT_ASCENDING] or @[Fins.Model.SORT_DESCENDING]
 //!   if not provided, defaults to SORT_ASCENDING.
-static void create(string|array field, string|array|void order)
+protected void create(string|array field, string|array|void order)
 {
   if(!arrayp(field))
     field = ({ field });

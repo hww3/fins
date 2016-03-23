@@ -30,7 +30,7 @@ Fins.Helpers.Renderers.Renderer renderer = Fins.Helpers.Renderers.KeyRenderer();
 //!   not used in this class
 //! @param _null
 //!   if set, an object can be saved without providing a value for this field
-static void create(string _name, string _myfield, string _otherobject, void|.Criteria _criteria, void|int _null)
+protected void create(string _name, string _myfield, string _otherobject, void|.Criteria _criteria, void|int _null)
 {
   name = _name;
   field_name = _myfield;

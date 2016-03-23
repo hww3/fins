@@ -54,7 +54,7 @@ public void set_filter_context(mixed|void ctx)
 }
 
 //!  Construct a JSONObject, either empty, from a JSON datastream, or a pike mapping.
-		static void create(void|string|Tools.JSON.JSONTokener|mapping x, mixed|void filter_context)
+		protected void create(void|string|Tools.JSON.JSONTokener|mapping x, mixed|void filter_context)
 		{ 
 			myHashMap      = ([]);
 			myKeyIndexList = ({});
@@ -184,7 +184,7 @@ public void set_filter_context(mixed|void ctx)
 //! Return the key for the associated index
 //! 
 //!
-static mixed `[](mixed i)
+protected mixed `[](mixed i)
 {
   if(intp(i))
     return (string)myKeyIndexList[i];
@@ -193,7 +193,7 @@ static mixed `[](mixed i)
 }
 
 //!
-static void `[]=(mixed key, mixed value)
+protected void `[]=(mixed key, mixed value)
 {
   put(key,value);
 }
@@ -202,7 +202,7 @@ static void `[]=(mixed key, mixed value)
 //! Return the number of JSON items in hashtable
 //! 
 //!
-static int _sizeof()
+protected int _sizeof()
 {
   return sizeof(myCustomRenderObject||myHashMap);
 }
@@ -371,14 +371,14 @@ static int _sizeof()
 //! @returns
 //!  
 //!
-		static array _indices()
+		protected array _indices()
 		{
                         if(myCustomRenderObject) return indices(myCustomRenderObject);
 			return indices(myHashMap);
 		}
 
 //!
-		static array _values()
+		protected array _values()
 		{
                         if(myCustomRenderObject) return values(myCustomRenderObject);
 			return values(myHashMap);
@@ -678,7 +678,7 @@ static int _sizeof()
 		}
 
 //!
-static mixed cast(string to)
+protected mixed cast(string to)
 {
   if(to =="string")
     return ToString();

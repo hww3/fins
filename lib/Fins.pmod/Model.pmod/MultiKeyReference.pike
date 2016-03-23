@@ -17,7 +17,7 @@ string mappingtable;
 string my_mappingfield;
 string other_mappingfield;
 
-static void create(object p, string _name, string _mappingtable, string _my_mappingfield, 
+protected void create(object p, string _name, string _mappingtable, string _my_mappingfield, 
 	string _other_mappingfield, string _otherobject, string _otherkey, .Criteria|void _criteria, int|void owns_relationship)
 {
   name = _name;

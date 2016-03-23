@@ -17,7 +17,7 @@ constant ERROR = 16;
 constant CRITICAL = 32;
 
 //!
-static array appenders = ({});
+protected array appenders = ({});
 
 int enabled = 1;
 int loglevel = INFO|WARN|ERROR|CRITICAL;
@@ -42,7 +42,7 @@ mapping strs_log = ([
 
 mapping local_vars = (["pid": getpid(), "host": gethostname() ]);
 
-static void create(mapping|void config)
+protected void create(mapping|void config)
 {
   // NOTE: we probably shouldn't do this...
 //  if(!config) werror("Logger.create(%O)\n", backtrace());
@@ -160,7 +160,7 @@ void set_level(int level)
   loglevel = level;
 }
 
-static string _sprintf(mixed ... args)
+protected string _sprintf(mixed ... args)
 {
   return "logger()";//, appenders);
 }

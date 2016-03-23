@@ -1,12 +1,12 @@
 int start, limit;
 
-static string criteria = "";
+protected string criteria = "";
 
 string _sprintf(mixed ...args)
 {
    return "LimitCriteria(" + start + ", " + limit + ")";
 }
-static void create(int _limit, int|void _start)
+protected void create(int _limit, int|void _start)
 {
    limit = _limit;
 

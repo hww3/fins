@@ -6,7 +6,7 @@ object view;
 object app;
 object config;
 
-static void create(object a)
+protected void create(object a)
 {
   app = a;
   model = a->model;

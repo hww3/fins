@@ -1,7 +1,7 @@
 
 //!
 
-static string criteria = "";
+protected string criteria = "";
 
 string _sprintf(mixed ...args)
 {
@@ -9,7 +9,7 @@ string _sprintf(mixed ...args)
 }
 
 //!
-static void create(string _criteria)
+protected void create(string _criteria)
 {
    criteria = _criteria;
 }

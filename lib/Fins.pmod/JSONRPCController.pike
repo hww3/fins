@@ -7,7 +7,7 @@ inherit .FinsController;
 
 public object index = JSONRPCRunner(this, ::`[]);
 
-static mixed `[](mixed a)
+protected mixed `[](mixed a)
 {
   if(objectp(::`[](a, 2)))
   {
@@ -26,13 +26,13 @@ private class JSONRPCRunner(object obj, function indexer)
 {
   inherit .Helpers.Runner;
 
-  static mixed `()(Fins.Request request, Fins.Response response, mixed ... args) 
+  protected mixed `()(Fins.Request request, Fins.Response response, mixed ... args) 
   {
     run(request, response, args);
     return 0;
   }
 
-  static int(0..1) _is_type(string bt)
+  protected int(0..1) _is_type(string bt)
   {
     if(bt=="function")
       return 1;

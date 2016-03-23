@@ -17,20 +17,20 @@ program default_data = Fins.Template.TemplateData;
 //! the default template context class to be used in this application
 program default_context = Fins.Template.TemplateContext;
 
-static mapping templates = ([]);
-static mapping(string:function|string) macros = ([]);
+protected mapping templates = ([]);
+protected mapping(string:function|string) macros = ([]);
 
 //! the base View class
 
 //!
-static void create(object app)
+protected void create(object app)
 {
 	::create(app);
   
 	load_macros();
 }
 
-static void load_macros()
+protected void load_macros()
 {
   foreach(glob("simple_macro_*", indices(this)); ; string mf)
   {
@@ -64,7 +64,7 @@ public void add_macro(string name, function|string macrocode)
 
 class StringMacroRunner(string name, string macrocode, object view)
 {
-  static function `()(Fins.Template.TemplateData data, mapping|void args)
+  protected function `()(Fins.Template.TemplateData data, mapping|void args)
   {
     return view->render_string_partial(macrocode, data->get_data() + (["args": args]), 0, 0, data->get_request());
   }

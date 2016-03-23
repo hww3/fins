@@ -72,7 +72,7 @@ class pidlet
 //!  Tools.Standalone utility), then this parameter should contain the extra arguments that would
 //!  be required to get this program to be run (such as ({"-x", "mytool"})).
 //!
-static void create(array(string) _args, array(string)|void _bootargs)
+protected void create(array(string) _args, array(string)|void _bootargs)
 {
 //  argv = _args; 
   if(_bootargs)

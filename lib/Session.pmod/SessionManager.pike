@@ -1,8 +1,8 @@
 // our default timeout is 1 hour.
-static int default_timeout = 3600;
-static int cleaner_interval = 3600;
+protected int default_timeout = 3600;
+protected int cleaner_interval = 3600;
 
-static object app;
+protected object app;
 
 Tools.Logging.Log.Logger log;
 

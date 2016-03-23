@@ -7,7 +7,7 @@ void set_multi_tenant(int x)
   multi_tenant = x;
 }
 
-static void create()
+protected void create()
 {  
 //  werror("loader loaded.\n"); 
 }

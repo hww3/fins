@@ -22,7 +22,7 @@ protected mapping contexts = ([]);
 private object default_finder;
 //object find;
 
-static void create()
+protected void create()
 {
   
 }

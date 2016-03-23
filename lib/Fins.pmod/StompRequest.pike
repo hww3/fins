@@ -7,7 +7,7 @@ mapping headers;
 string body;
 
 #if constant(Public.Protocols.Stomp)
-static void create(Public.Protocols.Stomp.Client.Frame frame)
+protected void create(Public.Protocols.Stomp.Client.Frame frame)
 {
   low_frame = frame;
 

@@ -9,13 +9,13 @@ import Public.Parser;
 string templatename;
 XML2.Stylesheet stylesheet;
 
-static void create(string template)
+protected void create(string template)
 {
    templatename = template + ".xslt";
    compile_template();
 }
 
-static void compile_template()
+protected void compile_template()
 {
    string template = load_template(templatename);
 

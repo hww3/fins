@@ -6,13 +6,13 @@ import Fins;
 //!
 //! @example
 //! // we're in our FinsController
-//! static void start() {
+//! protected void start() {
 //!   after_filter(Fins.Helpers.Filters.Compress());
 //! }
 
 #if constant(Gz)
 //!
-static Thread.Mutex _mutex = Thread.Mutex();
+protected Thread.Mutex _mutex = Thread.Mutex();
 
 string real_deflate(string _data, string _name)
 {

@@ -32,7 +32,7 @@ string getenv(string key)
   else return fast_cgi_request->env[key];
 }
 
-static void create(Stdio.File myfd)
+protected void create(Stdio.File myfd)
 {
   object scgir = SCGIConn(myfd);
   
@@ -51,7 +51,7 @@ class SCGIConn
   function finish;
   function write;
 
-  static void create(Stdio.File myfd)
+  protected void create(Stdio.File myfd)
   {
     fd = myfd;
     read = myfd->read;

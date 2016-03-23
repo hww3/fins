@@ -58,7 +58,7 @@ int create_table(string tablename, array fields, array indexes, int|void dry_run
 
 mapping get_field_info(string table, string field, mapping|void info);
 
-static void create(object c)
+protected void create(object c)
 {
   context = c;
 }

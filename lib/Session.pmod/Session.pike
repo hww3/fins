@@ -1,6 +1,6 @@
 
 string id = "";
-static mapping attrs = ([]);
+protected mapping attrs = ([]);
 public mapping data = ([]);
 
 string _sprintf(mixed ... args)

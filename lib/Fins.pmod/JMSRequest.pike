@@ -83,7 +83,7 @@ void acknowledge()
 }
 
 //!
-static void create(object|void message)
+protected void create(object|void message)
 {
   if(message)
   {

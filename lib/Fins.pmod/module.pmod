@@ -18,7 +18,7 @@ string version()
 
 int ts;
 
-static void create()
+protected void create()
 {
   ts = time();
   werror("bootstrap!\n");
@@ -620,7 +620,7 @@ return joinnode(({static_modules}), 0, 0, "predef::");
   {
 
     string my_key;
-  static void create(string _my_key)
+  protected void create(string _my_key)
   {
     //werror("MultiTenantCompileContainer()\n");
     my_key = _my_key;
@@ -703,7 +703,7 @@ object get_backend()
 }
 
 
-static void destroy()
+protected void destroy()
 {
   shutdown_backend();
   while(abe);  

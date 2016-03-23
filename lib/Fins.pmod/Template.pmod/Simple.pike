@@ -15,7 +15,7 @@ int is_layout = 0;
 // should this be configurable?
 int max_includes = 100;
 
-static .TemplateContext context;
+protected .TemplateContext context;
 
 int auto_reload;
 int last_update;
@@ -34,7 +34,7 @@ string _sprintf(mixed ... args)
 }
 
 //!
-static void create(string _templatename, 
+protected void create(string _templatename, 
          .TemplateContext|void context_obj, int|void _is_layout)
 {
    ::create(_templatename, context_obj);
@@ -46,7 +46,7 @@ static void create(string _templatename,
    reload_template();
 }
 
-static void reload_template()
+protected void reload_template()
 {
    last_update = time();
 
@@ -246,7 +246,7 @@ string low_parse_psp(BlockHolder contents, object|void compilecontext)
   }
 
   header += h;
-  pikescript+=("object __context; static void create(object context){__context = context; " + initialization + 
+  pikescript+=("object __context; protected void create(object context){__context = context; " + initialization + 
 "}\n void render(String.Buffer buf, Fins.Template.TemplateData __d,object|void __view){mapping data = __d->get_data();\n");
   pikescript += ps;
 
@@ -410,7 +410,7 @@ class MacroContainerBlock
   Block macro;
   BlockHolder macro_contents;
   
-  static void create(Block _macro, BlockHolder _macro_contents)
+  protected void create(Block _macro, BlockHolder _macro_contents)
   {
     macro = _macro;
     macro_contents = _macro_contents;
@@ -434,7 +434,7 @@ class MacroContainerBlock
       low_parse_psp(macro_contents, compilecontext) +  
       "mixed data, v,output;"
       "void set_info(mixed __d, mixed __view){data=__d; v=__view;}"
-      "static mixed cast(string type){if (type==\"string\"){object buf = String.Buffer(); render(buf, data, v); return output||(output=buf->get());}}"
+      "protected mixed cast(string type){if (type==\"string\"){object buf = String.Buffer(); render(buf, data, v); return output||(output=buf->get());}}"
     "}\n"
     ;
     
@@ -466,7 +466,7 @@ class PikeBlock
   int is_macro;
   int is_end;
   
-  static void create(string contents, string filename, object|void compilecontext)
+  protected void create(string contents, string filename, object|void compilecontext)
   {
     this->contents = contents;  
     this->filename = filename;

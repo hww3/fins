@@ -9,7 +9,7 @@ string type_name = "unknown";
 string context_name = Fins.Model.DEFAULT_MODEL;
 
 //!
-static void create(int|Parser.XML.Tree.Node|void identifier, void|object/*.DataModelContext*/ c)
+protected void create(int|Parser.XML.Tree.Node|void identifier, void|object/*.DataModelContext*/ c)
 {
   if(!c)
 	  c = Fins.Model.get_context(context_name);

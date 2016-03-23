@@ -3,18 +3,18 @@
 string status = "STOPPED";
 object status_last_change = Calendar.now();
 
-static object app;
+protected object app;
 
 Thread.Queue queue = Thread.Queue();
 
 program server = Fins.Util.AppPort;
 program ssl_server = Fins.Util.SSLAppPort;
 
-static array ports = ({});
+protected array ports = ({});
 multiset urls = (<>);
-static array workers = ({});
+protected array workers = ({});
 
-static object logger;
+protected object logger;
 string project;
 string config;
 string ident;
@@ -22,19 +22,19 @@ string ident;
 //! this is the key used to identify the compilation handler environment used by all threads that have this key
 string handler_key;
 
-static function do_handle_request;
-static function do_new_session;
+protected function do_handle_request;
+protected function do_new_session;
 
-static object session_manager;
-static object container;
+protected object session_manager;
+protected object container;
 
-static int keep_running = 1;
-static int worker_number;
+protected int keep_running = 1;
+protected int worker_number;
 
-static object reload_scanner;
+protected object reload_scanner;
 
 //!
-static void create(string _project, string _config)
+protected void create(string _project, string _config)
 {
   logger=master()->resolv("Tools.Logging.get_logger")("finserve");
   project = _project;
@@ -48,8 +48,8 @@ class ReloadScanner
 {
   inherit Filesystem.Monitor.basic : mon;
   
-  static object runner;
-  static void create(object _runner)
+  protected object runner;
+  protected void create(object _runner)
   {
     runner = _runner;
     
@@ -94,7 +94,7 @@ class ReloadScanner
 #else
 class ReloadScanner
 {
-  static void create(object _runner)
+  protected void create(object _runner)
   {
     logger->warning("No support for Filesystem.Monitor found. NOT enabling automatic application reload.");
   }
@@ -166,13 +166,13 @@ mixed new_session(mixed ... args)
   return do_new_session(@args);
 }
 
-static void set_status(string _status)
+protected void set_status(string _status)
 {
   status = _status;
   status_last_change = Calendar.now();
 }
 
-static object load_app(string project, string config_name)
+protected object load_app(string project, string config_name)
 {
   object application;
   mixed err = catch(
@@ -363,7 +363,7 @@ void register_ports()
   }  
 }
 
-static void run_worker(object app)
+protected void run_worker(object app)
 {
   keep_running = 1;
   mixed err;
@@ -384,7 +384,7 @@ static void run_worker(object app)
   logger->info("Worker Thread %O exiting.", Thread.this_thread());
 }
 
-static Thread.Thread start_worker_thread(object app, string key)
+protected Thread.Thread start_worker_thread(object app, string key)
 {
   Thread.Thread t;
   

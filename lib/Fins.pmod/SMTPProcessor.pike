@@ -23,7 +23,7 @@ class SMTPServer
 {
   inherit Protocols.SMTP.Server;
 
-  static void create(array domains, int port, string host, function _cb_mailfrom,
+  protected void create(array domains, int port, string host, function _cb_mailfrom,
     function _cb_rcptto, function _cb_data, object app)
   {
     fins_app = app;

@@ -26,7 +26,7 @@ mixed default_value = .Undefined;
 int null = 0;
 int is_shadow=1;
 
-static void create(string _name)
+protected void create(string _name)
 {
   name = _name;
 }

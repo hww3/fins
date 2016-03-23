@@ -22,7 +22,7 @@ void log(object r)
 
 
 // TODO: should be optimized.
-static void do_msg(object r /*response*/)
+protected void do_msg(object r /*response*/)
 {
   if(!enabled) return;
   mapping lt = localtime(time());

@@ -65,10 +65,10 @@ mapping|Tools.Mapping.MappingCache  _objs_by_alt = ([]);
 //! contains the list of field mappings. normally, this mapping should not be modified directly; use @[add_field] instead.
 mapping(string:.Field) fields = ([]);
 
-static  array _fields = ({});
-static  mapping _fieldnames = ([]);
-static  mapping _fieldnames_low = ([]);
-static  string _fields_string = "";
+protected  array _fields = ({});
+protected  mapping _fieldnames = ([]);
+protected  mapping _fieldnames_low = ([]);
+protected  string _fields_string = "";
 
 // used during initialization
 protected mapping renderers = ([]);
@@ -320,7 +320,7 @@ void validate_on_create(mapping changes, Fins.Errors.Validation errors, .DataObj
 //!
 void transform(mapping changes, Fins.Errors.Validation errors, .DataObjectInstance i);
 
-static void reflect_definition(.DataModelContext context)
+protected void reflect_definition(.DataModelContext context)
 {  
   string table;
   string instance = master()->describe_program(object_program(this));
@@ -949,7 +949,7 @@ else
   return 1;
 }
 
-static void low_load(mapping row, .DataObjectInstance i, mapping objs, mapping objs_by_alt)
+protected void low_load(mapping row, .DataObjectInstance i, mapping objs, mapping objs_by_alt)
 {
   mixed id = i->get_id();
   if(!objs[id]) objs[id] = ([]);
@@ -1304,7 +1304,7 @@ else
    return 1;
 }
 
-static mapping mk_validate_fields(object i, multiset fields_set, mapping object_data)
+protected mapping mk_validate_fields(object i, multiset fields_set, mapping object_data)
 {
   mapping vf = ([]);
   foreach(fields_set; string f;)
@@ -1364,7 +1364,7 @@ Fins.Errors.Validation valid(object i)
    else return 0;
 }
 
-static int commit_changes(.DataModelContext context, multiset fields_set, multiset shadows_set, mapping object_data, int|void no_validation, mixed update_id, object i)
+protected int commit_changes(.DataModelContext context, multiset fields_set, multiset shadows_set, mapping object_data, int|void no_validation, mixed update_id, object i)
 {
    string query;
    array qfields = ({});

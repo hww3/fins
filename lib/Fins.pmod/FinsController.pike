@@ -85,7 +85,7 @@ void __do_start()
 //!  {
 //!    foo = load_controller("foo_controller");
 //!  } 
-static object load_controller(string controller_name)
+protected object load_controller(string controller_name)
 {
   program c;
   string cn;
@@ -139,7 +139,7 @@ static object load_controller(string controller_name)
 //!   a filter should return a true value if the filter was a success. otherwise, false (zero)
 //!   should be returned, and the request will not be handled further. returning false indicates
 //!   the filter wishes to perform a redirect or render function in order to preempt the request.
-static void before_filter(function|object filter)
+protected void before_filter(function|object filter)
 {
   __before_filters += ({ filter });
 }
@@ -162,7 +162,7 @@ static void before_filter(function|object filter)
 //!
 //!   around filters may be nested, in which case the first added around filter will be called closest
 //!   to the event in the controller, and subsequent filters will be called surrounding it.
-static void around_filter(function|object filter)
+protected void around_filter(function|object filter)
 {
   __around_filters += ({ filter });
 }
@@ -180,14 +180,14 @@ static void around_filter(function|object filter)
 //!   a filter should return a true value if the filter was a success. otherwise, false (zero)
 //!   should be returned, and the request will not be handled further. returning false indicates
 //!   the filter wishes to perform a redirect or render function in order to preempt the request.
-static void after_filter(function|object filter)
+protected void after_filter(function|object filter)
 {
   __after_filters += ({ filter });
 }
 
 //! it is not recommended that you override this method. use the start()
 //!  method to load up your controllers.
-static void create(object a)
+protected void create(object a)
 {  
   log->debug("%O->create()", this);
   __last_load = time();
@@ -199,14 +199,14 @@ static void create(object a)
 //!
 //! @seealso
 //!  @[load_controller]
-static void start()
+protected void start()
 {
 }
 
 //! causes control of the application to be yielded to any connected breakpoint client.
 //! the breakpoint client may examine and or modify the request or response before passing
 //! control back to the application.
-static void breakpoint(string desc, object id, object response, 
+protected void breakpoint(string desc, object id, object response, 
                            void|mapping args)
 {
   app->breakpoint(desc, (["app": app, "cache": cache, "model": model, 
@@ -215,7 +215,7 @@ static void breakpoint(string desc, object id, object response,
 }
 
 //! returns a string containing the absolute URI to the desired event function or controller.
-static string action_url(function|object action, array|void args, mapping|void vars)
+protected string action_url(function|object action, array|void args, mapping|void vars)
 {
   return app->url_for_action(action, args, vars);
 }

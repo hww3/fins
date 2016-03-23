@@ -501,7 +501,7 @@ public void update(Fins.Request request, Fins.Response response, Fins.Template.V
   response->set_view(v);
 }
 
-static mixed make_encodable_val(mixed val)
+protected mixed make_encodable_val(mixed val)
 {
   mixed rval;
 
@@ -516,7 +516,7 @@ static mixed make_encodable_val(mixed val)
   else return val;
 }
 
-static string encode_orig_data(mapping orig)
+protected string encode_orig_data(mapping orig)
 {
   mapping val = ([]);
 
@@ -617,7 +617,7 @@ if(e)
   Log.exception("error", e);
 }
 
-static void decode_from_form(mapping variables, mapping v)
+protected void decode_from_form(mapping variables, mapping v)
 {
   array inds = indices(variables);
 
@@ -781,7 +781,7 @@ public void new(Fins.Request request, Fins.Response response, Fins.Template.View
   response->set_view(v);
 }
 
-static string make_nice(string v)
+protected string make_nice(string v)
 {
   return Tools.Language.Inflect.humanize(v);
 }

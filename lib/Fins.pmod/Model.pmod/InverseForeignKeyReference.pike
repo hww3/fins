@@ -25,7 +25,7 @@ int unique;
 .Criteria sort;
 
 //! "unique" implies that this is a one-to-one relationship.
-static void create(string _name, string _otherobject, string _otherkey, .Criteria|void _criteria, int|void _unique)
+protected void create(string _name, string _otherobject, string _otherkey, .Criteria|void _criteria, int|void _unique)
 {
   name = _name;
   otherobject = _otherobject;

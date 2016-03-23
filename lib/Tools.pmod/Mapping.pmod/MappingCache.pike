@@ -3,7 +3,7 @@
 	int timeout;
 	int cleanup_interval;
 	
-	static mapping(mixed:array) vals = ([]);
+	protected mapping(mixed:array) vals = ([]);
 
 //! @param _timeout
 //! specify the length of time (in seconds) an entry should be retained after it has
@@ -16,7 +16,7 @@
 //! by default the cleanup period will be twice the timeout. entries will
 //! always be removed if accessed after their timeout period; this interval
 //! is only used to remove entries which might not be accessed otherwise.
-	static void create(int _timeout, void|int _cleanup_interval)
+	protected void create(int _timeout, void|int _cleanup_interval)
 	{
 	  timeout = _timeout;
 	  cleanup_interval = _cleanup_interval || (_timeout * 2);
@@ -24,7 +24,7 @@
 	}
 	
 //!
-	static mixed `[](mixed k)
+	protected mixed `[](mixed k)
 	{
 	  mixed q;
 	
@@ -42,26 +42,26 @@
 	}
 
 //!	
-	static mixed `->(string k)
+	protected mixed `->(string k)
 	{
 		return `[](k);
 	}
 
 //!	
-	static mixed `->=(string k, mixed v)
+	protected mixed `->=(string k, mixed v)
 	{
 		return `[]=(k, v);
 	}
 
 //!	
-	static mixed `[]=(mixed k, mixed v)
+	protected mixed `[]=(mixed k, mixed v)
 	{
 	  vals[k] = ({time() + timeout, v});
 	  return v;
 	}
 
 //!	
-	static mixed _m_delete(mixed k)
+	protected mixed _m_delete(mixed k)
 	{
 	  mixed v = m_delete(vals, k);
 	  if(v) return v[1];
@@ -69,17 +69,17 @@
 	}
 	
 //!
-	static int _sizeof()
+	protected int _sizeof()
 	{
 		return sizeof(vals);
 	}
 	
-	static array _indices()
+	protected array _indices()
 	{
 	  return indices(vals);  
 	}
 	
-	static array _values()
+	protected array _values()
 	{
 	  return values(vals)[*][1];
 	}

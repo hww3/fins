@@ -59,8 +59,8 @@ object breakpoint_hilfe;
 object bpbe;
 object bpbet;
 
-static int started = 0;
-static int starting = 0;
+protected int started = 0;
+protected int starting = 0;
 
 //! if set to true, controllers will be reloaded on access if they are changed. this setting
 //! is derived from the value of the reload parameter in the controller section of the application config file.
@@ -74,7 +74,7 @@ Standards.URI my_url;
 int my_port;
 string my_ip;
 
-//! determines the length of time, in hours, responses from a static file controller should indicate the file ought to be cached. 
+//! determines the length of time, in hours, responses from a protected file controller should indicate the file ought to be cached. 
 //! this setting is derived from the value of the static_expire_period parameter in the application section of the application 
 //! config file and defaults to 240 (10 days).
 protected int exp = 24 * 10;

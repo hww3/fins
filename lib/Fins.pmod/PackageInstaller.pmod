@@ -64,7 +64,7 @@ int install_package(string package) {
   return p()->main();
 }
 
-static class ErrorContainer() {
+protected class ErrorContainer() {
 
   array err = ({});
   array warn = ({});

@@ -10,7 +10,7 @@ string app_name;
 
 //! the name of this application's root module, which is usually the same as the app_name,
 //! though special precautions are taken to make it possible to change the app's folder name
-//! without upsetting code that depends on this being static (such as the model's definition files).
+//! without upsetting code that depends on this being protected (such as the model's definition files).
 string module_root;
 
 //! the path to the configuration file in use, such as /path/to/config/dev.cfg

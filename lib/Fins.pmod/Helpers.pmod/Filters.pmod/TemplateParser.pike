@@ -6,7 +6,7 @@ import Fins;
 //!
 //! @example
 //! // we're in our FinsController
-//! static void start() {
+//! protected void start() {
 //!   after_filter(Fins.Helpers.Filters.TemplateParser());
 //! }
 
