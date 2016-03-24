@@ -460,6 +460,8 @@ int start_app(string project, string config_name, int|void solo)
     
     if(runner->has_ports())
       logger->info("Application %s is ready for business on %s.", runner->ident, (runner->get_ports()->port->query_address()) * ", ");
+    else if(no_admin) 
+      logger->info("Application %s is ready for business, no ports are listening.", runner->ident);
     else
       logger->info("Application %s is ready for business on admin hosting port %d.", runner->ident, admin_port);
 

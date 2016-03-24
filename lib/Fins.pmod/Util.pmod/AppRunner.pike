@@ -352,9 +352,9 @@ void register_ports()
   object a;
   mixed err = catch(a = app->get_my_url());
   
-  if(a) 
+  if(!err) 
   {
-    logger->info("registering %O", lower_case(a->host));
+    logger->info("Registering %O", lower_case(a->host));
     urls += (< lower_case(a->host) >);
   }
   else

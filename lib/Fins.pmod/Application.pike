@@ -600,6 +600,19 @@ string get_path_for_action(function|object action, int|void nocontextroot)
   return path;
 }
 
+void set_default_port(Standards.URI url)
+{
+  if(url->port)
+  {
+    int nport = 21;
+    string scheme = lower_case(url->scheme);
+    
+    if(scheme == "http") nport = 80;
+    else if(scheme == "https") nport = 443;
+    url->port = nport;
+  }
+}
+
 //! gets the url of the current application (not including the context root). this setting
 //! is derived from the value of the url parameter in the web section of the application config file,
 //! or the xip.io url, if the use_xip_io config setting is enabled in the web section of the config file.
@@ -620,8 +633,12 @@ Standards.URI get_my_url(string|void host_header)
 
   // get_my_url() should be called during application startup (without host header), so my_url should
   // be primed by the time this is called with a host header. this is probably running with scissors...
-  if(my_url && (!host_header || Tools.Boolean.fromString(config["web"]["force_url"]))) return Standards.URI(my_url);
+  if(my_url && (!host_header || Tools.Boolean.fromString(config["web"]?config["web"]["force_url"]:""))) return Standards.URI(my_url);
   
+  int host_header_port;
+  
+  sscanf(host_header, "%s:%d", host_header, host_header_port);
+// werror("host_header: %O, host_header_port: %O\n", host_header, host_header_port); 
   if(my_port == 0)
   {
     if(app_runner->has_ports())
@@ -643,7 +660,7 @@ Standards.URI get_my_url(string|void host_header)
       my_port = app_runner->get_container()->admin_port;
     else my_port = -1;
     
-    werror("get_my_url: host=%O, port=%O, protocol=%O\n", my_ip, my_port, protocol);
+//    werror("get_my_url: host=%O, port=%O, protocol=%O\n", my_ip, my_port, protocol);
     
   }
   
@@ -652,13 +669,13 @@ Standards.URI get_my_url(string|void host_header)
     logger->debug("Using url specified in config file.");
     my_url = Standards.URI(url);
 
-      if( host_header)
+      if(host_header)
       {
-        array h = host_header/":";
-        my_url->host = h[0];
-        if(sizeof(h) > 1)
-          my_url->port = h[1];
-      }
+        my_url->host = host_header;
+        if(host_header_port)
+          my_url->port = host_header_port;
+        else if(my_url->port) set_default_port(my_url);
+    }
       return Standards.URI((string)my_url);
   }
   else if(config["web"] && config["web"]["use_xip_io"])
@@ -666,12 +683,12 @@ Standards.URI get_my_url(string|void host_header)
     logger->debug("Using xip.io url.");
     my_url = Fins.Util.get_xip_io_url(this);
     
-      if( host_header)
+      if(host_header)
       {
-        array h = host_header/":";
-        my_url->host = h[0];
-        if(sizeof(h) > 1)
-          my_url->port = h[1];
+        my_url->host = host_header;
+        if(host_header_port)
+          my_url->port = host_header_port;
+        else if(my_url->port) set_default_port(my_url);
       }
       return Standards.URI((string)my_url);
   }
@@ -685,11 +702,11 @@ Standards.URI get_my_url(string|void host_header)
 
       if( host_header)
       {
-        array h = host_header/":";
-        my_url->host = h[0];
-        if(sizeof(h) > 1)
-          my_url->port = h[1];
-      }
+        my_url->host = host_header;
+        if(host_header_port)
+          my_url->port = host_header_port;
+        else if(my_url->port) set_default_port(my_url);
+    }
       return Standards.URI((string)my_url);
       
     }
@@ -701,10 +718,10 @@ Standards.URI get_my_url(string|void host_header)
     
       if(host_header)
       {
-        array h = host_header/":";
-        my_url->host = h[0];
-        if(sizeof(h) > 1)
-          my_url->port = h[1];
+        my_url->host = host_header;
+        if(host_header_port)
+          my_url->port = host_header_port;
+        else if(my_url->port) set_default_port(my_url);
       }
     
       return Standards.URI((string)my_url);    
@@ -715,13 +732,13 @@ Standards.URI get_my_url(string|void host_header)
 
     if(host_header && !my_ip)
     {
-       my_ip = (host_header/":")[0];
+       my_ip = host_header;
     }
     else if (!host_header)
     {
       my_ip = gethostname();
     }    
-    my_url = Standards.URI(protocol + "://" + my_ip + ":" + my_port + "/");
+    my_url = Standards.URI(protocol + "://" + my_ip + ":" + host_header_port||my_port + "/");
 
     return Standards.URI((string)my_url);
   }
@@ -738,10 +755,10 @@ Standards.URI get_my_url(string|void host_header)
     
     if(host_header)
     {
-      array h = host_header/":";
-      my_url->host = h[0];
-      if(sizeof(h) > 1)
-        my_url->port = h[1];
+      my_url->host = host_header;
+      if(host_header_port)
+        my_url->port = host_header_port;
+      else if(my_url->port) set_default_port(my_url);
     }
 
     return Standards.URI((string)my_url);
@@ -865,6 +882,7 @@ public mixed handle_http(.Request request)
 
   array x = get_event(request);
 
+//werror("event: %O\n", x);
   if(sizeof(x)>=1)
     event = x[0];
 
@@ -1185,7 +1203,9 @@ array get_event(.Request request)
   {
     event = lambda(.Request request, .Response response, mixed ... args)
     {
+//    werror("adding / to path via a redirect: ");
       response->redirect(request->not_query + "/");
+//      werror("%O\n", response->get_response());
     };
   }
   else if(cc->__uses_session && !request->misc->session_variables && app_runner)

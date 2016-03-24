@@ -66,7 +66,6 @@ protected Filesystem.Base create_filesystem()
 
 void index(Request req, Response resp, mixed ... args)
 {
-//	werror("Serving " + Stdio.append_path(static_dir, args*"/") + " from " + getcwd());
    	low_static_request(req, resp, "/" + (args*"/"));
 }
 
@@ -107,7 +106,7 @@ protected void generate_directory_listing(string filename, .Request request, .Re
   array x;
   string listing = "";
 
-  werror("generate_directory_listing(%O, %O, %O)\n", filename, request, fs);
+//  werror("generate_directory_listing(%O, %O, %O)\n", filename, request, fs);
 
   object view = view->get_fallback_string_view("application/directory", default_directory_listing);
 

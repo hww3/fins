@@ -41,7 +41,7 @@
       "; charset=" + response->_charset;
     else response->type = response->_type;
   }
- 
+  
   //!
   public void set_charset(string charset)
   {
@@ -214,8 +214,9 @@
     if(to[0] == '/')
     {
       object u;
-      if(catch(u = request->fins_app->get_my_url(request->request_headers->host)))
-        werror("an error occurred while getting the application's url."); // this is a poor effort, but it's better than nothing.
+      mixed er;
+      if(er = catch(u = request->fins_app->get_my_url(request->request_headers->host)))
+        werror("an error occurred while getting the application's url: %s\n", er[0]); // this is a poor effort, but it's better than nothing.
             
       if(!u)
       {
