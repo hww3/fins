@@ -637,7 +637,8 @@ Standards.URI get_my_url(string|void host_header)
   
   int host_header_port;
   
-  sscanf(host_header, "%s:%d", host_header, host_header_port);
+  if(host_header)
+    sscanf(host_header, "%s:%d", host_header, host_header_port);
 // werror("host_header: %O, host_header_port: %O\n", host_header, host_header_port); 
   if(my_port == 0)
   {
