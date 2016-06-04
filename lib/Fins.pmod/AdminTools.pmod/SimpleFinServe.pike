@@ -44,11 +44,13 @@ int hilfe_mode = 0;
 string project = "default";
 string config_name = "dev";
 int go_background = 0;
+private string run_expression;
 private int has_started = 0;
+
 void print_help()
 {
 	werror("Help: fin_serve [-p portnum|--port=portnum|--hilfe] [-s ram|file|sqlite|--session-manager=ram|file|sqlite [-l "
-		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d]  appname\n");
+		"storage_path|--session-storage-location=storage_path]] [-c|--config configname] [-d] [-e expression] appname\n");
 }
 
 array tool_args;
@@ -78,6 +80,7 @@ int main(int argc, array(string) argv)
     ({"config",Getopt.HAS_ARG,({"-c", "--config"}) }),
     ({"sessionmgr",Getopt.HAS_ARG,({"-s", "--session-manager"}) }),
     ({"sessionloc",Getopt.HAS_ARG,({"-l", "--session-storage-location"}) }),
+    ({"expression",Getopt.HAS_ARG,({"-e"}) }),
 #if constant(fork)
     ({"daemon",Getopt.NO_ARG,({"-d"}) }),
 #endif /* fork() */
@@ -109,6 +112,10 @@ int main(int argc, array(string) argv)
 		session_storagetype = opt[1];
 		break;
 		
+                case "expression":
+                run_expression = opt[1];
+		break;
+
 		case "hilfe":
 		hilfe_mode = 1;
 		break;
@@ -162,7 +169,11 @@ int has_ports()
 
 int do_startup()
 {
-
+  if(hilfe_mode && run_expression)
+  {
+    werror("Starting with --hilfe and -e are mutually exclusive");
+    return 1;
+  }
 #if constant(fork)
   if(!hilfe_mode && go_background && fork())
 	{
@@ -232,7 +243,15 @@ int do_startup()
 
     has_started = 1;
 
-    return -1;
+    if(run_expression)
+    {
+      int rv;
+      string prog = "mixed run(object application) { return " + run_expression + "; }";
+      rv = (compile_string(prog)()->run(app));
+      return rv;
+    }
+    else
+      return -1;
   }
 }
 
