@@ -93,6 +93,18 @@ object get_repository()
     Tools.throw(Error.Generic, "No model definition module specified. Cannot configure model (default=%O, config=%O).", is_default, config);
   }
 
+  if(!master()->resolv(definition_module))
+  {
+    log->warn("Definition module %s doesn't exist, looking harder.", definition_module);
+    mapping possibles = mkmapping(map(indices(master()->root_module), lower_case), indices(master()->root_module));
+    string poss;
+    if(possibles[lower_case(definition_module)])
+    {
+      definition_module = possibles[lower_case(definition_module)];
+      log->warn("Found a possible case-insensitive match. This may not be what you want: %s.", definition_module);
+    }
+  }
+
   string mn = definition_module + "." + defaults->data_mapping_module_name;
   if(o = master()->resolv(mn))
   {
@@ -100,7 +112,7 @@ object get_repository()
     log->debug("Model %s using %s for data mapping objects.", context_id, mn); 
   }
   else
-    log->warn("Unable to find model data mapping definition module %s.", mn); 
+     log->warn("Unable to find model data mapping definition module %s.", mn); 
 
   mn = definition_module + "." + defaults->data_instance_module_name;
   if(o = master()->resolv(mn))
