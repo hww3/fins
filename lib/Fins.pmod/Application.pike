@@ -1,6 +1,10 @@
 import Fins;
 import Tools.Logging;
 
+#define ASSERT(TEST, ARGS...) do {                             \
+     if (!(TEST)) error ("Assertion failed: " #TEST "\n", ARGS);         \
+   } while (0)
+
 //! this is the base application class.
 
 Log.Logger logger = get_logger("fins.application");
@@ -492,7 +496,7 @@ string get_path_for_controller(object _controller)
 
   //werror("get_path_for_controller(%O)\n", _controller); 
   string path;
-  array pcs = ({});
+  array path_components = ({});
   if(controller_path_cache[_controller])
     return controller_path_cache[_controller];
 //werror("not in cache.\n");
@@ -503,28 +507,32 @@ string get_path_for_controller(object _controller)
   }
   else
   {
-    array x = ({_controller});
+    array controller_elements = ({_controller});
     int i = 0;
-    object c = _controller;
+    object current_controller = _controller;
     do
     {
-      object p = find_parent_controller(c);
-      if(!p)
+      object parent_controller = find_parent_controller(current_controller);
+	  werror("parent of %O is %O\n", current_controller, parent_controller);
+      if(!parent_controller)
         break;
-      else x += ({p});
-      c = p;
+      else controller_elements += ({parent_controller});
+      current_controller = parent_controller;
       i++;
     } while(i < 100);
 
     //werror("array is %O\n", x);
 
-    foreach(x;int i; object pc)
+	ASSERT(sizeof(controller_elements) > 1); // we always put the controller in the array, and we wouldn't be here at all if the controller were the parent, sooo...
+	ASSERT(controller_elements[-1] == controller);
+	
+    foreach(controller_elements;int i; object pc)
     {
-      if(pc == controller) pcs += ({""});
-      else pcs += ({ search(mkmapping(indices(x[i+1]),values(x[i+1])), pc) });
+      if(pc == controller) path_components += ({""});
+      else path_components += ({ search(mkmapping(indices(controller_elements[i+1]),values(controller_elements[i+1])), pc) });
     }
 
-   path = reverse(pcs)*"/";
+   path = reverse(path_components)*"/";
   }  
 //werror("figured path: %O\n", path);
 
